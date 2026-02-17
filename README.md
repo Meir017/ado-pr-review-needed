@@ -208,9 +208,8 @@ src/
 ├── retry.ts                    # Retry with exponential backoff
 ├── log.ts                      # Structured colored logging
 ├── types.ts                    # Shared type definitions
-└── __tests__/
-    ├── review-logic.test.ts    # Tests for review logic
-    ├── generate-markdown.test.ts # Tests for markdown generation
-    ├── git-detect.test.ts      # Tests for ADO URL parsing
-    └── pr-quantifier.test.ts   # Tests for PR size classification
+├── review-logic.test.ts        # Tests for review logic
+├── generate-markdown.test.ts   # Tests for markdown generation
+├── git-detect.test.ts          # Tests for ADO URL parsing
+└── pr-quantifier.test.ts       # Tests for PR size classification
 ```
