@@ -135,15 +135,16 @@ export async function computePrSize(
 
   // API limits to 10 files per request — batch accordingly
   const BATCH_SIZE = 10;
-  try {
-    for (let i = 0; i < fileDiffParams.length; i += BATCH_SIZE) {
-      const batch = fileDiffParams.slice(i, i + BATCH_SIZE);
-      const criteria: FileDiffsCriteria = {
-        baseVersionCommit: targetCommit,
-        targetVersionCommit: sourceCommit,
-        fileDiffParams: batch,
-      };
+  let failedFiles = 0;
+  for (let i = 0; i < fileDiffParams.length; i += BATCH_SIZE) {
+    const batch = fileDiffParams.slice(i, i + BATCH_SIZE);
+    const criteria: FileDiffsCriteria = {
+      baseVersionCommit: targetCommit,
+      targetVersionCommit: sourceCommit,
+      fileDiffParams: batch,
+    };
 
+    try {
       const fileDiffs = await withRetry(
         `Fetch file diffs for PR #${pullRequestId} (batch ${Math.floor(i / BATCH_SIZE) + 1})`,
         () => gitApi.getFileDiffs(criteria, project, repositoryId),
@@ -154,12 +155,31 @@ export async function computePrSize(
         totalAdded += added;
         totalDeleted += deleted;
       }
+    } catch {
+      // Batch failed — try each file individually to salvage what we can
+      for (const param of batch) {
+        try {
+          const singleCriteria: FileDiffsCriteria = {
+            baseVersionCommit: targetCommit,
+            targetVersionCommit: sourceCommit,
+            fileDiffParams: [param],
+          };
+          const diffs = await gitApi.getFileDiffs(singleCriteria, project, repositoryId);
+          for (const diff of diffs) {
+            const { added, deleted } = countLineDiffs(diff.lineDiffBlocks ?? []);
+            totalAdded += added;
+            totalDeleted += deleted;
+          }
+        } catch {
+          // File doesn't exist at specified version (rename/rebase/force-push) — skip it
+          failedFiles++;
+        }
+      }
     }
-  } catch (err) {
-    // Fallback: use file count if file diffs API fails
-    log.debug(`  PR #${pullRequestId} — file diffs failed, using file count as proxy`);
-    totalAdded = allChanges.length;
-    totalDeleted = 0;
+  }
+
+  if (failedFiles > 0) {
+    log.debug(`  PR #${pullRequestId} — skipped ${failedFiles} files (not found at specified version)`);
   }
 
   const totalChanges = totalAdded + totalDeleted;
