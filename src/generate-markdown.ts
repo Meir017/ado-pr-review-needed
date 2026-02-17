@@ -1,4 +1,4 @@
-import type { PrNeedingReview, PrWaitingOnAuthor, PrApproved, AnalysisResult, PrSizeInfo, PrSizeLabel } from "./types.js";
+import type { AnalysisResult, PrSizeInfo, PrAction } from "./types.js";
 
 function formatTimeSince(date: Date, now: Date = new Date()): string {
   const diffMs = now.getTime() - date.getTime();
@@ -34,6 +34,7 @@ interface PrRow {
   url: string;
   hasMergeConflict: boolean;
   dateColumn: Date;
+  action: PrAction;
   repository?: string;
   size?: PrSizeInfo;
 }
@@ -45,6 +46,14 @@ function formatSizeLabel(size: PrSizeInfo): string {
       ? "🟡"
       : "🔴";
   return `${emoji} ${size.label}`;
+}
+
+function formatAction(action: PrAction): string {
+  switch (action) {
+    case "APPROVE": return "🟢 APPROVE";
+    case "REVIEW": return "🔍 REVIEW";
+    case "PENDING": return "⏳ PENDING";
+  }
 }
 
 function escapeMarkdown(text: string): string {
@@ -65,8 +74,8 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
 
   if (multiRepo) {
     let table = hasSize
-      ? `| PR | Repository | Author | Size | ${dateHeader} |\n|---|---|---|---|---|\n`
-      : `| PR | Repository | Author | ${dateHeader} |\n|---|---|---|---|\n`;
+      ? `| PR | Repository | Author | Action | Size | ${dateHeader} |\n|---|---|---|---|---|---|\n`
+      : `| PR | Repository | Author | Action | ${dateHeader} |\n|---|---|---|---|---|\n`;
 
     for (const pr of prs) {
       const conflictEmoji = pr.hasMergeConflict ? " ❌" : "";
@@ -75,16 +84,17 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
       const repo = escapeMarkdown(pr.repository ?? "Unknown");
       const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}`;
       const timeSince = formatTimeSince(pr.dateColumn, now);
+      const actionCol = formatAction(pr.action);
       const sizeCol = hasSize ? ` ${pr.size ? formatSizeLabel(pr.size) : ""} |` : "";
-      table += `| ${prLink} | ${repo} | ${author} |${sizeCol} ${timeSince} |\n`;
+      table += `| ${prLink} | ${repo} | ${author} | ${actionCol} |${sizeCol} ${timeSince} |\n`;
     }
 
     return table + "\n";
   }
 
   let table = hasSize
-    ? `| PR | Author | Size | ${dateHeader} |\n|---|---|---|---|\n`
-    : `| PR | Author | ${dateHeader} |\n|---|---|---|\n`;
+    ? `| PR | Author | Action | Size | ${dateHeader} |\n|---|---|---|---|---|\n`
+    : `| PR | Author | Action | ${dateHeader} |\n|---|---|---|---|\n`;
 
   for (const pr of prs) {
     const conflictEmoji = pr.hasMergeConflict ? " ❌" : "";
@@ -92,8 +102,9 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
     const author = escapeMarkdown(pr.author);
     const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}`;
     const timeSince = formatTimeSince(pr.dateColumn, now);
+    const actionCol = formatAction(pr.action);
     const sizeCol = hasSize ? ` ${pr.size ? formatSizeLabel(pr.size) : ""} |` : "";
-    table += `| ${prLink} | ${author} |${sizeCol} ${timeSince} |\n`;
+    table += `| ${prLink} | ${author} | ${actionCol} |${sizeCol} ${timeSince} |\n`;
   }
 
   return table + "\n";

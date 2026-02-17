@@ -1,4 +1,4 @@
-import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo } from "./types.js";
+import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction } from "./types.js";
 
 const RESET = "\x1b[0m";
 const DIM = "\x1b[2m";
@@ -63,6 +63,14 @@ function truncate(text: string, maxLen: number): string {
   return text.length > maxLen ? text.slice(0, maxLen - 1) + "…" : text;
 }
 
+function formatAction(action: PrAction): string {
+  switch (action) {
+    case "APPROVE": return `${GREEN}${BOLD}APPROVE${RESET}`;
+    case "REVIEW": return `${YELLOW}${BOLD}REVIEW${RESET}`;
+    case "PENDING": return `${DIM}PENDING${RESET}`;
+  }
+}
+
 function renderPrRow(
   id: number,
   title: string,
@@ -71,6 +79,7 @@ function renderPrRow(
   date: Date,
   hasMergeConflict: boolean,
   now: Date,
+  action: PrAction,
   size?: PrSizeInfo,
 ): string {
   const { color, label } = ageColor(date, now);
@@ -81,15 +90,16 @@ function renderPrRow(
   const authorText = `${DIM}${truncate(author, 20)}${RESET}`;
   const conflict = conflictIndicator(hasMergeConflict);
   const sizeText = formatSize(size);
+  const actionText = formatAction(action);
 
-  return `  ${ageText}  ${pad(prLink, 80)} ${authorText}${sizeText}${conflict}`;
+  return `  ${ageText}  ${pad(prLink, 80)} ${authorText}${sizeText} ${actionText}${conflict}`;
 }
 
 function renderSection<T>(
   title: string,
   bg: string,
   items: T[],
-  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; size?: PrSizeInfo },
+  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo },
   now: Date,
   getRepo?: (item: T) => string | undefined,
 ): string {
@@ -112,15 +122,15 @@ function renderSection<T>(
     for (const [repo, repoItems] of groups) {
       lines.push(`  ${BOLD}${CYAN}📂 ${repo}${RESET}`);
       for (const item of repoItems) {
-        const { id, title, author, url, date, hasMergeConflict, size } = getRow(item);
-        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, size));
+        const { id, title, author, url, date, hasMergeConflict, action, size } = getRow(item);
+        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size));
       }
       lines.push("");
     }
   } else {
     for (const item of items) {
-      const { id, title, author, url, date, hasMergeConflict, size } = getRow(item);
-      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, size));
+      const { id, title, author, url, date, hasMergeConflict, action, size } = getRow(item);
+      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size));
     }
     lines.push("");
   }
@@ -147,15 +157,15 @@ export function renderDashboard(analysis: AnalysisResult, repoLabel: string, mul
     : undefined;
 
   lines.push(renderSection("✅ Approved", BG_GREEN, approved,
-    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, size: pr.size }),
+    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size }),
     now, repoGetter));
 
   lines.push(renderSection("👀 Needing Review", BG_YELLOW, needingReview,
-    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, size: pr.size }),
+    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size }),
     now, repoGetter));
 
   lines.push(renderSection("✍️  Waiting on Author", BG_RED, waitingOnAuthor,
-    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, size: pr.size }),
+    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size }),
     now, repoGetter));
 
   lines.push(`  ${DIM}Total: ${total} open PRs — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author${RESET}`);

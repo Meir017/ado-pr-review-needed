@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { analyzePrs, mergeAnalysisResults } from "./review-logic.js";
+import { analyzePrs, mergeAnalysisResults, isBotAuthor } from "./review-logic.js";
 import type { PullRequestInfo } from "./types.js";
 import { PullRequestAsyncStatus } from "azure-devops-node-api/interfaces/GitInterfaces.js";
 
@@ -352,5 +352,80 @@ describe("mergeAnalysisResults", () => {
     const pr = makePr();
     const { needingReview } = analyzePrs([pr]);
     expect(needingReview[0].size).toBeUndefined();
+  });
+});
+
+describe("isBotAuthor", () => {
+  it("detects dependabot as a bot author", () => {
+    expect(isBotAuthor("dependabot[bot]")).toBe(true);
+  });
+
+  it("detects renovate as a bot author", () => {
+    expect(isBotAuthor("renovate[bot]")).toBe(true);
+  });
+
+  it("detects github-actions as a bot author", () => {
+    expect(isBotAuthor("github-actions[bot]")).toBe(true);
+  });
+
+  it("detects snyk-bot as a bot author", () => {
+    expect(isBotAuthor("snyk-bot")).toBe(true);
+  });
+
+  it("detects build service accounts as bot authors", () => {
+    expect(isBotAuthor("build-service@microsoft.visualstudio.com")).toBe(true);
+  });
+
+  it("does not flag regular users as bot authors", () => {
+    expect(isBotAuthor("alice@example.com")).toBe(false);
+  });
+
+  it("is case-insensitive", () => {
+    expect(isBotAuthor("Dependabot[bot]")).toBe(true);
+  });
+});
+
+describe("action field", () => {
+  it("sets action to REVIEW for human-authored PRs needing review", () => {
+    const pr = makePr();
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].action).toBe("REVIEW");
+  });
+
+  it("sets action to PENDING for human-authored PRs waiting on author", () => {
+    const pr = makePr({
+      threads: [{
+        id: 1, publishedDate: new Date("2025-01-02"),
+        comments: [{ authorUniqueName: "bob@example.com", publishedDate: new Date("2025-01-03") }],
+      }],
+    });
+    const { waitingOnAuthor } = analyzePrs([pr]);
+    expect(waitingOnAuthor[0].action).toBe("PENDING");
+  });
+
+  it("sets action to APPROVE for human-authored approved PRs", () => {
+    const pr = makePr({
+      reviewers: [{ displayName: "Bob", uniqueName: "bob@example.com", vote: 10 }],
+    });
+    const { approved } = analyzePrs([pr]);
+    expect(approved[0].action).toBe("APPROVE");
+  });
+
+  it("sets action to APPROVE for bot-authored PRs needing review", () => {
+    const pr = makePr({ authorUniqueName: "dependabot[bot]" });
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].action).toBe("APPROVE");
+  });
+
+  it("sets action to APPROVE for bot-authored PRs waiting on author", () => {
+    const pr = makePr({
+      authorUniqueName: "renovate[bot]",
+      threads: [{
+        id: 1, publishedDate: new Date("2025-01-02"),
+        comments: [{ authorUniqueName: "bob@example.com", publishedDate: new Date("2025-01-03") }],
+      }],
+    });
+    const { waitingOnAuthor } = analyzePrs([pr]);
+    expect(waitingOnAuthor[0].action).toBe("APPROVE");
   });
 });
