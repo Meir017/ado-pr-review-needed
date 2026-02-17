@@ -26,7 +26,8 @@ async function getAdoToken(): Promise<string> {
       err instanceof Error ? err.message : String(err);
     throw new Error(
       `Failed to obtain Azure DevOps token via AzureCliCredential. ` +
-        `Make sure you are logged in with \`az login\`.\n${msg}`
+        `Make sure you are logged in with \`az login\`.\n${msg}`,
+      { cause: err },
     );
   }
 }

@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "tsx src/index.ts",
+    "lint": "eslint src/",
     "test": "vitest run"
   },
   "dependencies": {
@@ -18,11 +19,14 @@
     "node": ">=22.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.2.3",
     "@types/picomatch": "^4.0.2",
     "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "^10.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
+    "typescript-eslint": "^8.56.0",
     "vitest": "^4.0.18"
   }
 }
