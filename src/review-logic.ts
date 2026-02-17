@@ -75,6 +75,7 @@ export function analyzePrs(
         hasMergeConflict,
         isTeamMember,
         repository: repoLabel,
+        size: pr.size,
       });
       continue;
     }
@@ -122,6 +123,7 @@ export function analyzePrs(
         hasMergeConflict,
         isTeamMember,
         repository: repoLabel,
+        size: pr.size,
       });
       continue;
     }
@@ -155,6 +157,7 @@ export function analyzePrs(
       hasMergeConflict,
       isTeamMember,
       repository: repoLabel,
+      size: pr.size,
     });
   }
 

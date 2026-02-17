@@ -237,4 +237,72 @@ describe("generateMarkdown", () => {
       expect(md).toContain("| PR | Repository | Author | Waiting for feedback |");
     });
   });
+
+  describe("size column", () => {
+    it("shows Size column when PRs have size info", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({
+          id: 1,
+          size: { linesAdded: 5, linesDeleted: 3, totalChanges: 8, label: "XS" },
+        })],
+      }));
+      expect(md).toContain("| Size |");
+      expect(md).toContain("🟢 XS");
+    });
+
+    it("shows 🟡 for medium PRs", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({
+          size: { linesAdded: 50, linesDeleted: 20, totalChanges: 70, label: "M" },
+        })],
+      }));
+      expect(md).toContain("🟡 M");
+    });
+
+    it("shows 🔴 for large PRs", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({
+          size: { linesAdded: 300, linesDeleted: 200, totalChanges: 500, label: "XL" },
+        })],
+      }));
+      expect(md).toContain("🔴 XL");
+    });
+
+    it("shows 🔴 for L PRs", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({
+          size: { linesAdded: 150, linesDeleted: 100, totalChanges: 250, label: "L" },
+        })],
+      }));
+      expect(md).toContain("🔴 L");
+    });
+
+    it("shows 🟢 for S PRs", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({
+          size: { linesAdded: 20, linesDeleted: 10, totalChanges: 30, label: "S" },
+        })],
+      }));
+      expect(md).toContain("🟢 S");
+    });
+
+    it("does not show Size column when no PRs have size info", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({ id: 1 })],
+      }));
+      expect(md).not.toContain("| Size |");
+    });
+
+    it("shows Size column in multi-repo mode", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({
+          id: 1,
+          repository: "Project/Repo",
+          size: { linesAdded: 5, linesDeleted: 3, totalChanges: 8, label: "XS" },
+        })],
+      }), true);
+      expect(md).toContain("| PR | Repository | Author | Size | Waiting for feedback |");
+      expect(md).toContain("🟢 XS");
+    });
+  });
 });

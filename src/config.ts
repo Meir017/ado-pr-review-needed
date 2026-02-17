@@ -3,6 +3,8 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchDirectReports, fetchOrgMembers, type OrgMembersResult } from "./graph-client.js";
 import { parseAdoRemote } from "./git-detect.js";
+import type { QuantifierConfig, SizeThreshold, PrSizeLabel } from "./types.js";
+import { DEFAULT_THRESHOLDS } from "./types.js";
 
 export interface RepoTarget {
   orgUrl: string;
@@ -21,6 +23,7 @@ export interface MultiRepoConfig {
   repos: RepoTarget[];
   teamMembers: Set<string>;
   ignoredUsers: Set<string>;
+  quantifier?: QuantifierConfig;
 }
 
 interface ConfigFile {
@@ -35,6 +38,12 @@ interface ConfigFile {
   manager?: string;
   orgManager?: string;
   ignoreManagers?: boolean;
+
+  quantifier?: {
+    enabled?: boolean;
+    excludedPatterns?: string[];
+    thresholds?: { label: string; maxChanges: number }[];
+  };
 }
 
 function loadConfigFile(configFilePath?: string): ConfigFile {
@@ -107,11 +116,27 @@ async function resolveTeamMembers(cfg: ConfigFile): Promise<ResolvedMembers> {
   return { teamMembers: members, ignoredUsers };
 }
 
+function resolveQuantifierConfig(cfg: ConfigFile): QuantifierConfig | undefined {
+  // Enabled by default; only disabled when explicitly set to false
+  if (cfg.quantifier?.enabled === false) return undefined;
+
+  const excludedPatterns = cfg.quantifier?.excludedPatterns ?? [];
+  const thresholds: SizeThreshold[] = cfg.quantifier?.thresholds
+    ? cfg.quantifier.thresholds.map((t) => ({
+        label: t.label as PrSizeLabel,
+        maxChanges: t.maxChanges,
+      }))
+    : DEFAULT_THRESHOLDS;
+
+  return { enabled: true, excludedPatterns, thresholds };
+}
+
 export async function getMultiRepoConfig(configFilePath?: string): Promise<MultiRepoConfig> {
   const cfg = loadConfigFile(configFilePath);
   const repos = parseRepoTargets(cfg);
   const { teamMembers, ignoredUsers } = await resolveTeamMembers(cfg);
-  return { repos, teamMembers, ignoredUsers };
+  const quantifier = resolveQuantifierConfig(cfg);
+  return { repos, teamMembers, ignoredUsers, quantifier };
 }
 
 export async function getAdoConfig(configFilePath?: string): Promise<AdoConfig> {

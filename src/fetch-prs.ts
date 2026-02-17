@@ -3,10 +3,11 @@ import {
   PullRequestStatus,
   type GitPullRequest,
 } from "azure-devops-node-api/interfaces/GitInterfaces.js";
-import type { PullRequestInfo, ThreadInfo, ThreadComment } from "./types.js";
+import type { PullRequestInfo, ThreadInfo, ThreadComment, QuantifierConfig } from "./types.js";
 import { identityUniqueName } from "./types.js";
 import * as log from "./log.js";
 import { withRetry } from "./retry.js";
+import { computePrSize } from "./pr-quantifier.js";
 
 const CONCURRENCY = 10;
 
@@ -63,6 +64,7 @@ export async function fetchOpenPullRequests(
   repositoryId: string,
   project: string,
   orgUrl: string,
+  quantifierConfig?: QuantifierConfig,
 ): Promise<PullRequestInfo[]> {
   // Convert old visualstudio.com URLs to dev.azure.com
   // e.g. https://microsoft.visualstudio.com -> https://dev.azure.com/microsoft
@@ -132,6 +134,9 @@ export async function fetchOpenPullRequests(
       mergeStatus: pr.mergeStatus ?? 0,
       lastSourcePushDate: pr.lastMergeSourceCommit?.committer?.date
         ? new Date(pr.lastMergeSourceCommit.committer.date)
+        : undefined,
+      size: quantifierConfig
+        ? await computePrSize(gitApi, repositoryId, project, prId, quantifierConfig)
         : undefined,
     } satisfies PullRequestInfo;
   });

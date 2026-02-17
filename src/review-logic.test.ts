@@ -317,4 +317,40 @@ describe("mergeAnalysisResults", () => {
     expect(merged.needingReview).toHaveLength(0);
     expect(merged.waitingOnAuthor).toHaveLength(0);
   });
+
+  it("propagates size info to needingReview", () => {
+    const size = { linesAdded: 20, linesDeleted: 10, totalChanges: 30, label: "S" as const };
+    const pr = makePr({ size });
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].size).toEqual(size);
+  });
+
+  it("propagates size info to approved", () => {
+    const size = { linesAdded: 50, linesDeleted: 50, totalChanges: 100, label: "M" as const };
+    const pr = makePr({
+      size,
+      reviewers: [{ displayName: "Bob", uniqueName: "bob@example.com", vote: 10 }],
+    });
+    const { approved } = analyzePrs([pr]);
+    expect(approved[0].size).toEqual(size);
+  });
+
+  it("propagates size info to waitingOnAuthor", () => {
+    const size = { linesAdded: 300, linesDeleted: 200, totalChanges: 500, label: "XL" as const };
+    const pr = makePr({
+      size,
+      threads: [{
+        id: 1, publishedDate: new Date("2025-01-02"),
+        comments: [{ authorUniqueName: "bob@example.com", publishedDate: new Date("2025-01-03") }],
+      }],
+    });
+    const { waitingOnAuthor } = analyzePrs([pr]);
+    expect(waitingOnAuthor[0].size).toEqual(size);
+  });
+
+  it("leaves size undefined when not provided", () => {
+    const pr = makePr();
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].size).toBeUndefined();
+  });
 });
