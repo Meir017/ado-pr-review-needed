@@ -1,9 +1,15 @@
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 import type { PullRequestInfo } from "./types.js";
-import { withRetry } from "./retry.js";
+import { withRetry, NonRetryableError } from "./retry.js";
 import * as log from "./log.js";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// ADO error codes that should not be retried
+const NON_RETRYABLE_PREFIXES = [
+  "TF401398", // source/target branch no longer exists
+  "TF401027", // missing PullRequestContribute permission
+];
 
 /**
  * Triggers "restart merge" on PRs older than the configured threshold.
@@ -35,9 +41,17 @@ export async function restartMergeForStalePrs(
   let restarted = 0;
   for (const pr of stalePrs) {
     try {
-      await withRetry(`Restart merge for PR #${pr.id}`, () =>
-        gitApi.updatePullRequest({ mergeStatus: 1 }, repositoryId, pr.id, project),
-      );
+      await withRetry(`Restart merge for PR #${pr.id}`, async () => {
+        try {
+          return await gitApi.updatePullRequest({ mergeStatus: 1 }, repositoryId, pr.id, project);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (NON_RETRYABLE_PREFIXES.some((p) => msg.includes(p))) {
+            throw new NonRetryableError(msg);
+          }
+          throw err;
+        }
+      });
       log.debug(`  #${pr.id} "${pr.title}" — merge restarted`);
       restarted++;
     } catch (err: unknown) {

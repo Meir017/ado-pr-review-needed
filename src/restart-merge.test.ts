@@ -89,4 +89,30 @@ describe("restartMergeForStalePrs", () => {
 
     expect(count).toBe(1);
   });
+
+  it("does not retry TF401398 (branch deleted) errors", async () => {
+    const updatePullRequest = vi.fn().mockRejectedValue(
+      new Error("TF401398: The pull request cannot be activated because the source and/or the target branch no longer exists"),
+    );
+    const gitApi = { updatePullRequest } as never;
+
+    const prs = [makePr({ id: 10, createdDate: new Date("2025-01-01") })];
+    const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
+
+    expect(count).toBe(0);
+    expect(updatePullRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry TF401027 (permission denied) errors", async () => {
+    const updatePullRequest = vi.fn().mockRejectedValue(
+      new Error("TF401027: You need the Git 'PullRequestContribute' permission to perform this action."),
+    );
+    const gitApi = { updatePullRequest } as never;
+
+    const prs = [makePr({ id: 10, createdDate: new Date("2025-01-01") })];
+    const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
+
+    expect(count).toBe(0);
+    expect(updatePullRequest).toHaveBeenCalledTimes(1);
+  });
 });
