@@ -81,18 +81,6 @@ All supported ADO URL formats work:
 
 When multiple repositories are configured, the markdown output groups PRs by repository.
 
-<details>
-<summary>Legacy single-repo format (still supported)</summary>
-
-```json
-{
-  "orgUrl": "https://dev.azure.com/{org}",
-  "project": "{project}",
-  "repository": "{repo}"
-}
-```
-</details>
-
 ### Config Fields
 
 | Field | Description |

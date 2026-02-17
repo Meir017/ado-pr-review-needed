@@ -1,6 +1,4 @@
 import { execSync } from "node:child_process";
-import type { AdoConfig } from "./config.js";
-
 interface GitRemoteInfo {
   orgUrl: string;
   project: string;
@@ -68,7 +66,7 @@ export function parseAdoRemote(remoteUrl: string): GitRemoteInfo | null {
 }
 
 /** Detect the ADO repo from git remotes in the cwd. Returns null if not a git repo or not ADO. */
-export function detectAdoRepo(): AdoConfig | null {
+export function detectAdoRepo(): GitRemoteInfo | null {
   let remoteOutput: string;
   try {
     remoteOutput = execSync("git remote -v", {
@@ -83,10 +81,7 @@ export function detectAdoRepo(): AdoConfig | null {
     if (!line.includes("(fetch)")) continue;
     const info = parseAdoRemote(line);
     if (info) {
-      return {
-        ...info,
-        teamMembers: new Set<string>(),
-      };
+      return info;
     }
   }
 
