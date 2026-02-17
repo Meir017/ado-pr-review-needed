@@ -13,6 +13,7 @@ function makePrNeeding(
     waitingSince: new Date(),
     hasMergeConflict: false,
     isTeamMember: true,
+    action: "REVIEW",
     ...overrides,
   };
 }
@@ -28,6 +29,7 @@ function makePrWaiting(
     lastReviewerActivityDate: new Date(),
     hasMergeConflict: false,
     isTeamMember: true,
+    action: "PENDING",
     ...overrides,
   };
 }
@@ -43,6 +45,7 @@ function makePrApproved(
     createdDate: new Date(),
     hasMergeConflict: false,
     isTeamMember: true,
+    action: "APPROVE",
     ...overrides,
   };
 }
@@ -81,7 +84,7 @@ describe("generateMarkdown", () => {
       approved: [makePrApproved({ id: 77, title: "Ship it", author: "Eve" })],
     }));
     expect(md).toContain("## ✅ Approved");
-    expect(md).toContain("| PR | Author | Created |");
+    expect(md).toContain("| PR | Author | Action | Created |");
     expect(md).toContain("#77 - Ship it");
     expect(md).toContain("Eve");
     expect(md).toContain("1 approved");
@@ -91,7 +94,7 @@ describe("generateMarkdown", () => {
     const md = generateMarkdown(makeAnalysis({
       needingReview: [makePrNeeding({ id: 42, title: "Fix the thing", author: "Bob" })],
     }));
-    expect(md).toContain("| PR | Author | Waiting for feedback |");
+    expect(md).toContain("| PR | Author | Action | Waiting for feedback |");
     expect(md).toContain("#42 - Fix the thing");
     expect(md).toContain("Bob");
     expect(md).toContain("1 needing review");
@@ -102,7 +105,7 @@ describe("generateMarkdown", () => {
       waitingOnAuthor: [makePrWaiting({ id: 99, title: "WIP stuff", author: "Dan" })],
     }));
     expect(md).toContain("## ✍️ Waiting on Author");
-    expect(md).toContain("| PR | Author | Last reviewer activity |");
+    expect(md).toContain("| PR | Author | Action | Last reviewer activity |");
     expect(md).toContain("#99 - WIP stuff");
     expect(md).toContain("Dan");
     expect(md).toContain("1 waiting on author");
@@ -202,7 +205,7 @@ describe("generateMarkdown", () => {
           makePrNeeding({ id: 2, title: "PR in Repo B", repository: "Project/RepoB" }),
         ],
       }), true);
-      expect(md).toContain("| PR | Repository | Author | Waiting for feedback |");
+      expect(md).toContain("| PR | Repository | Author | Action | Waiting for feedback |");
       expect(md).toContain("| Project/RepoA |");
       expect(md).toContain("| Project/RepoB |");
       expect(md).toContain("PR in Repo A");
@@ -234,7 +237,7 @@ describe("generateMarkdown", () => {
       }), true);
       expect(md).toContain("### Team PRs");
       expect(md).toContain("### Community Contributions");
-      expect(md).toContain("| PR | Repository | Author | Waiting for feedback |");
+      expect(md).toContain("| PR | Repository | Author | Action | Waiting for feedback |");
     });
   });
 
@@ -301,7 +304,7 @@ describe("generateMarkdown", () => {
           size: { linesAdded: 5, linesDeleted: 3, totalChanges: 8, label: "XS" },
         })],
       }), true);
-      expect(md).toContain("| PR | Repository | Author | Size | Waiting for feedback |");
+      expect(md).toContain("| PR | Repository | Author | Action | Size | Waiting for feedback |");
       expect(md).toContain("🟢 XS");
     });
   });

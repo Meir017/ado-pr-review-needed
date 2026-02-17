@@ -1,14 +1,30 @@
 import {
   PullRequestAsyncStatus,
 } from "azure-devops-node-api/interfaces/GitInterfaces.js";
-import type { PullRequestInfo, PrNeedingReview, PrWaitingOnAuthor, PrApproved, AnalysisResult } from "./types.js";
+import type { PullRequestInfo, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrAction, AnalysisResult } from "./types.js";
 import * as log from "./log.js";
 
 const BOT_PATTERNS = ["build", "[bot]", "team foundation", "microsoft.visualstudio.com"];
 
+const KNOWN_BOT_AUTHORS = ["dependabot[bot]", "renovate[bot]", "github-actions[bot]", "snyk-bot", "greenkeeper[bot]", "depfu[bot]", "imgbot[bot]", "allcontributors[bot]"];
+
 function isBotAccount(uniqueName: string): boolean {
   const lower = uniqueName.toLowerCase();
   return BOT_PATTERNS.some((p) => lower.includes(p));
+}
+
+export function isBotAuthor(authorUniqueName: string): boolean {
+  const lower = authorUniqueName.toLowerCase();
+  return KNOWN_BOT_AUTHORS.some((b) => lower.includes(b)) || isBotAccount(lower);
+}
+
+function determineAction(category: "approved" | "needingReview" | "waitingOnAuthor", authorUniqueName: string): PrAction {
+  if (isBotAuthor(authorUniqueName)) return "APPROVE";
+  switch (category) {
+    case "approved": return "APPROVE";
+    case "needingReview": return "REVIEW";
+    case "waitingOnAuthor": return "PENDING";
+  }
 }
 
 interface Activity {
@@ -74,6 +90,7 @@ export function analyzePrs(
         createdDate: pr.createdDate,
         hasMergeConflict,
         isTeamMember,
+        action: determineAction("approved", pr.authorUniqueName),
         repository: repoLabel,
         size: pr.size,
       });
@@ -122,6 +139,7 @@ export function analyzePrs(
         lastReviewerActivityDate: lastReviewerActivity!.date,
         hasMergeConflict,
         isTeamMember,
+        action: determineAction("waitingOnAuthor", pr.authorUniqueName),
         repository: repoLabel,
         size: pr.size,
       });
@@ -156,6 +174,7 @@ export function analyzePrs(
       waitingSince,
       hasMergeConflict,
       isTeamMember,
+      action: determineAction("needingReview", pr.authorUniqueName),
       repository: repoLabel,
       size: pr.size,
     });

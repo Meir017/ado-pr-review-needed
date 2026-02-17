@@ -1,5 +1,7 @@
 import type { IdentityRef } from "azure-devops-node-api/interfaces/common/VSSInterfaces.js";
 
+export type PrAction = "APPROVE" | "REVIEW" | "PENDING";
+
 export type PrSizeLabel = "XS" | "S" | "M" | "L" | "XL";
 
 export interface PrSizeInfo {
@@ -68,6 +70,7 @@ export interface PrNeedingReview {
   waitingSince: Date;
   hasMergeConflict: boolean;
   isTeamMember: boolean;
+  action: PrAction;
   repository?: string;
   size?: PrSizeInfo;
 }
@@ -80,6 +83,7 @@ export interface PrWaitingOnAuthor {
   lastReviewerActivityDate: Date;
   hasMergeConflict: boolean;
   isTeamMember: boolean;
+  action: PrAction;
   repository?: string;
   size?: PrSizeInfo;
 }
@@ -98,6 +102,7 @@ export interface PrApproved {
   createdDate: Date;
   hasMergeConflict: boolean;
   isTeamMember: boolean;
+  action: PrAction;
   repository?: string;
   size?: PrSizeInfo;
 }
