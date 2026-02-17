@@ -113,7 +113,6 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
 function splitTeamCommunity<T extends { isTeamMember: boolean }>(
   items: T[],
 ): { team: T[]; community: T[] } {
-  const hasTeamConfig = items.some((i) => i.isTeamMember) || items.some((i) => !i.isTeamMember);
   const allTeam = items.every((i) => i.isTeamMember);
 
   // If no team config (all treated as team), don't split

@@ -26,6 +26,7 @@ async function getGraphToken(): Promise<string> {
     throw new Error(
       `Failed to get Microsoft Graph token via AzureCliCredential. ` +
         `Make sure you are logged in with \`az login\`.\n${msg}`,
+      { cause: err },
     );
   }
 }

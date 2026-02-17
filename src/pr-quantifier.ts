@@ -1,10 +1,8 @@
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 import type {
   FileDiffsCriteria,
-  FileDiff,
   FileDiffParams,
   LineDiffBlock,
-  GitPullRequestIteration,
 } from "azure-devops-node-api/interfaces/GitInterfaces.js";
 import {
   LineDiffBlockChangeType,

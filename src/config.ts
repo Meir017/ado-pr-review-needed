@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { fetchDirectReports, fetchOrgMembers, type OrgMembersResult } from "./graph-client.js";
+import { fetchDirectReports, fetchOrgMembers } from "./graph-client.js";
 import { parseAdoRemote } from "./git-detect.js";
 import type { QuantifierConfig, SizeThreshold, PrSizeLabel } from "./types.js";
 import { DEFAULT_THRESHOLDS } from "./types.js";

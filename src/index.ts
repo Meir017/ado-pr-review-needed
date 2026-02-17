@@ -1,10 +1,10 @@
 // Suppress url.parse() deprecation from azure-devops-node-api (DEP0169)
 process.removeAllListeners("warning");
-process.on("warning", (w) => { if (w.name !== "DeprecationWarning" || (w as any).code !== "DEP0169") console.warn(w); });
+process.on("warning", (w) => { if (w.name !== "DeprecationWarning" || (w as NodeJS.ErrnoException).code !== "DEP0169") console.warn(w); });
 
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { getAdoClient, getGitApiForOrg } from "./ado-client.js";
+import { getGitApiForOrg } from "./ado-client.js";
 import { getMultiRepoConfig } from "./config.js";
 import { fetchOpenPullRequests } from "./fetch-prs.js";
 import { analyzePrs, mergeAnalysisResults } from "./review-logic.js";

@@ -11,7 +11,6 @@ const WHITE = "\x1b[37m";
 const BG_RED = "\x1b[41m";
 const BG_GREEN = "\x1b[42m";
 const BG_YELLOW = "\x1b[43m";
-const BG_CYAN = "\x1b[46m";
 
 function link(text: string, url: string): string {
   // OSC 8 hyperlink: \x1b]8;;URL\x1b\\text\x1b]8;;\x1b\\
@@ -54,6 +53,7 @@ function formatSize(size?: PrSizeInfo): string {
 
 function pad(str: string, width: number): string {
   // Strip ANSI for length calculation
+  // eslint-disable-next-line no-control-regex
   const visible = str.replace(/\x1b\][^\x1b]*\x1b\\|\x1b\[[0-9;]*m/g, "");
   const diff = width - visible.length;
   return diff > 0 ? str + " ".repeat(diff) : str;
