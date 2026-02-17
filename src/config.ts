@@ -117,20 +117,18 @@ async function resolveTeamMembers(cfg: ConfigFile): Promise<ResolvedMembers> {
 }
 
 function resolveQuantifierConfig(cfg: ConfigFile): QuantifierConfig | undefined {
-  if (!cfg.quantifier) return undefined;
+  // Enabled by default; only disabled when explicitly set to false
+  if (cfg.quantifier?.enabled === false) return undefined;
 
-  const enabled = cfg.quantifier.enabled !== false;
-  if (!enabled) return undefined;
-
-  const excludedPatterns = cfg.quantifier.excludedPatterns ?? [];
-  const thresholds: SizeThreshold[] = cfg.quantifier.thresholds
+  const excludedPatterns = cfg.quantifier?.excludedPatterns ?? [];
+  const thresholds: SizeThreshold[] = cfg.quantifier?.thresholds
     ? cfg.quantifier.thresholds.map((t) => ({
         label: t.label as PrSizeLabel,
         maxChanges: t.maxChanges,
       }))
     : DEFAULT_THRESHOLDS;
 
-  return { enabled, excludedPatterns, thresholds };
+  return { enabled: true, excludedPatterns, thresholds };
 }
 
 export async function getMultiRepoConfig(configFilePath?: string): Promise<MultiRepoConfig> {

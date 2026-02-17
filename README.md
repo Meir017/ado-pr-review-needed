@@ -137,7 +137,17 @@ Inspired by [microsoft/PullRequestQuantifier](https://github.com/microsoft/PullR
 
 ### Enabling the Quantifier
 
-Add a `quantifier` section to your `pr-review-config.json`:
+The quantifier is **enabled by default**. To disable it, add to your `pr-review-config.json`:
+
+```json
+{
+  "quantifier": {
+    "enabled": false
+  }
+}
+```
+
+To customize thresholds or file exclusions:
 
 ```json
 {
@@ -160,7 +170,7 @@ Add a `quantifier` section to your `pr-review-config.json`:
 
 | Field | Description |
 |-------|-------------|
-| `enabled` | (Optional) Set to `false` to disable. Defaults to `true` when the `quantifier` key is present. |
+| `enabled` | (Optional) Set to `false` to disable. Defaults to `true`. |
 | `excludedPatterns` | (Optional) Glob patterns for files to exclude from the change count (e.g., lockfiles, auto-generated code). |
 | `thresholds` | (Optional) Custom size thresholds. Each entry has a `label` and `maxChanges`. Defaults to the PullRequestQuantifier standard (XS≤10, S≤40, M≤100, L≤400, XL≤1000). |
 
