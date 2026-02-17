@@ -18,6 +18,7 @@ interface CliArgs {
   dryRun: boolean;
   verbose: boolean;
   dashboard: boolean;
+  config?: string;
 }
 
 function parseArgs(argv: string[]): CliArgs {
@@ -42,17 +43,20 @@ function parseArgs(argv: string[]): CliArgs {
       case "--dashboard":
         args.dashboard = true;
         break;
+      case "--config":
+        args.config = argv[++i];
+        break;
     }
   }
 
   return args;
 }
 
-async function runDashboard(verbose: boolean): Promise<void> {
+async function runDashboard(verbose: boolean, configPath?: string): Promise<void> {
   log.setVerbose(verbose);
 
   log.info("Loading configuration…");
-  const multiConfig = await getMultiRepoConfig();
+  const multiConfig = await getMultiRepoConfig(configPath);
   const repos = multiConfig.repos;
   const isMultiRepo = repos.length > 1;
 
@@ -86,7 +90,7 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   log.heading("PR Review Needed");
 
   log.info("Loading configuration…");
-  const multiConfig = await getMultiRepoConfig();
+  const multiConfig = await getMultiRepoConfig(args.config);
   const repos = multiConfig.repos;
   const isMultiRepo = repos.length > 1;
 
@@ -145,7 +149,7 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv);
 
   if (args.dashboard) {
-    await runDashboard(args.verbose);
+    await runDashboard(args.verbose, args.config);
   } else {
     await runMarkdownExport(args);
   }

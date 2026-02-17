@@ -37,9 +37,10 @@ interface ConfigFile {
   ignoreManagers?: boolean;
 }
 
-function loadConfigFile(): ConfigFile {
-  const dir = dirname(fileURLToPath(import.meta.url));
-  const configPath = resolve(dir, "..", "pr-review-config.json");
+function loadConfigFile(configFilePath?: string): ConfigFile {
+  const configPath = configFilePath
+    ? resolve(configFilePath)
+    : resolve(dirname(fileURLToPath(import.meta.url)), "..", "pr-review-config.json");
 
   const raw = readFileSync(configPath, "utf-8");
   return JSON.parse(raw) as ConfigFile;
@@ -106,15 +107,15 @@ async function resolveTeamMembers(cfg: ConfigFile): Promise<ResolvedMembers> {
   return { teamMembers: members, ignoredUsers };
 }
 
-export async function getMultiRepoConfig(): Promise<MultiRepoConfig> {
-  const cfg = loadConfigFile();
+export async function getMultiRepoConfig(configFilePath?: string): Promise<MultiRepoConfig> {
+  const cfg = loadConfigFile(configFilePath);
   const repos = parseRepoTargets(cfg);
   const { teamMembers, ignoredUsers } = await resolveTeamMembers(cfg);
   return { repos, teamMembers, ignoredUsers };
 }
 
-export async function getAdoConfig(): Promise<AdoConfig> {
-  const cfg = loadConfigFile();
+export async function getAdoConfig(configFilePath?: string): Promise<AdoConfig> {
+  const cfg = loadConfigFile(configFilePath);
 
   const members = new Set<string>(
     (cfg.teamMembers ?? []).map((e) => e.toLowerCase()),

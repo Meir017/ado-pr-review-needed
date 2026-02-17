@@ -34,6 +34,7 @@ interface PrRow {
   url: string;
   hasMergeConflict: boolean;
   dateColumn: Date;
+  repository?: string;
 }
 
 function escapeMarkdown(text: string): string {
@@ -45,9 +46,26 @@ function escapeMarkdown(text: string): string {
     .replace(/\|/g, "\\|");
 }
 
-function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: Date): string {
+function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: Date, multiRepo: boolean = false): string {
   if (prs.length === 0) {
     return `_${emptyMsg}_\n\n`;
+  }
+
+  if (multiRepo) {
+    let table = `| PR | Repository | Author | ${dateHeader} |\n`;
+    table += "|---|---|---|---|\n";
+
+    for (const pr of prs) {
+      const conflictEmoji = pr.hasMergeConflict ? " ❌" : "";
+      const title = escapeMarkdown(pr.title);
+      const author = escapeMarkdown(pr.author);
+      const repo = escapeMarkdown(pr.repository ?? "Unknown");
+      const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}`;
+      const timeSince = formatTimeSince(pr.dateColumn, now);
+      table += `| ${prLink} | ${repo} | ${author} | ${timeSince} |\n`;
+    }
+
+    return table + "\n";
   }
 
   let table = `| PR | Author | ${dateHeader} |\n`;
@@ -89,6 +107,7 @@ function renderSection<T extends { isTeamMember: boolean }>(
   dateHeader: string,
   emptyMsg: string,
   now: Date,
+  multiRepo: boolean = false,
 ): string {
   let md = `## ${heading}\n\n`;
 
@@ -96,54 +115,11 @@ function renderSection<T extends { isTeamMember: boolean }>(
 
   if (community.length > 0) {
     md += `### Team PRs\n\n`;
-    md += generateTable(team.map(toRow), dateHeader, `No team PRs.`, now);
+    md += generateTable(team.map(toRow), dateHeader, `No team PRs.`, now, multiRepo);
     md += `### Community Contributions\n\n`;
-    md += generateTable(community.map(toRow), dateHeader, `No community PRs.`, now);
+    md += generateTable(community.map(toRow), dateHeader, `No community PRs.`, now, multiRepo);
   } else {
-    md += generateTable(items.map(toRow), dateHeader, emptyMsg, now);
-  }
-
-  return md;
-}
-
-function groupByRepo<T extends { repository?: string }>(items: T[]): Map<string, T[]> {
-  const groups = new Map<string, T[]>();
-  for (const item of items) {
-    const key = item.repository ?? "Unknown";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(item);
-  }
-  return groups;
-}
-
-function generateMultiRepoSection<T extends { isTeamMember: boolean; repository?: string }>(
-  heading: string,
-  items: T[],
-  toRow: (item: T) => PrRow,
-  dateHeader: string,
-  emptyMsg: string,
-  now: Date,
-): string {
-  let md = `## ${heading}\n\n`;
-
-  if (items.length === 0) {
-    md += `_${emptyMsg}_\n\n`;
-    return md;
-  }
-
-  const grouped = groupByRepo(items);
-  for (const [repo, repoItems] of grouped) {
-    md += `### 📂 ${repo}\n\n`;
-
-    const { team, community } = splitTeamCommunity(repoItems);
-    if (community.length > 0) {
-      md += `#### Team PRs\n\n`;
-      md += generateTable(team.map(toRow), dateHeader, `No team PRs.`, now);
-      md += `#### Community Contributions\n\n`;
-      md += generateTable(community.map(toRow), dateHeader, `No community PRs.`, now);
-    } else {
-      md += generateTable(repoItems.map(toRow), dateHeader, emptyMsg, now);
-    }
+    md += generateTable(items.map(toRow), dateHeader, emptyMsg, now, multiRepo);
   }
 
   return md;
@@ -155,31 +131,17 @@ export function generateMarkdown(analysis: AnalysisResult, multiRepo: boolean = 
 
   let md = `_Last updated: ${now.toISOString()}_\n\n`;
 
-  if (multiRepo) {
-    md += generateMultiRepoSection("✅ Approved", approved,
-      (pr) => ({ ...pr, dateColumn: pr.createdDate }),
-      "Created", "No approved PRs.", now);
+  md += renderSection("✅ Approved", approved,
+    (pr) => ({ ...pr, dateColumn: pr.createdDate }),
+    "Created", "No approved PRs.", now, multiRepo);
 
-    md += generateMultiRepoSection("👀 PRs Needing Review", needingReview,
-      (pr) => ({ ...pr, dateColumn: pr.waitingSince }),
-      "Waiting for feedback", "No PRs currently need review.", now);
+  md += renderSection("👀 PRs Needing Review", needingReview,
+    (pr) => ({ ...pr, dateColumn: pr.waitingSince }),
+    "Waiting for feedback", "No PRs currently need review.", now, multiRepo);
 
-    md += generateMultiRepoSection("✍️ Waiting on Author", waitingOnAuthor,
-      (pr) => ({ ...pr, dateColumn: pr.lastReviewerActivityDate }),
-      "Last reviewer activity", "No PRs waiting on author.", now);
-  } else {
-    md += renderSection("✅ Approved", approved,
-      (pr) => ({ ...pr, dateColumn: pr.createdDate }),
-      "Created", "No approved PRs.", now);
-
-    md += renderSection("👀 PRs Needing Review", needingReview,
-      (pr) => ({ ...pr, dateColumn: pr.waitingSince }),
-      "Waiting for feedback", "No PRs currently need review.", now);
-
-    md += renderSection("✍️ Waiting on Author", waitingOnAuthor,
-      (pr) => ({ ...pr, dateColumn: pr.lastReviewerActivityDate }),
-      "Last reviewer activity", "No PRs waiting on author.", now);
-  }
+  md += renderSection("✍️ Waiting on Author", waitingOnAuthor,
+    (pr) => ({ ...pr, dateColumn: pr.lastReviewerActivityDate }),
+    "Last reviewer activity", "No PRs waiting on author.", now, multiRepo);
 
   const total = approved.length + needingReview.length + waitingOnAuthor.length;
   md += `_Total: ${total} open PR${total === 1 ? "" : "s"} — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author._\n`;
