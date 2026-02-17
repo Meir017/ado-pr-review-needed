@@ -1,4 +1,4 @@
-import type { AnalysisResult, PrSizeInfo, PrAction } from "./types.js";
+import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats } from "./types.js";
 
 function formatTimeSince(date: Date, now: Date = new Date()): string {
   const diffMs = now.getTime() - date.getTime();
@@ -151,7 +151,7 @@ function renderSection<T extends { isTeamMember: boolean }>(
   return md;
 }
 
-export function generateMarkdown(analysis: AnalysisResult, multiRepo: boolean = false): string {
+export function generateMarkdown(analysis: AnalysisResult, multiRepo: boolean = false, stats?: SummaryStats): string {
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
 
@@ -170,7 +170,17 @@ export function generateMarkdown(analysis: AnalysisResult, multiRepo: boolean = 
     "Last reviewer activity", "No PRs waiting on author.", now, multiRepo);
 
   const total = approved.length + needingReview.length + waitingOnAuthor.length;
-  md += `_Total: ${total} open PR${total === 1 ? "" : "s"} — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author._\n`;
+  let summaryLine = `Total: ${total} open PR${total === 1 ? "" : "s"} — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author`;
+  if (stats) {
+    summaryLine += `, ${stats.totalConflicts} with conflicts`;
+    if (stats.mergeRestarted > 0 || stats.mergeRestartFailed > 0) {
+      summaryLine += `, ${stats.mergeRestarted} merge restarted`;
+      if (stats.mergeRestartFailed > 0) {
+        summaryLine += ` (${stats.mergeRestartFailed} failed)`;
+      }
+    }
+  }
+  md += `_${summaryLine}._\n`;
 
   return md;
 }

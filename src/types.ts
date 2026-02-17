@@ -107,6 +107,22 @@ export interface PrApproved {
   size?: PrSizeInfo;
 }
 
+export interface SummaryStats {
+  totalConflicts: number;
+  mergeRestarted: number;
+  mergeRestartFailed: number;
+}
+
+export function computeSummaryStats(analysis: AnalysisResult, mergeRestarted: number, mergeRestartFailed: number): SummaryStats {
+  const allPrs = [
+    ...analysis.approved,
+    ...analysis.needingReview,
+    ...analysis.waitingOnAuthor,
+  ];
+  const totalConflicts = allPrs.filter((pr) => pr.hasMergeConflict).length;
+  return { totalConflicts, mergeRestarted, mergeRestartFailed };
+}
+
 export function identityUniqueName(identity: IdentityRef | undefined): string {
   return identity?.uniqueName?.toLowerCase() ?? "";
 }

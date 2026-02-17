@@ -34,7 +34,8 @@ describe("restartMergeForStalePrs", () => {
 
     const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
 
-    expect(count).toBe(1);
+    expect(count.restarted).toBe(1);
+    expect(count.failed).toBe(0);
     expect(updatePullRequest).toHaveBeenCalledTimes(1);
     expect(updatePullRequest).toHaveBeenCalledWith({ mergeStatus: 1 }, "repo", 10, "proj");
   });
@@ -46,7 +47,8 @@ describe("restartMergeForStalePrs", () => {
     const prs = [makePr({ id: 10, createdDate: new Date("2024-01-01") })];
     const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, -1, now);
 
-    expect(count).toBe(0);
+    expect(count.restarted).toBe(0);
+    expect(count.failed).toBe(0);
     expect(updatePullRequest).not.toHaveBeenCalled();
   });
 
@@ -57,7 +59,8 @@ describe("restartMergeForStalePrs", () => {
     const prs = [makePr({ id: 10, createdDate: new Date("2025-02-28") })];
     const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
 
-    expect(count).toBe(0);
+    expect(count.restarted).toBe(0);
+    expect(count.failed).toBe(0);
     expect(updatePullRequest).not.toHaveBeenCalled();
   });
 
@@ -75,7 +78,8 @@ describe("restartMergeForStalePrs", () => {
 
     const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
 
-    expect(count).toBe(1);
+    expect(count.restarted).toBe(1);
+    expect(count.failed).toBe(1);
     expect(updatePullRequest).toHaveBeenCalledTimes(2);
   });
 
@@ -87,7 +91,8 @@ describe("restartMergeForStalePrs", () => {
     const prs = [makePr({ id: 10, createdDate: new Date("2025-01-29") })];
     const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
 
-    expect(count).toBe(1);
+    expect(count.restarted).toBe(1);
+    expect(count.failed).toBe(0);
   });
 
   it("does not retry TF401398 (branch deleted) errors", async () => {
@@ -99,7 +104,8 @@ describe("restartMergeForStalePrs", () => {
     const prs = [makePr({ id: 10, createdDate: new Date("2025-01-01") })];
     const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
 
-    expect(count).toBe(0);
+    expect(count.restarted).toBe(0);
+    expect(count.failed).toBe(1);
     expect(updatePullRequest).toHaveBeenCalledTimes(1);
   });
 
@@ -112,7 +118,8 @@ describe("restartMergeForStalePrs", () => {
     const prs = [makePr({ id: 10, createdDate: new Date("2025-01-01") })];
     const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
 
-    expect(count).toBe(0);
+    expect(count.restarted).toBe(0);
+    expect(count.failed).toBe(1);
     expect(updatePullRequest).toHaveBeenCalledTimes(1);
   });
 });
