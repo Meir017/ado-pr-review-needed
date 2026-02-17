@@ -1,5 +1,33 @@
 import type { IdentityRef } from "azure-devops-node-api/interfaces/common/VSSInterfaces.js";
 
+export type PrSizeLabel = "XS" | "S" | "M" | "L" | "XL";
+
+export interface PrSizeInfo {
+  linesAdded: number;
+  linesDeleted: number;
+  totalChanges: number;
+  label: PrSizeLabel;
+}
+
+export interface SizeThreshold {
+  label: PrSizeLabel;
+  maxChanges: number;
+}
+
+export interface QuantifierConfig {
+  enabled: boolean;
+  excludedPatterns: string[];
+  thresholds: SizeThreshold[];
+}
+
+export const DEFAULT_THRESHOLDS: SizeThreshold[] = [
+  { label: "XS", maxChanges: 10 },
+  { label: "S", maxChanges: 40 },
+  { label: "M", maxChanges: 100 },
+  { label: "L", maxChanges: 400 },
+  { label: "XL", maxChanges: 1000 },
+];
+
 export interface ReviewerInfo {
   displayName: string;
   uniqueName: string;
@@ -29,6 +57,7 @@ export interface PullRequestInfo {
   labels: string[];
   mergeStatus: number;
   lastSourcePushDate: Date | undefined;
+  size?: PrSizeInfo;
 }
 
 export interface PrNeedingReview {
@@ -40,6 +69,7 @@ export interface PrNeedingReview {
   hasMergeConflict: boolean;
   isTeamMember: boolean;
   repository?: string;
+  size?: PrSizeInfo;
 }
 
 export interface PrWaitingOnAuthor {
@@ -51,6 +81,7 @@ export interface PrWaitingOnAuthor {
   hasMergeConflict: boolean;
   isTeamMember: boolean;
   repository?: string;
+  size?: PrSizeInfo;
 }
 
 export interface AnalysisResult {
@@ -68,6 +99,7 @@ export interface PrApproved {
   hasMergeConflict: boolean;
   isTeamMember: boolean;
   repository?: string;
+  size?: PrSizeInfo;
 }
 
 export function identityUniqueName(identity: IdentityRef | undefined): string {
