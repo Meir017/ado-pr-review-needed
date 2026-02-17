@@ -383,6 +383,21 @@ describe("isBotAuthor", () => {
   it("is case-insensitive", () => {
     expect(isBotAuthor("Dependabot[bot]")).toBe(true);
   });
+
+  it("detects custom bot users from botUsers set", () => {
+    const botUsers = new Set(["custom-bot@example.com"]);
+    expect(isBotAuthor("custom-bot@example.com", botUsers)).toBe(true);
+  });
+
+  it("does not flag regular users when botUsers is provided", () => {
+    const botUsers = new Set(["custom-bot@example.com"]);
+    expect(isBotAuthor("alice@example.com", botUsers)).toBe(false);
+  });
+
+  it("is case-insensitive for custom bot users", () => {
+    const botUsers = new Set(["custom-bot@example.com"]);
+    expect(isBotAuthor("Custom-Bot@Example.com", botUsers)).toBe(true);
+  });
 });
 
 describe("action field", () => {
@@ -427,5 +442,36 @@ describe("action field", () => {
     });
     const { waitingOnAuthor } = analyzePrs([pr]);
     expect(waitingOnAuthor[0].action).toBe("APPROVE");
+  });
+
+  it("sets action to APPROVE for custom bot user PRs needing review", () => {
+    const pr = makePr({ authorUniqueName: "custom-bot@example.com" });
+    const botUsers = new Set(["custom-bot@example.com"]);
+    const { needingReview } = analyzePrs([pr], new Set(), undefined, new Set(), botUsers);
+    expect(needingReview[0].action).toBe("APPROVE");
+  });
+
+  it("ignores custom bot user activity in thread comments", () => {
+    const pr = makePr({
+      threads: [
+        {
+          id: 1,
+          publishedDate: new Date("2025-01-05"),
+          comments: [
+            {
+              authorUniqueName: "alice@example.com",
+              publishedDate: new Date("2025-01-02"),
+            },
+            {
+              authorUniqueName: "custom-bot@example.com",
+              publishedDate: new Date("2025-01-05"),
+            },
+          ],
+        },
+      ],
+    });
+    const botUsers = new Set(["custom-bot@example.com"]);
+    const { needingReview } = analyzePrs([pr], new Set(), undefined, new Set(), botUsers);
+    expect(needingReview).toHaveLength(1);
   });
 });

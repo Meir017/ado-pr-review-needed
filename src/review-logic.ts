@@ -8,18 +8,18 @@ const BOT_PATTERNS = ["build", "[bot]", "team foundation", "microsoft.visualstud
 
 const KNOWN_BOT_AUTHORS = ["dependabot[bot]", "renovate[bot]", "github-actions[bot]", "snyk-bot", "greenkeeper[bot]", "depfu[bot]", "imgbot[bot]", "allcontributors[bot]"];
 
-function isBotAccount(uniqueName: string): boolean {
+function isBotAccount(uniqueName: string, botUsers: Set<string> = new Set()): boolean {
   const lower = uniqueName.toLowerCase();
-  return BOT_PATTERNS.some((p) => lower.includes(p));
+  return botUsers.has(lower) || BOT_PATTERNS.some((p) => lower.includes(p));
 }
 
-export function isBotAuthor(authorUniqueName: string): boolean {
+export function isBotAuthor(authorUniqueName: string, botUsers: Set<string> = new Set()): boolean {
   const lower = authorUniqueName.toLowerCase();
-  return KNOWN_BOT_AUTHORS.some((b) => lower.includes(b)) || isBotAccount(lower);
+  return KNOWN_BOT_AUTHORS.some((b) => lower.includes(b)) || isBotAccount(lower, botUsers);
 }
 
-function determineAction(category: "approved" | "needingReview" | "waitingOnAuthor", authorUniqueName: string): PrAction {
-  if (isBotAuthor(authorUniqueName)) return "APPROVE";
+function determineAction(category: "approved" | "needingReview" | "waitingOnAuthor", authorUniqueName: string, botUsers: Set<string> = new Set()): PrAction {
+  if (isBotAuthor(authorUniqueName, botUsers)) return "APPROVE";
   switch (category) {
     case "approved": return "APPROVE";
     case "needingReview": return "REVIEW";
@@ -32,14 +32,14 @@ interface Activity {
   isAuthor: boolean;
 }
 
-function collectActivities(pr: PullRequestInfo): Activity[] {
+function collectActivities(pr: PullRequestInfo, botUsers: Set<string> = new Set()): Activity[] {
   const authorId = pr.authorUniqueName;
   const activities: Activity[] = [];
 
   // Thread comments
   for (const thread of pr.threads) {
     for (const comment of thread.comments) {
-      if (isBotAccount(comment.authorUniqueName)) continue;
+      if (isBotAccount(comment.authorUniqueName, botUsers)) continue;
       activities.push({
         date: comment.publishedDate,
         isAuthor: comment.authorUniqueName === authorId,
@@ -60,6 +60,7 @@ export function analyzePrs(
   teamMembers: Set<string> = new Set(),
   repoLabel?: string,
   ignoredUsers: Set<string> = new Set(),
+  botUsers: Set<string> = new Set(),
 ): AnalysisResult {
   const approved: PrApproved[] = [];
   const needingReview: PrNeedingReview[] = [];
@@ -76,7 +77,7 @@ export function analyzePrs(
 
     // Skip if any reviewer approved (vote >= 5)
     const isApproved = pr.reviewers.some(
-      (r) => r.vote >= 5 && !isBotAccount(r.uniqueName),
+      (r) => r.vote >= 5 && !isBotAccount(r.uniqueName, botUsers),
     );
     if (isApproved) {
       const hasMergeConflict =
@@ -90,14 +91,14 @@ export function analyzePrs(
         createdDate: pr.createdDate,
         hasMergeConflict,
         isTeamMember,
-        action: determineAction("approved", pr.authorUniqueName),
+        action: determineAction("approved", pr.authorUniqueName, botUsers),
         repository: repoLabel,
         size: pr.size,
       });
       continue;
     }
 
-    const activities = collectActivities(pr);
+    const activities = collectActivities(pr, botUsers);
     const authorActivities = activities
       .filter((a) => a.isAuthor)
       .sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -139,7 +140,7 @@ export function analyzePrs(
         lastReviewerActivityDate: lastReviewerActivity!.date,
         hasMergeConflict,
         isTeamMember,
-        action: determineAction("waitingOnAuthor", pr.authorUniqueName),
+        action: determineAction("waitingOnAuthor", pr.authorUniqueName, botUsers),
         repository: repoLabel,
         size: pr.size,
       });
@@ -174,7 +175,7 @@ export function analyzePrs(
       waitingSince,
       hasMergeConflict,
       isTeamMember,
-      action: determineAction("needingReview", pr.authorUniqueName),
+      action: determineAction("needingReview", pr.authorUniqueName, botUsers),
       repository: repoLabel,
       size: pr.size,
     });
