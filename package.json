@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@azure/identity": "^4.6.0",
-    "azure-devops-node-api": "^14.1.0"
+    "azure-devops-node-api": "^14.1.0",
+    "picomatch": "^4.0.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/picomatch": "^4.0.2",
     "@vitest/coverage-v8": "^3.2.4",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
