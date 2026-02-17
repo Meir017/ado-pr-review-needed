@@ -11,9 +11,13 @@ import { restartMergeForStalePrs } from "./restart-merge.js";
 import { analyzePrs, mergeAnalysisResults } from "./review-logic.js";
 import { generateMarkdown } from "./generate-markdown.js";
 import { renderDashboard } from "./dashboard.js";
-import type { AnalysisResult } from "./types.js";
+import type { AnalysisResult, PullRequestInfo } from "./types.js";
 import { computeSummaryStats } from "./types.js";
+import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
+import { withRetry } from "./retry.js";
 import * as log from "./log.js";
+import type { RepoTarget } from "./config.js";
+import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 
 interface CliArgs {
   output: string;
@@ -54,6 +58,74 @@ function parseArgs(argv: string[]): CliArgs {
   return args;
 }
 
+interface RepoResult {
+  repoLabel: string;
+  prs: PullRequestInfo[];
+  analysis: AnalysisResult;
+  restarted: number;
+  restartFailed: number;
+}
+
+/**
+ * Re-fetch mergeStatus for PRs that had their merge restarted.
+ * Updates the prs array in-place.
+ */
+async function refreshMergeStatus(
+  gitApi: IGitApi,
+  repositoryId: string,
+  project: string,
+  prs: PullRequestInfo[],
+  restartedPrIds: number[],
+): Promise<void> {
+  if (restartedPrIds.length === 0) return;
+
+  const idSet = new Set(restartedPrIds);
+  const toRefresh = prs.filter((pr) => idSet.has(pr.id));
+
+  log.info(`Refreshing merge status for ${toRefresh.length} restarted PR(s)…`);
+  for (const pr of toRefresh) {
+    try {
+      const updated = await withRetry(`Refresh merge status for PR #${pr.id}`, () =>
+        gitApi.getPullRequestById(pr.id, project),
+      );
+      if (updated.mergeStatus !== undefined) {
+        pr.mergeStatus = updated.mergeStatus;
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.warn(`  #${pr.id} — failed to refresh merge status: ${msg}`);
+    }
+  }
+}
+
+async function processRepo(
+  repo: RepoTarget,
+  isMultiRepo: boolean,
+  restartMergeAfterDays: number,
+  quantifierConfig: import("./types.js").QuantifierConfig | undefined,
+  teamMembers: Set<string>,
+  ignoredUsers: Set<string>,
+): Promise<RepoResult> {
+  const repoLabel = `${repo.project}/${repo.repository}`;
+  log.info(`Fetching open PRs from ${repoLabel}…`);
+  const startFetch = Date.now();
+  const gitApi = await getGitApiForOrg(repo.orgUrl);
+  const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, quantifierConfig);
+  log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
+
+  const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, restartMergeAfterDays);
+  await refreshMergeStatus(gitApi, repo.repository, repo.project, prs, restartResult.restartedPrIds);
+
+  const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers);
+  return {
+    repoLabel,
+    prs,
+    analysis,
+    restarted: restartResult.restarted,
+    restartFailed: restartResult.failed,
+  };
+}
+
 async function runDashboard(verbose: boolean, configPath?: string): Promise<void> {
   log.setVerbose(verbose);
 
@@ -72,16 +144,15 @@ async function runDashboard(verbose: boolean, configPath?: string): Promise<void
   let totalRestarted = 0;
   let totalRestartFailed = 0;
 
-  for (const repo of repos) {
-    const repoLabel = `${repo.project}/${repo.repository}`;
-    log.info(`Fetching open PRs from ${repoLabel}…`);
-    const gitApi = await getGitApiForOrg(repo.orgUrl);
-    const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, multiConfig.quantifier);
-    const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, multiConfig.restartMergeAfterDays);
-    totalRestarted += restartResult.restarted;
-    totalRestartFailed += restartResult.failed;
-    const analysis = analyzePrs(prs, multiConfig.teamMembers, isMultiRepo ? repoLabel : undefined, multiConfig.ignoredUsers);
-    allAnalyses.push(analysis);
+  log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
+  const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
+    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers),
+  );
+
+  for (const r of results) {
+    allAnalyses.push(r.analysis);
+    totalRestarted += r.restarted;
+    totalRestartFailed += r.restartFailed;
   }
 
   const merged = mergeAnalysisResults(allAnalyses);
@@ -116,24 +187,17 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   let totalRestarted = 0;
   let totalRestartFailed = 0;
 
-  for (const repo of repos) {
-    const repoLabel = `${repo.project}/${repo.repository}`;
-    log.info(`Fetching PRs from ${repoLabel}…`);
-    const startFetch = Date.now();
-    const gitApi = await getGitApiForOrg(repo.orgUrl);
-    const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, multiConfig.quantifier);
-    log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
-    totalPrs += prs.length;
+  log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
+  const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
+    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers),
+  );
 
-    await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, multiConfig.restartMergeAfterDays).then((r) => {
-      totalRestarted += r.restarted;
-      totalRestartFailed += r.failed;
-    });
-
-    log.info(`Analyzing review status for ${repoLabel}…`);
-    const analysis = analyzePrs(prs, multiConfig.teamMembers, isMultiRepo ? repoLabel : undefined, multiConfig.ignoredUsers);
-    allAnalyses.push(analysis);
-    log.success(`${repoLabel}: ${analysis.approved.length} approved, ${analysis.needingReview.length} needing review, ${analysis.waitingOnAuthor.length} waiting on author`);
+  for (const r of results) {
+    allAnalyses.push(r.analysis);
+    totalPrs += r.prs.length;
+    totalRestarted += r.restarted;
+    totalRestartFailed += r.restartFailed;
+    log.success(`${r.repoLabel}: ${r.analysis.approved.length} approved, ${r.analysis.needingReview.length} needing review, ${r.analysis.waitingOnAuthor.length} waiting on author`);
   }
 
   const merged = mergeAnalysisResults(allAnalyses);
