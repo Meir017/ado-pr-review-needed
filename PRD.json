@@ -1,0 +1,146 @@
+{
+  "title": "PR Review Needed — Markdown Summary Generator",
+  "description": "A TypeScript script that queries Azure DevOps REST API for open pull requests in the Wcd.Infra.ConfigurationGeneration repository, determines which PRs are waiting for reviewer feedback, and generates a markdown summary file (similar to dotnet/aspire#13834). The script is intended to run on-demand or on a schedule via an Azure DevOps pipeline.",
+  "context": {
+    "organization": "https://microsoft.visualstudio.com",
+    "project": "WDATP",
+    "repository": "Wcd.Infra.ConfigurationGeneration",
+    "reference": "https://github.com/dotnet/aspire/issues/13834"
+  },
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Project scaffolding",
+      "description": "Create a new TypeScript project under Tools/PrReviewNeeded with package.json, tsconfig.json, and an entry point (src/index.ts). Use tsx for execution. Add azure-devops-node-api as a dependency for ADO REST calls.",
+      "requirements": [
+        "package.json with name, scripts (build, start), and dependencies",
+        "tsconfig.json targeting ES2020+ with strict mode",
+        "src/index.ts as the entry point",
+        "Dependencies: azure-devops-node-api (ADO SDK), @azure/identity (AzureCliCredential auth), dotenv (optional, for local dev)"
+      ],
+      "dod": "Running `npm install && npm run build` in Tools/PrReviewNeeded succeeds with zero errors.",
+      "verification": "Execute `npm run build` and confirm no TypeScript compilation errors.",
+      "completed": true
+    },
+    {
+      "id": "T2",
+      "title": "Azure DevOps API client setup",
+      "description": "Create a module (src/ado-client.ts) that authenticates to Azure DevOps using @azure/identity's AzureCliCredential to obtain a bearer token for the Azure DevOps resource (499b84ac-1321-427f-aa17-267ca6975798), then passes it to azure-devops-node-api via a BearerCredentialHandler. No PAT required — users just need to be logged in via `az login`.",
+      "requirements": [
+        "Use @azure/identity AzureCliCredential to get a token for resource 499b84ac-1321-427f-aa17-267ca6975798 (Azure DevOps)",
+        "Create a BearerCredentialHandler from azure-devops-node-api/handlers with the obtained token",
+        "Instantiate WebApi with the org URL and bearer handler",
+        "Accept org URL, project, and repository name via environment variables or CLI arguments with sensible defaults matching this repo",
+        "Export a function getAdoClient() that returns { gitApi, coreApi } ready to use",
+        "Graceful error if az login session is expired or missing, with a helpful message to run `az login`",
+        "Add @azure/identity as a dependency in package.json"
+      ],
+      "dod": "Calling getAdoClient() returns a working GitApi instance authenticated via AzureCliCredential that can list pull requests.",
+      "verification": "Run the script locally after `az login` and confirm it connects and fetches PRs without errors. Verify it fails gracefully with a clear message when not logged in.",
+      "completed": true
+    },
+    {
+      "id": "T3",
+      "title": "Fetch open pull requests",
+      "description": "Create a module (src/fetch-prs.ts) that retrieves all open, non-draft PRs from the repository via the ADO Git API. Include reviewer vote information, creation date, labels/tags, and the latest iteration (push) timestamp.",
+      "requirements": [
+        "Use gitApi.getPullRequests() with status=active",
+        "Filter out draft PRs (pr.isDraft === true)",
+        "Filter out PRs tagged with 'NO-MERGE'",
+        "For each PR, also fetch threads (gitApi.getThreads) to determine comment activity",
+        "Return a typed array of PullRequestInfo objects with: id, title, author, url, createdDate, reviewers (with votes), threads, labels, lastSourcePushDate"
+      ],
+      "dod": "The function returns a correctly typed list of active, non-draft, non-NO-MERGE PRs with all required metadata.",
+      "verification": "Run against the real repo and verify the returned PR count matches manual ADO query. Spot-check 2-3 PRs for correct metadata.",
+      "completed": true
+    },
+    {
+      "id": "T4",
+      "title": "Determine PRs needing review",
+      "description": "Create a module (src/review-logic.ts) that analyzes each PR to decide whether it is 'waiting for reviewer feedback'. Port the logic from the aspire workflow adapted for Azure DevOps semantics: a PR needs review when the last meaningful activity is from the author (the ball is in reviewers' court).",
+      "requirements": [
+        "A PR needs review when: (a) it has no approving vote (vote >= 5), AND (b) the most recent activity (comment, push, or vote) is from the PR author",
+        "ADO vote semantics: 10=approved, 5=approved-with-suggestions, 0=no-vote, -5=waiting-for-author, -10=rejected. Consider vote>=5 as approved",
+        "Ignore bot/service-account activity (e.g., accounts containing 'build', '[bot]', or 'Team Foundation')",
+        "Compute 'waitingSince' as the date of the first author activity after the last reviewer activity (or PR creation if no reviewer activity)",
+        "Detect merge conflicts if the PR has mergeStatus === 'conflicts'",
+        "Export function getPrsNeedingReview(prs: PullRequestInfo[]): PrNeedingReview[]"
+      ],
+      "dod": "Given a set of PRs, the function correctly classifies which need review and computes accurate waitingSince dates.",
+      "verification": "Write unit tests with mocked PR data covering: approved PR (excluded), PR with only author activity (included), PR where reviewer commented last (excluded), PR with merge conflicts (included with conflict flag).",
+      "completed": true
+    },
+    {
+      "id": "T5",
+      "title": "Generate markdown output",
+      "description": "Create a module (src/generate-markdown.ts) that takes the list of PRs needing review and produces a formatted markdown string matching the aspire issue style: a table with PR link, author, and color-coded waiting duration.",
+      "requirements": [
+        "Table columns: PR (linked title), Author, Waiting for feedback (color-coded duration)",
+        "Color coding: 🟢 ≤1 day, 🟡 2-3 days, 🔴 >3 days",
+        "Show ❌ emoji next to PRs with merge conflicts",
+        "Sort PRs by waitingSince ascending (oldest first)",
+        "Include a 'Last updated: <ISO timestamp>' header",
+        "Include a summary footer with total count",
+        "Optionally split into sections (e.g., by team/area path) if ADO area paths are available"
+      ],
+      "dod": "The function produces valid markdown that renders correctly on Azure DevOps wiki or any markdown viewer.",
+      "verification": "Generate markdown for sample data and render it in a markdown previewer. Verify table formatting, links, and emoji indicators.",
+      "completed": true
+    },
+    {
+      "id": "T6",
+      "title": "CLI entry point and file output",
+      "description": "Wire up the entry point (src/index.ts) to orchestrate: authenticate → fetch PRs → filter → generate markdown → write to file. Support CLI arguments for output path and optional console-only mode.",
+      "requirements": [
+        "Default output file: pr-review-summary.md in the current directory",
+        "Support --output <path> to customize output location",
+        "Support --dry-run to print markdown to stdout without writing a file",
+        "Support --verbose to enable debug logging (similar to aspire's DEBUG_LOGGING flag)",
+        "Exit code 0 on success, 1 on error with descriptive message",
+        "Log summary: 'Found N PRs needing review. Output written to <path>.'"
+      ],
+      "dod": "Running `npm start` (or `npx tsx src/index.ts`) authenticates, fetches PRs, and writes a correct markdown summary file.",
+      "verification": "Run the script end-to-end and verify: (1) file is created at expected path, (2) content matches expected format, (3) --dry-run only prints to stdout, (4) exit codes are correct.",
+      "completed": true
+    },
+    {
+      "id": "T7",
+      "title": "Unit tests",
+      "description": "Add unit tests using vitest for the review-logic and markdown-generation modules. Mock the ADO API layer so tests run without network access.",
+      "requirements": [
+        "Test review-logic: approved PRs excluded, author-last-activity PRs included, reviewer-last-activity PRs excluded, bot activity ignored, merge conflict detection, waitingSince calculation accuracy",
+        "Test markdown generation: correct table structure, color-coded durations, conflict emoji, sorting order, edge cases (zero PRs, single PR)",
+        "Test CLI argument parsing (output path, dry-run, verbose)",
+        "Code coverage target: ≥80% for review-logic and generate-markdown modules"
+      ],
+      "dod": "All tests pass with `npm test` and coverage meets the threshold.",
+      "verification": "Run `npm test -- --coverage` and confirm all tests pass with ≥80% coverage on target modules.",
+      "completed": true
+    },
+    {
+      "id": "T8",
+      "title": "Azure DevOps pipeline definition [SKIPPED]",
+      "description": "SKIPPED — Deferred for later. Create a YAML pipeline definition (Tools/PrReviewNeeded/pipeline.yml) that runs the script on a schedule (every 2 hours on weekdays) and on manual trigger.",
+      "requirements": [],
+      "dod": "",
+      "verification": "",
+      "completed": "skipped"
+    },
+    {
+      "id": "T9",
+      "title": "Documentation (README)",
+      "description": "Create a README.md in Tools/PrReviewNeeded explaining the tool's purpose, how to run it locally, environment variables, CLI arguments, and how the pipeline works.",
+      "requirements": [
+        "Purpose section explaining what the tool does and why",
+        "Prerequisites: Node.js 18+, Azure DevOps PAT with Code (Read) scope",
+        "Local usage: environment setup, npm install, npm start, CLI flags",
+        "Pipeline usage: how the scheduled pipeline works, where output goes",
+        "Configuration: environment variables (AZURE_DEVOPS_PAT, ADO_ORG, ADO_PROJECT, ADO_REPO)",
+        "Example output screenshot or markdown snippet"
+      ],
+      "dod": "README.md is comprehensive, accurate, and sufficient for a new developer to run the tool.",
+      "verification": "Have a teammate follow the README to run the script locally without additional guidance.",
+      "completed": true
+    }
+  ]
+}

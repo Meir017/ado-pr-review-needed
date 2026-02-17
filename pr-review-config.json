@@ -1,0 +1,8 @@
+{
+  "repositories": [
+    "https://dev.azure.com/{org}/{project}/_git/{repo}"
+  ],
+  "orgManager": null,
+  "teamMembers": [],
+  "ignoreManagers": false
+}
