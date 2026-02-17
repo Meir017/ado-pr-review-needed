@@ -72,7 +72,7 @@ async function runDashboard(verbose: boolean, configPath?: string): Promise<void
     const repoLabel = `${repo.project}/${repo.repository}`;
     log.info(`Fetching open PRs from ${repoLabel}…`);
     const gitApi = await getGitApiForOrg(repo.orgUrl);
-    const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl);
+    const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, multiConfig.quantifier);
     const analysis = analyzePrs(prs, multiConfig.teamMembers, isMultiRepo ? repoLabel : undefined, multiConfig.ignoredUsers);
     allAnalyses.push(analysis);
   }
@@ -111,7 +111,7 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
     log.info(`Fetching PRs from ${repoLabel}…`);
     const startFetch = Date.now();
     const gitApi = await getGitApiForOrg(repo.orgUrl);
-    const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl);
+    const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, multiConfig.quantifier);
     log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
     totalPrs += prs.length;
 
