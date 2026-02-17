@@ -195,15 +195,16 @@ describe("generateMarkdown", () => {
   });
 
   describe("multi-repo mode", () => {
-    it("groups PRs by repository when multiRepo is true", () => {
+    it("adds Repository column when multiRepo is true", () => {
       const md = generateMarkdown(makeAnalysis({
         needingReview: [
           makePrNeeding({ id: 1, title: "PR in Repo A", repository: "Project/RepoA" }),
           makePrNeeding({ id: 2, title: "PR in Repo B", repository: "Project/RepoB" }),
         ],
       }), true);
-      expect(md).toContain("### 📂 Project/RepoA");
-      expect(md).toContain("### 📂 Project/RepoB");
+      expect(md).toContain("| PR | Repository | Author | Waiting for feedback |");
+      expect(md).toContain("| Project/RepoA |");
+      expect(md).toContain("| Project/RepoB |");
       expect(md).toContain("PR in Repo A");
       expect(md).toContain("PR in Repo B");
     });
@@ -215,25 +216,25 @@ describe("generateMarkdown", () => {
       expect(md).toContain("_No PRs waiting on author._");
     });
 
-    it("does not group by repo when multiRepo is false", () => {
+    it("does not add Repository column when multiRepo is false", () => {
       const md = generateMarkdown(makeAnalysis({
         needingReview: [
           makePrNeeding({ id: 1, repository: "Project/RepoA" }),
         ],
       }), false);
-      expect(md).not.toContain("### 📂");
+      expect(md).not.toContain("| Repository |");
     });
 
-    it("splits team/community within each repo group", () => {
+    it("splits team/community with Repository column in multi-repo mode", () => {
       const md = generateMarkdown(makeAnalysis({
         needingReview: [
           makePrNeeding({ id: 1, repository: "Project/Repo", isTeamMember: true }),
           makePrNeeding({ id: 2, repository: "Project/Repo", isTeamMember: false }),
         ],
       }), true);
-      expect(md).toContain("### 📂 Project/Repo");
-      expect(md).toContain("#### Team PRs");
-      expect(md).toContain("#### Community Contributions");
+      expect(md).toContain("### Team PRs");
+      expect(md).toContain("### Community Contributions");
+      expect(md).toContain("| PR | Repository | Author | Waiting for feedback |");
     });
   });
 });

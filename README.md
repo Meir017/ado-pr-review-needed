@@ -38,6 +38,9 @@ npm start
 # Custom output path
 npm start -- --output docs/review-status.md
 
+# Use a custom config file
+npm start -- --config path/to/my-config.json
+
 # Print to stdout without writing a file
 npm start -- --dry-run
 
@@ -50,6 +53,7 @@ npm start -- --verbose
 | Flag | Description |
 |------|-------------|
 | `--output <path>` | Output file path (default: `pr-review-summary.md`) |
+| `--config <path>` | Path to a custom config file (default: `pr-review-config.json` in project root) |
 | `--dry-run` | Print markdown to stdout only |
 | `--verbose` | Enable debug logging |
 
