@@ -7,6 +7,7 @@ import { resolve } from "node:path";
 import { getGitApiForOrg } from "./ado-client.js";
 import { getMultiRepoConfig } from "./config.js";
 import { fetchOpenPullRequests } from "./fetch-prs.js";
+import { restartMergeForStalePrs } from "./restart-merge.js";
 import { analyzePrs, mergeAnalysisResults } from "./review-logic.js";
 import { generateMarkdown } from "./generate-markdown.js";
 import { renderDashboard } from "./dashboard.js";
@@ -73,6 +74,7 @@ async function runDashboard(verbose: boolean, configPath?: string): Promise<void
     log.info(`Fetching open PRs from ${repoLabel}…`);
     const gitApi = await getGitApiForOrg(repo.orgUrl);
     const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, multiConfig.quantifier);
+    await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, multiConfig.restartMergeAfterDays);
     const analysis = analyzePrs(prs, multiConfig.teamMembers, isMultiRepo ? repoLabel : undefined, multiConfig.ignoredUsers);
     allAnalyses.push(analysis);
   }
@@ -114,6 +116,8 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
     const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, multiConfig.quantifier);
     log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
     totalPrs += prs.length;
+
+    await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, multiConfig.restartMergeAfterDays);
 
     log.info(`Analyzing review status for ${repoLabel}…`);
     const analysis = analyzePrs(prs, multiConfig.teamMembers, isMultiRepo ? repoLabel : undefined, multiConfig.ignoredUsers);

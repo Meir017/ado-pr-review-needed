@@ -17,6 +17,7 @@ export interface MultiRepoConfig {
   teamMembers: Set<string>;
   ignoredUsers: Set<string>;
   quantifier?: QuantifierConfig;
+  restartMergeAfterDays: number;
 }
 
 interface ConfigFile {
@@ -32,6 +33,8 @@ interface ConfigFile {
     excludedPatterns?: string[];
     thresholds?: { label: string; maxChanges: number }[];
   };
+
+  restartMergeAfterDays?: number;
 }
 
 function loadConfigFile(configFilePath?: string): ConfigFile {
@@ -119,7 +122,8 @@ export async function getMultiRepoConfig(configFilePath?: string): Promise<Multi
   const repos = parseRepoTargets(cfg);
   const { teamMembers, ignoredUsers } = await resolveTeamMembers(cfg);
   const quantifier = resolveQuantifierConfig(cfg);
-  return { repos, teamMembers, ignoredUsers, quantifier };
+  const restartMergeAfterDays = cfg.restartMergeAfterDays ?? 30;
+  return { repos, teamMembers, ignoredUsers, quantifier, restartMergeAfterDays };
 }
 
 
