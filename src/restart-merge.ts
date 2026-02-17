@@ -14,6 +14,7 @@ const NON_RETRYABLE_PREFIXES = [
 export interface RestartMergeResult {
   restarted: number;
   failed: number;
+  restartedPrIds: number[];
 }
 
 /**
@@ -30,7 +31,7 @@ export async function restartMergeForStalePrs(
 ): Promise<RestartMergeResult> {
   if (restartMergeAfterDays < 0) {
     log.debug("Restart merge is disabled (restartMergeAfterDays < 0)");
-    return { restarted: 0, failed: 0 };
+    return { restarted: 0, failed: 0, restartedPrIds: [] };
   }
 
   const cutoff = new Date(now.getTime() - restartMergeAfterDays * MS_PER_DAY);
@@ -38,13 +39,14 @@ export async function restartMergeForStalePrs(
 
   if (stalePrs.length === 0) {
     log.debug("No PRs older than the restart-merge threshold");
-    return { restarted: 0, failed: 0 };
+    return { restarted: 0, failed: 0, restartedPrIds: [] };
   }
 
   log.info(`Restarting merge for ${stalePrs.length} PR(s) older than ${restartMergeAfterDays} days…`);
 
   let restarted = 0;
   let failed = 0;
+  const restartedPrIds: number[] = [];
   for (const pr of stalePrs) {
     try {
       await withRetry(`Restart merge for PR #${pr.id}`, async () => {
@@ -60,6 +62,7 @@ export async function restartMergeForStalePrs(
       });
       log.debug(`  #${pr.id} "${pr.title}" — merge restarted`);
       restarted++;
+      restartedPrIds.push(pr.id);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       log.warn(`  #${pr.id} "${pr.title}" — failed to restart merge: ${msg}`);
@@ -68,5 +71,5 @@ export async function restartMergeForStalePrs(
   }
 
   log.success(`Restarted merge for ${restarted}/${stalePrs.length} PR(s)`);
-  return { restarted, failed };
+  return { restarted, failed, restartedPrIds };
 }

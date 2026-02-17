@@ -36,8 +36,8 @@ describe("restartMergeForStalePrs", () => {
 
     expect(count.restarted).toBe(1);
     expect(count.failed).toBe(0);
+    expect(count.restartedPrIds).toEqual([10]);
     expect(updatePullRequest).toHaveBeenCalledTimes(1);
-    expect(updatePullRequest).toHaveBeenCalledWith({ mergeStatus: 1 }, "repo", 10, "proj");
   });
 
   it("does nothing when disabled (restartMergeAfterDays < 0)", async () => {

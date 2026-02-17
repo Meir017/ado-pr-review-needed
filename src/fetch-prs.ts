@@ -8,31 +8,7 @@ import { identityUniqueName } from "./types.js";
 import * as log from "./log.js";
 import { withRetry } from "./retry.js";
 import { computePrSize } from "./pr-quantifier.js";
-
-const CONCURRENCY = 10;
-
-async function runConcurrent<T, R>(
-  items: T[],
-  concurrency: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let nextIndex = 0;
-
-  async function worker(): Promise<void> {
-    while (nextIndex < items.length) {
-      const i = nextIndex++;
-      results[i] = await fn(items[i]);
-    }
-  }
-
-  const workers = Array.from(
-    { length: Math.min(concurrency, items.length) },
-    () => worker(),
-  );
-  await Promise.all(workers);
-  return results;
-}
+import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 
 function filterCandidates(prs: GitPullRequest[]): GitPullRequest[] {
   const candidates: GitPullRequest[] = [];
@@ -90,9 +66,9 @@ export async function fetchOpenPullRequests(
   log.debug(`API returned ${prs.length} active pull requests`);
 
   const candidates = filterCandidates(prs);
-  log.info(`Fetching threads for ${candidates.length} PRs (concurrency: ${CONCURRENCY})…`);
+  log.info(`Fetching threads for ${candidates.length} PRs (concurrency: ${DEFAULT_CONCURRENCY})…`);
 
-  const results = await runConcurrent(candidates, CONCURRENCY, async (pr) => {
+  const results = await runConcurrent(candidates, DEFAULT_CONCURRENCY, async (pr) => {
     const prId = pr.pullRequestId!;
     log.debug(`  #${prId} — fetching threads…`);
 
