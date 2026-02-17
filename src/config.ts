@@ -12,13 +12,6 @@ export interface RepoTarget {
   repository: string;
 }
 
-export interface AdoConfig {
-  orgUrl: string;
-  project: string;
-  repository: string;
-  teamMembers: Set<string>;
-}
-
 export interface MultiRepoConfig {
   repos: RepoTarget[];
   teamMembers: Set<string>;
@@ -27,12 +20,7 @@ export interface MultiRepoConfig {
 }
 
 interface ConfigFile {
-  // New multi-repo format
   repositories?: string[];
-  // Legacy single-repo format
-  orgUrl?: string;
-  project?: string;
-  repository?: string;
 
   teamMembers?: string[];
   manager?: string;
@@ -56,24 +44,19 @@ function loadConfigFile(configFilePath?: string): ConfigFile {
 }
 
 function parseRepoTargets(cfg: ConfigFile): RepoTarget[] {
-  if (cfg.repositories && cfg.repositories.length > 0) {
-    return cfg.repositories.map((url) => {
-      const parsed = parseAdoRemote(url);
-      if (!parsed) {
-        throw new Error(`Invalid ADO repository URL: ${url}`);
-      }
-      return parsed;
-    });
+  if (!cfg.repositories || cfg.repositories.length === 0) {
+    throw new Error(
+      "Config must specify 'repositories' (array of ADO URLs).",
+    );
   }
 
-  // Legacy single-repo fallback
-  if (cfg.orgUrl && cfg.project && cfg.repository) {
-    return [{ orgUrl: cfg.orgUrl, project: cfg.project, repository: cfg.repository }];
-  }
-
-  throw new Error(
-    "Config must specify either 'repositories' (array of ADO URLs) or 'orgUrl'/'project'/'repository'.",
-  );
+  return cfg.repositories.map((url) => {
+    const parsed = parseAdoRemote(url);
+    if (!parsed) {
+      throw new Error(`Invalid ADO repository URL: ${url}`);
+    }
+    return parsed;
+  });
 }
 
 interface ResolvedMembers {
@@ -139,39 +122,4 @@ export async function getMultiRepoConfig(configFilePath?: string): Promise<Multi
   return { repos, teamMembers, ignoredUsers, quantifier };
 }
 
-export async function getAdoConfig(configFilePath?: string): Promise<AdoConfig> {
-  const cfg = loadConfigFile(configFilePath);
 
-  const members = new Set<string>(
-    (cfg.teamMembers ?? []).map((e) => e.toLowerCase()),
-  );
-
-  // If an orgManager is specified, recursively fetch all descendants
-  if (cfg.orgManager) {
-    const result = await fetchOrgMembers(cfg.orgManager);
-    for (const email of result.members) {
-      members.add(email);
-    }
-    members.add(cfg.orgManager.toLowerCase());
-  }
-
-  // If a manager is specified, fetch their direct reports from Graph
-  if (cfg.manager) {
-    const reports = await fetchDirectReports(cfg.manager);
-    for (const email of reports) {
-      members.add(email);
-    }
-    // Include the manager themselves
-    members.add(cfg.manager.toLowerCase());
-  }
-
-  const repos = parseRepoTargets(cfg);
-  const first = repos[0];
-
-  return {
-    orgUrl: first.orgUrl,
-    project: first.project,
-    repository: first.repository,
-    teamMembers: members,
-  };
-}

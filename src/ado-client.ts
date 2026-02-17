@@ -3,16 +3,9 @@ import * as azdev from "azure-devops-node-api";
 import { IGitApi } from "azure-devops-node-api/GitApi.js";
 import { ICoreApi } from "azure-devops-node-api/CoreApi.js";
 import { BearerCredentialHandler } from "azure-devops-node-api/handlers/bearertoken.js";
-import { getAdoConfig, type AdoConfig } from "./config.js";
 import * as log from "./log.js";
 
 const ADO_RESOURCE = "499b84ac-1321-427f-aa17-267ca6975798";
-
-export interface AdoClient {
-  gitApi: IGitApi;
-  coreApi: ICoreApi;
-  config: AdoConfig;
-}
 
 async function getAdoToken(): Promise<string> {
   try {
@@ -53,9 +46,4 @@ export async function getGitApiForOrg(orgUrl: string): Promise<IGitApi> {
   return connectionCache.get(orgUrl)!.gitApi;
 }
 
-export async function getAdoClient(configOverride?: AdoConfig): Promise<AdoClient> {
-  const config = configOverride ?? await getAdoConfig();
-  const token = await getAdoToken();
-  const { gitApi, coreApi } = await createConnection(config.orgUrl, token);
-  return { gitApi, coreApi, config };
-}
+
