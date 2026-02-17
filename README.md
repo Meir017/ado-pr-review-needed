@@ -102,6 +102,7 @@ When multiple repositories are configured, the markdown output groups PRs by rep
 | `manager` | (Optional) Manager UPN — fetches only direct reports via MS Graph |
 | `teamMembers` | (Optional) Explicit list of team member emails to scope PR results |
 | `ignoreManagers` | (Optional) When `true`, hides PRs authored by managers (anyone with direct reports in the org tree) |
+| `quantifier` | (Optional) PR size quantifier config — see [PR Quantifier](#pr-quantifier) below |
 
 ## Example Output
 
@@ -112,11 +113,11 @@ When multiple repositories are configured, the markdown output groups PRs by rep
 
 _Last updated: 2025-02-09T10:00:00.000Z_
 
-| PR | Author | Waiting for feedback |
-|---|---|---|
-| [#1234 - Fix config parsing](https://dev.azure.com/...) ❌ | Alice | 🔴 5 days ago |
-| [#1250 - Add new template](https://dev.azure.com/...) | Bob | 🟡 2 days ago |
-| [#1260 - Update docs](https://dev.azure.com/...) | Carol | 🟢 3 hours ago |
+| PR | Author | Size | Waiting for feedback |
+|---|---|---|---|
+| [#1234 - Fix config parsing](https://dev.azure.com/...) ❌ | Alice | 🔴 XL | 🔴 5 days ago |
+| [#1250 - Add new template](https://dev.azure.com/...) | Bob | 🟡 M | 🟡 2 days ago |
+| [#1260 - Update docs](https://dev.azure.com/...) | Carol | 🟢 S | 🟢 3 hours ago |
 
 _Total: 3 PRs needing review._
 ```
@@ -125,10 +126,51 @@ _Total: 3 PRs needing review._
 
 | Icon | Meaning |
 |------|---------|
-| 🟢 | Waiting ≤ 1 day |
-| 🟡 | Waiting 2–3 days |
-| 🔴 | Waiting > 3 days |
+| 🟢 | Waiting ≤ 1 day / Size XS or S |
+| 🟡 | Waiting 2–3 days / Size M |
+| 🔴 | Waiting > 3 days / Size L or XL |
 | ❌ | Has merge conflicts |
+
+## PR Quantifier
+
+Inspired by [microsoft/PullRequestQuantifier](https://github.com/microsoft/PullRequestQuantifier), the tool can classify each PR by change size (XS, S, M, L, XL) based on total lines added + deleted. This helps encourage smaller, more reviewable PRs.
+
+### Enabling the Quantifier
+
+Add a `quantifier` section to your `pr-review-config.json`:
+
+```json
+{
+  "repositories": ["..."],
+  "quantifier": {
+    "enabled": true,
+    "excludedPatterns": ["package-lock.json", "*.generated.cs", "*.Designer.cs"],
+    "thresholds": [
+      { "label": "XS", "maxChanges": 10 },
+      { "label": "S",  "maxChanges": 40 },
+      { "label": "M",  "maxChanges": 100 },
+      { "label": "L",  "maxChanges": 400 },
+      { "label": "XL", "maxChanges": 1000 }
+    ]
+  }
+}
+```
+
+### Quantifier Config Fields
+
+| Field | Description |
+|-------|-------------|
+| `enabled` | (Optional) Set to `false` to disable. Defaults to `true` when the `quantifier` key is present. |
+| `excludedPatterns` | (Optional) Glob patterns for files to exclude from the change count (e.g., lockfiles, auto-generated code). |
+| `thresholds` | (Optional) Custom size thresholds. Each entry has a `label` and `maxChanges`. Defaults to the PullRequestQuantifier standard (XS≤10, S≤40, M≤100, L≤400, XL≤1000). |
+
+### How It Works
+
+1. Fetches PR iteration changes from Azure DevOps to get the list of changed files
+2. Filters out files matching `excludedPatterns`
+3. Uses the ADO file diffs API to count lines added and deleted
+4. Sums additions + deletions and maps to a size label using the configured thresholds
+5. Displays the size label as a column in the markdown table and terminal dashboard
 
 ## Running Tests
 
@@ -148,6 +190,7 @@ src/
 ├── config.ts                   # Configuration loading (multi-repo support)
 ├── fetch-prs.ts                # Fetch & filter open PRs
 ├── review-logic.ts             # Determine which PRs need review
+├── pr-quantifier.ts            # PR size classification (XS/S/M/L/XL)
 ├── generate-markdown.ts        # Markdown table generation (grouped by repo)
 ├── dashboard.ts                # Interactive terminal dashboard
 ├── git-detect.ts               # Auto-detect ADO repo from git remote
@@ -158,5 +201,6 @@ src/
 └── __tests__/
     ├── review-logic.test.ts    # Tests for review logic
     ├── generate-markdown.test.ts # Tests for markdown generation
-    └── git-detect.test.ts      # Tests for ADO URL parsing
+    ├── git-detect.test.ts      # Tests for ADO URL parsing
+    └── pr-quantifier.test.ts   # Tests for PR size classification
 ```
