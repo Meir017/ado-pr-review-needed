@@ -1,4 +1,4 @@
-import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction } from "./types.js";
+import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats } from "./types.js";
 
 const RESET = "\x1b[0m";
 const DIM = "\x1b[2m";
@@ -138,7 +138,7 @@ function renderSection<T>(
   return lines.join("\n");
 }
 
-export function renderDashboard(analysis: AnalysisResult, repoLabel: string, multiRepo: boolean = false): string {
+export function renderDashboard(analysis: AnalysisResult, repoLabel: string, multiRepo: boolean = false, stats?: SummaryStats): string {
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
   const total = approved.length + needingReview.length + waitingOnAuthor.length;
@@ -168,7 +168,17 @@ export function renderDashboard(analysis: AnalysisResult, repoLabel: string, mul
     (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size }),
     now, repoGetter));
 
-  lines.push(`  ${DIM}Total: ${total} open PRs — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author${RESET}`);
+  let summaryLine = `Total: ${total} open PRs — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author`;
+  if (stats) {
+    summaryLine += `, ${stats.totalConflicts} with conflicts`;
+    if (stats.mergeRestarted > 0 || stats.mergeRestartFailed > 0) {
+      summaryLine += `, ${stats.mergeRestarted} merge restarted`;
+      if (stats.mergeRestartFailed > 0) {
+        summaryLine += ` (${stats.mergeRestartFailed} failed)`;
+      }
+    }
+  }
+  lines.push(`  ${DIM}${summaryLine}${RESET}`);
   lines.push(`  ${DIM}Updated: ${now.toLocaleString()}${RESET}`);
   lines.push("");
 

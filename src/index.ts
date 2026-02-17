@@ -7,10 +7,12 @@ import { resolve } from "node:path";
 import { getGitApiForOrg } from "./ado-client.js";
 import { getMultiRepoConfig } from "./config.js";
 import { fetchOpenPullRequests } from "./fetch-prs.js";
+import { restartMergeForStalePrs } from "./restart-merge.js";
 import { analyzePrs, mergeAnalysisResults } from "./review-logic.js";
 import { generateMarkdown } from "./generate-markdown.js";
 import { renderDashboard } from "./dashboard.js";
 import type { AnalysisResult } from "./types.js";
+import { computeSummaryStats } from "./types.js";
 import * as log from "./log.js";
 
 interface CliArgs {
@@ -67,21 +69,27 @@ async function runDashboard(verbose: boolean, configPath?: string): Promise<void
   }
 
   const allAnalyses: AnalysisResult[] = [];
+  let totalRestarted = 0;
+  let totalRestartFailed = 0;
 
   for (const repo of repos) {
     const repoLabel = `${repo.project}/${repo.repository}`;
     log.info(`Fetching open PRs from ${repoLabel}…`);
     const gitApi = await getGitApiForOrg(repo.orgUrl);
     const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, multiConfig.quantifier);
+    const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, multiConfig.restartMergeAfterDays);
+    totalRestarted += restartResult.restarted;
+    totalRestartFailed += restartResult.failed;
     const analysis = analyzePrs(prs, multiConfig.teamMembers, isMultiRepo ? repoLabel : undefined, multiConfig.ignoredUsers);
     allAnalyses.push(analysis);
   }
 
   const merged = mergeAnalysisResults(allAnalyses);
+  const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed);
   const repoLabel = isMultiRepo
     ? `${repos.length} repositories`
     : `${repos[0].project}/${repos[0].repository}`;
-  const output = renderDashboard(merged, repoLabel, isMultiRepo);
+  const output = renderDashboard(merged, repoLabel, isMultiRepo, stats);
   console.log(output);
 }
 
@@ -105,6 +113,8 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
 
   const allAnalyses: AnalysisResult[] = [];
   let totalPrs = 0;
+  let totalRestarted = 0;
+  let totalRestartFailed = 0;
 
   for (const repo of repos) {
     const repoLabel = `${repo.project}/${repo.repository}`;
@@ -115,6 +125,11 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
     log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
     totalPrs += prs.length;
 
+    await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, multiConfig.restartMergeAfterDays).then((r) => {
+      totalRestarted += r.restarted;
+      totalRestartFailed += r.failed;
+    });
+
     log.info(`Analyzing review status for ${repoLabel}…`);
     const analysis = analyzePrs(prs, multiConfig.teamMembers, isMultiRepo ? repoLabel : undefined, multiConfig.ignoredUsers);
     allAnalyses.push(analysis);
@@ -122,9 +137,10 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   }
 
   const merged = mergeAnalysisResults(allAnalyses);
+  const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed);
 
   log.info("Generating markdown…");
-  const markdown = generateMarkdown(merged, isMultiRepo);
+  const markdown = generateMarkdown(merged, isMultiRepo, stats);
 
   if (args.dryRun) {
     log.info("Dry-run mode — printing to stdout:\n");

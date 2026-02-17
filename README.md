@@ -91,6 +91,7 @@ When multiple repositories are configured, the markdown output groups PRs by rep
 | `teamMembers` | (Optional) Explicit list of team member emails to scope PR results |
 | `ignoreManagers` | (Optional) When `true`, hides PRs authored by managers (anyone with direct reports in the org tree) |
 | `quantifier` | (Optional) PR size quantifier config — see [PR Quantifier](#pr-quantifier) below |
+| `restartMergeAfterDays` | (Optional) Trigger "restart merge" on PRs older than this many days. Default: `30`. Set to `-1` to disable. |
 
 ## Example Output
 
@@ -193,11 +194,13 @@ src/
 ├── dashboard.ts                # Interactive terminal dashboard
 ├── git-detect.ts               # Auto-detect ADO repo from git remote
 ├── graph-client.ts             # Microsoft Graph API for org/team resolution
+├── restart-merge.ts            # Restart merge for stale PRs
 ├── retry.ts                    # Retry with exponential backoff
 ├── log.ts                      # Structured colored logging
 ├── types.ts                    # Shared type definitions
 ├── review-logic.test.ts        # Tests for review logic
 ├── generate-markdown.test.ts   # Tests for markdown generation
 ├── git-detect.test.ts          # Tests for ADO URL parsing
-└── pr-quantifier.test.ts       # Tests for PR size classification
+├── pr-quantifier.test.ts       # Tests for PR size classification
+└── restart-merge.test.ts       # Tests for restart merge logic
 ```
