@@ -145,10 +145,7 @@ export async function computePrSize(
     };
 
     try {
-      const fileDiffs = await withRetry(
-        `Fetch file diffs for PR #${pullRequestId} (batch ${Math.floor(i / BATCH_SIZE) + 1})`,
-        () => gitApi.getFileDiffs(criteria, project, repositoryId),
-      );
+      const fileDiffs = await gitApi.getFileDiffs(criteria, project, repositoryId);
 
       for (const diff of fileDiffs) {
         const { added, deleted } = countLineDiffs(diff.lineDiffBlocks ?? []);
