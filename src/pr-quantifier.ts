@@ -2,10 +2,14 @@ import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 import type {
   FileDiffsCriteria,
   FileDiff,
+  FileDiffParams,
   LineDiffBlock,
   GitPullRequestIteration,
 } from "azure-devops-node-api/interfaces/GitInterfaces.js";
-import { LineDiffBlockChangeType } from "azure-devops-node-api/interfaces/GitInterfaces.js";
+import {
+  LineDiffBlockChangeType,
+  VersionControlChangeType,
+} from "azure-devops-node-api/interfaces/GitInterfaces.js";
 import picomatch from "picomatch";
 import type { PrSizeInfo, PrSizeLabel, SizeThreshold, QuantifierConfig } from "./types.js";
 import { DEFAULT_THRESHOLDS } from "./types.js";
@@ -71,7 +75,8 @@ export async function computePrSize(
   const iterationId = lastIteration.id!;
 
   // Get changed files for this iteration (comparing against base)
-  let allChanges: { path: string; changeType: number }[] = [];
+  interface ChangeEntry { path: string; originalPath?: string; changeType: number }
+  const allChanges: ChangeEntry[] = [];
   let skip = 0;
   const top = 100;
 
@@ -85,8 +90,9 @@ export async function computePrSize(
     const entries = iterChanges.changeEntries ?? [];
     for (const entry of entries) {
       const path = entry.item?.path ?? "";
+      const originalPath = entry.originalPath;
       if (path && !isExcluded(path, matchers)) {
-        allChanges.push({ path, changeType: entry.changeType ?? 0 });
+        allChanges.push({ path, originalPath: originalPath ?? undefined, changeType: entry.changeType ?? 0 });
       }
     }
 
@@ -101,41 +107,53 @@ export async function computePrSize(
   }
 
   // Use getFileDiffs to get line-level counts
-  const baseCommit = lastIteration.sourceRefCommit?.commitId;
+  // baseVersionCommit = target branch (what we're merging into)
+  // targetVersionCommit = source branch (the PR changes)
+  const sourceCommit = lastIteration.sourceRefCommit?.commitId;
   const targetCommit = lastIteration.targetRefCommit?.commitId;
 
-  if (!baseCommit || !targetCommit) {
-    // Fallback: use file count as a rough proxy
+  if (!sourceCommit || !targetCommit) {
     log.debug(`  PR #${pullRequestId} — no commit refs, using file count as proxy`);
     const total = allChanges.length;
     return { linesAdded: total, linesDeleted: 0, totalChanges: total, label: classifyPrSize(total, config.thresholds) };
   }
 
-  // Batch file diff requests (API handles multiple files at once)
-  const fileDiffParams = allChanges.map((c) => ({
-    originalPath: c.path,
-    modifiedPath: c.path,
-  }));
-
-  const criteria: FileDiffsCriteria = {
-    baseVersionCommit: targetCommit,
-    targetVersionCommit: baseCommit,
-    fileDiffParams,
-  };
+  // Build FileDiffParams with correct paths based on change type.
+  // For adds: file doesn't exist in base (target branch), so originalPath must be null.
+  // For deletes: file doesn't exist in source branch, so path must be null.
+  const fileDiffParams: FileDiffParams[] = allChanges.map((c) => {
+    const isAdd = (c.changeType & VersionControlChangeType.Add) !== 0;
+    const isDelete = (c.changeType & VersionControlChangeType.Delete) !== 0;
+    return {
+      originalPath: isAdd ? undefined : (c.originalPath ?? c.path),
+      path: isDelete ? undefined : c.path,
+    };
+  });
 
   let totalAdded = 0;
   let totalDeleted = 0;
 
+  // API limits to 10 files per request — batch accordingly
+  const BATCH_SIZE = 10;
   try {
-    const fileDiffs = await withRetry(
-      `Fetch file diffs for PR #${pullRequestId}`,
-      () => gitApi.getFileDiffs(criteria, project, repositoryId),
-    );
+    for (let i = 0; i < fileDiffParams.length; i += BATCH_SIZE) {
+      const batch = fileDiffParams.slice(i, i + BATCH_SIZE);
+      const criteria: FileDiffsCriteria = {
+        baseVersionCommit: targetCommit,
+        targetVersionCommit: sourceCommit,
+        fileDiffParams: batch,
+      };
 
-    for (const diff of fileDiffs) {
-      const { added, deleted } = countLineDiffs(diff.lineDiffBlocks ?? []);
-      totalAdded += added;
-      totalDeleted += deleted;
+      const fileDiffs = await withRetry(
+        `Fetch file diffs for PR #${pullRequestId} (batch ${Math.floor(i / BATCH_SIZE) + 1})`,
+        () => gitApi.getFileDiffs(criteria, project, repositoryId),
+      );
+
+      for (const diff of fileDiffs) {
+        const { added, deleted } = countLineDiffs(diff.lineDiffBlocks ?? []);
+        totalAdded += added;
+        totalDeleted += deleted;
+      }
     }
   } catch (err) {
     // Fallback: use file count if file diffs API fails
