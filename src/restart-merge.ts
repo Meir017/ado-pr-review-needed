@@ -11,6 +11,11 @@ const NON_RETRYABLE_PREFIXES = [
   "TF401027", // missing PullRequestContribute permission
 ];
 
+// Permission errors are repo-scoped — stop trying the entire repo
+const REPO_LEVEL_PREFIXES = [
+  "TF401027",
+];
+
 export interface RestartMergeResult {
   restarted: number;
   failed: number;
@@ -67,6 +72,13 @@ export async function restartMergeForStalePrs(
       const msg = err instanceof Error ? err.message : String(err);
       log.warn(`  #${pr.id} "${pr.title}" — failed to restart merge: ${msg}`);
       failed++;
+
+      // Permission errors are repo-scoped — no point trying the remaining PRs
+      if (REPO_LEVEL_PREFIXES.some((p) => msg.includes(p))) {
+        log.warn("Stopping restart-merge for this repository due to permission error");
+        failed += stalePrs.length - stalePrs.indexOf(pr) - 1;
+        break;
+      }
     }
   }
 

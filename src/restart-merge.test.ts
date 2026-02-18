@@ -122,4 +122,23 @@ describe("restartMergeForStalePrs", () => {
     expect(count.failed).toBe(1);
     expect(updatePullRequest).toHaveBeenCalledTimes(1);
   });
+
+  it("stops processing remaining PRs after TF401027 permission error", async () => {
+    const updatePullRequest = vi.fn().mockRejectedValue(
+      new Error("TF401027: You need the Git 'PullRequestContribute' permission to perform this action."),
+    );
+    const gitApi = { updatePullRequest } as never;
+
+    const prs = [
+      makePr({ id: 10, createdDate: new Date("2025-01-01") }),
+      makePr({ id: 11, createdDate: new Date("2025-01-10") }),
+      makePr({ id: 12, createdDate: new Date("2025-01-15") }),
+    ];
+    const count = await restartMergeForStalePrs(gitApi, "repo", "proj", prs, 30, now);
+
+    expect(count.restarted).toBe(0);
+    expect(count.failed).toBe(3);
+    // Should only attempt the first PR, then bail out
+    expect(updatePullRequest).toHaveBeenCalledTimes(1);
+  });
 });
