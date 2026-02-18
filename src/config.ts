@@ -16,6 +16,7 @@ export interface MultiRepoConfig {
   repos: RepoTarget[];
   teamMembers: Set<string>;
   ignoredUsers: Set<string>;
+  botUsers: Set<string>;
   quantifier?: QuantifierConfig;
   restartMergeAfterDays: number;
 }
@@ -27,6 +28,8 @@ interface ConfigFile {
   manager?: string;
   orgManager?: string;
   ignoreManagers?: boolean;
+
+  botUsers?: string[];
 
   quantifier?: {
     enabled?: boolean;
@@ -121,9 +124,12 @@ export async function getMultiRepoConfig(configFilePath?: string): Promise<Multi
   const cfg = loadConfigFile(configFilePath);
   const repos = parseRepoTargets(cfg);
   const { teamMembers, ignoredUsers } = await resolveTeamMembers(cfg);
+  const botUsers = new Set<string>(
+    (cfg.botUsers ?? []).map((e) => e.toLowerCase()),
+  );
   const quantifier = resolveQuantifierConfig(cfg);
   const restartMergeAfterDays = cfg.restartMergeAfterDays ?? 30;
-  return { repos, teamMembers, ignoredUsers, quantifier, restartMergeAfterDays };
+  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays };
 }
 
 

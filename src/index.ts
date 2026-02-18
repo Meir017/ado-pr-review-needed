@@ -105,6 +105,7 @@ async function processRepo(
   quantifierConfig: import("./types.js").QuantifierConfig | undefined,
   teamMembers: Set<string>,
   ignoredUsers: Set<string>,
+  botUsers: Set<string>,
 ): Promise<RepoResult> {
   const repoLabel = `${repo.project}/${repo.repository}`;
   log.info(`Fetching open PRs from ${repoLabel}…`);
@@ -116,7 +117,7 @@ async function processRepo(
   const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, restartMergeAfterDays);
   await refreshMergeStatus(gitApi, repo.repository, repo.project, prs, restartResult.restartedPrIds);
 
-  const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers);
+  const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers);
   return {
     repoLabel,
     prs,
@@ -146,7 +147,7 @@ async function runDashboard(verbose: boolean, configPath?: string): Promise<void
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
   const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
-    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers),
+    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers, multiConfig.botUsers),
   );
 
   for (const r of results) {
@@ -189,7 +190,7 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
   const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
-    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers),
+    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers, multiConfig.botUsers),
   );
 
   for (const r of results) {
