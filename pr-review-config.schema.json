@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/Meir017/ado-pr-review-needed/main/pr-review-config.schema.json",
+  "title": "PR Review Needed Configuration",
+  "description": "Configuration file for the pr-review-needed tool, which generates a markdown summary of Azure DevOps pull requests that need review.",
+  "type": "object",
+  "required": ["repositories"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "The JSON schema reference for this configuration file."
+    },
+    "repositories": {
+      "type": "array",
+      "description": "List of Azure DevOps Git repositories to monitor for open pull requests.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["url"],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The full Azure DevOps repository URL in the format https://dev.azure.com/{org}/{project}/_git/{repo}.",
+            "pattern": "^https://dev\\.azure\\.com/.+/.+/_git/.+$",
+            "examples": ["https://dev.azure.com/myorg/myproject/_git/myrepo"]
+          },
+          "skipRestartMerge": {
+            "type": "boolean",
+            "description": "When true, skip automatically restarting merge for stale pull requests in this repository. Defaults to false.",
+            "default": false
+          }
+        }
+      }
+    },
+    "teamMembers": {
+      "type": "array",
+      "description": "List of team member email addresses (or ADO unique names) whose pull requests should be tracked. These are used to distinguish team PRs from external ones.",
+      "items": {
+        "type": "string",
+        "description": "An email address or ADO unique name identifying a team member.",
+        "examples": ["alice@example.com", "bob@example.com"]
+      },
+      "default": []
+    },
+    "manager": {
+      "type": ["string", "null"],
+      "description": "Email address of a direct manager. When provided, the tool will automatically fetch that manager's direct reports from Microsoft Graph and add them to the team members list.",
+      "examples": ["manager@example.com"]
+    },
+    "orgManager": {
+      "type": ["string", "null"],
+      "description": "Email address of an org-level manager. When provided, the tool will recursively fetch all members of that manager's organization from Microsoft Graph and add them to the team members list.",
+      "examples": ["orgmanager@example.com"]
+    },
+    "ignoreManagers": {
+      "type": "boolean",
+      "description": "When true, managers resolved via 'manager' or 'orgManager' are added to the ignored-users list and excluded from review-needed calculations. Useful for excluding managers who rarely review PRs. Defaults to false.",
+      "default": false
+    },
+    "botUsers": {
+      "type": "array",
+      "description": "List of bot or service-account email addresses to exclude from reviewer and author calculations entirely.",
+      "items": {
+        "type": "string",
+        "description": "An email address or ADO unique name identifying a bot or service account.",
+        "examples": ["ci-bot@example.com"]
+      },
+      "default": []
+    },
+    "quantifier": {
+      "type": "object",
+      "description": "Configuration for the PR size quantifier, which labels pull requests by the total number of changed lines.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to compute and display PR size labels. Defaults to true.",
+          "default": true
+        },
+        "excludedPatterns": {
+          "type": "array",
+          "description": "List of glob patterns for files whose line changes should be excluded from the size calculation (e.g. generated files, lock files).",
+          "items": {
+            "type": "string",
+            "description": "A glob pattern such as '**/*.generated.cs' or 'package-lock.json'."
+          },
+          "default": []
+        },
+        "thresholds": {
+          "type": "array",
+          "description": "Ordered list of size thresholds that map a maximum number of changed lines to a label. The first threshold whose maxChanges is greater than or equal to the PR's total changes is used. If the PR exceeds all thresholds it receives the last label.",
+          "items": {
+            "type": "object",
+            "required": ["label", "maxChanges"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "The human-readable size label assigned when the PR falls within this threshold.",
+                "enum": ["XS", "S", "M", "L", "XL"],
+                "examples": ["XS", "S", "M", "L", "XL"]
+              },
+              "maxChanges": {
+                "type": "integer",
+                "description": "The maximum total number of changed lines (additions + deletions) that maps to this label.",
+                "minimum": 1,
+                "examples": [10, 40, 100, 400, 1000]
+              }
+            }
+          },
+          "default": [
+            { "label": "XS", "maxChanges": 10 },
+            { "label": "S", "maxChanges": 40 },
+            { "label": "M", "maxChanges": 100 },
+            { "label": "L", "maxChanges": 400 },
+            { "label": "XL", "maxChanges": 1000 }
+          ]
+        }
+      }
+    },
+    "restartMergeAfterDays": {
+      "type": "integer",
+      "description": "Number of days after which a pull request with a stale merge status will have its merge automatically restarted. Set to a negative value to disable auto-restart globally. Defaults to 30.",
+      "default": 30,
+      "examples": [30, 7, -1]
+    }
+  }
+}
