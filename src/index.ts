@@ -42,7 +42,6 @@ function getVersion(): string {
 
 interface CliArgs {
   output: string;
-  dryRun: boolean;
   verbose: boolean;
   dashboard: boolean;
   config?: string;
@@ -213,14 +212,9 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   log.info("Generating markdown…");
   const markdown = generateMarkdown(merged, isMultiRepo, stats);
 
-  if (args.dryRun) {
-    log.info("Dry-run mode — printing to stdout:\n");
-    console.log(markdown);
-  } else {
-    const outputPath = resolve(args.output);
-    writeFileSync(outputPath, markdown, "utf-8");
-    log.success(`Output written to ${outputPath}`);
-  }
+  const outputPath = resolve(args.output);
+  writeFileSync(outputPath, markdown, "utf-8");
+  log.success(`Output written to ${outputPath}`);
 
   log.heading("Summary");
   log.summary("Repositories", repos.length);
@@ -228,7 +222,7 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   log.summary("Approved", merged.approved.length);
   log.summary("Needing review", merged.needingReview.length);
   log.summary("Waiting on author", merged.waitingOnAuthor.length);
-  if (!args.dryRun) log.summary("Output file", resolve(args.output));
+  log.summary("Output file", resolve(args.output));
   console.log();
 }
 
@@ -249,7 +243,6 @@ program
   .description("Analyze PRs and generate a markdown summary or dashboard")
   .option("--output <path>", "Output file path", "pr-review-summary.md")
   .option("--config <path>", "Path to a custom config file")
-  .option("--dry-run", "Print markdown to stdout only", false)
   .option("--dashboard", "Interactive terminal dashboard view", false)
   .option("--verbose", "Enable debug logging", false)
   .action(async (opts: CliArgs) => {

@@ -91,9 +91,6 @@ pr-review-needed run --output docs/review-status.md
 # Use a custom config file
 pr-review-needed run --config path/to/my-config.json
 
-# Print to stdout without writing a file
-pr-review-needed run --dry-run
-
 # Interactive terminal dashboard
 pr-review-needed run --dashboard
 
@@ -107,7 +104,6 @@ pr-review-needed run --verbose
 |------|-------------|
 | `--output <path>` | Output file path (default: `pr-review-summary.md`) |
 | `--config <path>` | Path to a custom config file (default: `pr-review-config.json` in project root) |
-| `--dry-run` | Print markdown to stdout only |
 | `--dashboard` | Interactive terminal dashboard view |
 | `--verbose` | Enable debug logging |
 
