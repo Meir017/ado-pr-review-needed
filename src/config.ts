@@ -10,6 +10,7 @@ export interface RepoTarget {
   orgUrl: string;
   project: string;
   repository: string;
+  skipRestartMerge: boolean;
 }
 
 export interface MultiRepoConfig {
@@ -21,8 +22,13 @@ export interface MultiRepoConfig {
   restartMergeAfterDays: number;
 }
 
+interface RepositoryConfigEntry {
+  url: string;
+  skipRestartMerge?: boolean;
+}
+
 interface ConfigFile {
-  repositories?: string[];
+  repositories?: RepositoryConfigEntry[];
 
   teamMembers?: string[];
   manager?: string;
@@ -52,16 +58,16 @@ function loadConfigFile(configFilePath?: string): ConfigFile {
 function parseRepoTargets(cfg: ConfigFile): RepoTarget[] {
   if (!cfg.repositories || cfg.repositories.length === 0) {
     throw new Error(
-      "Config must specify 'repositories' (array of ADO URLs).",
+      "Config must specify 'repositories' (array of repository objects with a 'url' field).",
     );
   }
 
-  return cfg.repositories.map((url) => {
-    const parsed = parseAdoRemote(url);
+  return cfg.repositories.map((entry) => {
+    const parsed = parseAdoRemote(entry.url);
     if (!parsed) {
-      throw new Error(`Invalid ADO repository URL: ${url}`);
+      throw new Error(`Invalid ADO repository URL: ${entry.url}`);
     }
-    return parsed;
+    return { ...parsed, skipRestartMerge: entry.skipRestartMerge ?? false };
   });
 }
 

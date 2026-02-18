@@ -114,7 +114,11 @@ async function processRepo(
   const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, quantifierConfig);
   log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
 
-  const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, restartMergeAfterDays);
+  const effectiveDays = repo.skipRestartMerge ? -1 : restartMergeAfterDays;
+  if (repo.skipRestartMerge) {
+    log.debug(`Skipping restart-merge for ${repoLabel} (configured per repository)`);
+  }
+  const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, effectiveDays);
   await refreshMergeStatus(gitApi, repo.repository, repo.project, prs, restartResult.restartedPrIds);
 
   const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers);
