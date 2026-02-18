@@ -6,9 +6,9 @@ import { parseAdoRemote } from "./git-detect.js";
 import type { QuantifierConfig, SizeThreshold, PrSizeLabel } from "./types.js";
 import { DEFAULT_THRESHOLDS } from "./types.js";
 
-export interface LabelPatternConfig {
-  label: string;
-  patterns: string[];
+export interface RepoPatternsConfig {
+  ignore: string[];
+  labels: Record<string, string[]>;
 }
 
 export interface RepoTarget {
@@ -16,8 +16,7 @@ export interface RepoTarget {
   project: string;
   repository: string;
   skipRestartMerge: boolean;
-  ignorePatterns: string[];
-  labelPatterns: LabelPatternConfig[];
+  patterns: RepoPatternsConfig;
 }
 
 export interface MultiRepoConfig {
@@ -32,8 +31,10 @@ export interface MultiRepoConfig {
 interface RepositoryConfigEntry {
   url: string;
   skipRestartMerge?: boolean;
-  ignorePatterns?: string[];
-  labelPatterns?: { label: string; patterns: string[] }[];
+  patterns?: {
+    ignore?: string[];
+    labels?: Record<string, string[]>;
+  };
 }
 
 interface ConfigFile {
@@ -79,8 +80,10 @@ function parseRepoTargets(cfg: ConfigFile): RepoTarget[] {
     return {
       ...parsed,
       skipRestartMerge: entry.skipRestartMerge ?? false,
-      ignorePatterns: entry.ignorePatterns ?? [],
-      labelPatterns: entry.labelPatterns ?? [],
+      patterns: {
+        ignore: entry.patterns?.ignore ?? [],
+        labels: entry.patterns?.labels ?? {},
+      },
     };
   });
 }

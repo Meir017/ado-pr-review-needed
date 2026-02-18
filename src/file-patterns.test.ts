@@ -3,7 +3,7 @@ import { detectLabels, filterIgnoredFiles } from "./file-patterns.js";
 
 describe("detectLabels", () => {
   it("returns empty when no label patterns configured", () => {
-    const result = detectLabels(["src/app.ts"], [], []);
+    const result = detectLabels(["src/app.ts"], [], {});
     expect(result).toEqual([]);
   });
 
@@ -11,7 +11,7 @@ describe("detectLabels", () => {
     const result = detectLabels(
       ["/azure-pipelines.yml", "/src/app.ts"],
       [],
-      [{ label: "azure-pipelines", patterns: ["**/azure-pipelines*.yml"] }],
+      { "azure-pipelines": ["**/azure-pipelines*.yml"] },
     );
     expect(result).toEqual(["azure-pipelines"]);
   });
@@ -20,10 +20,10 @@ describe("detectLabels", () => {
     const result = detectLabels(
       ["/azure-pipelines.yml", "/Dockerfile"],
       [],
-      [
-        { label: "azure-pipelines", patterns: ["**/azure-pipelines*.yml"] },
-        { label: "docker", patterns: ["**/Dockerfile", "**/docker-compose*.yml"] },
-      ],
+      {
+        "azure-pipelines": ["**/azure-pipelines*.yml"],
+        "docker": ["**/Dockerfile", "**/docker-compose*.yml"],
+      },
     );
     expect(result).toEqual(["azure-pipelines", "docker"]);
   });
@@ -32,7 +32,7 @@ describe("detectLabels", () => {
     const result = detectLabels(
       ["/src/Generated.designer.cs", "/src/appsettings.json"],
       ["**/*.designer.cs"],
-      [{ label: "generated", patterns: ["**/*.designer.cs"] }],
+      { "generated": ["**/*.designer.cs"] },
     );
     expect(result).toEqual([]);
   });
@@ -41,7 +41,7 @@ describe("detectLabels", () => {
     const result = detectLabels(
       ["/src/appsettings.json", "/src/appsettings.Production.json"],
       [],
-      [{ label: "config-change", patterns: ["**/appsettings*.json"] }],
+      { "config-change": ["**/appsettings*.json"] },
     );
     expect(result).toEqual(["config-change"]);
   });
@@ -50,7 +50,7 @@ describe("detectLabels", () => {
     const result = detectLabels(
       ["/obj/Generated.cs"],
       ["**/obj/**"],
-      [{ label: "csharp", patterns: ["**/*.cs"] }],
+      { "csharp": ["**/*.cs"] },
     );
     expect(result).toEqual([]);
   });
@@ -59,7 +59,7 @@ describe("detectLabels", () => {
     const result = detectLabels(
       ["/Dockerfile"],
       [],
-      [{ label: "docker", patterns: ["Dockerfile"] }],
+      { "docker": ["Dockerfile"] },
     );
     expect(result).toEqual(["docker"]);
   });
@@ -68,7 +68,7 @@ describe("detectLabels", () => {
     const result = detectLabels(
       ["/azure-pipelines.yml", "/azure-pipelines-ci.yml"],
       [],
-      [{ label: "azure-pipelines", patterns: ["**/azure-pipelines*.yml"] }],
+      { "azure-pipelines": ["**/azure-pipelines*.yml"] },
     );
     expect(result).toEqual(["azure-pipelines"]);
   });

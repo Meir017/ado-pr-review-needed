@@ -1,5 +1,4 @@
 import picomatch from "picomatch";
-import type { LabelPatternConfig } from "./config.js";
 
 /**
  * Determines which labels should be applied to a PR based on its changed files.
@@ -8,9 +7,9 @@ import type { LabelPatternConfig } from "./config.js";
 export function detectLabels(
   changedFiles: string[],
   ignorePatterns: string[],
-  labelPatterns: LabelPatternConfig[],
+  labelMap: Record<string, string[]>,
 ): string[] {
-  if (labelPatterns.length === 0) return [];
+  if (Object.keys(labelMap).length === 0) return [];
 
   const ignoreMatchers = ignorePatterns.map((p) => picomatch(p, { dot: true }));
   const nonIgnoredFiles = changedFiles
@@ -20,10 +19,10 @@ export function detectLabels(
   if (nonIgnoredFiles.length === 0) return [];
 
   const labels: string[] = [];
-  for (const rule of labelPatterns) {
-    const matchers = rule.patterns.map((p) => picomatch(p, { dot: true }));
+  for (const [label, patterns] of Object.entries(labelMap)) {
+    const matchers = patterns.map((p) => picomatch(p, { dot: true }));
     if (nonIgnoredFiles.some((f) => matchers.some((m) => m(f)))) {
-      labels.push(rule.label);
+      labels.push(label);
     }
   }
 

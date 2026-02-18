@@ -10,7 +10,7 @@ import { withRetry } from "./retry.js";
 import { computePrSize } from "./pr-quantifier.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 import { detectLabels } from "./file-patterns.js";
-import type { LabelPatternConfig } from "./config.js";
+import type { RepoPatternsConfig } from "./config.js";
 
 function filterCandidates(prs: GitPullRequest[]): GitPullRequest[] {
   const candidates: GitPullRequest[] = [];
@@ -82,8 +82,7 @@ export async function fetchOpenPullRequests(
   project: string,
   orgUrl: string,
   quantifierConfig?: QuantifierConfig,
-  ignorePatterns: string[] = [],
-  labelPatterns: LabelPatternConfig[] = [],
+  patterns: RepoPatternsConfig = { ignore: [], labels: {} },
 ): Promise<PullRequestInfo[]> {
   // Convert old visualstudio.com URLs to dev.azure.com
   // e.g. https://microsoft.visualstudio.com -> https://dev.azure.com/microsoft
@@ -142,9 +141,9 @@ export async function fetchOpenPullRequests(
 
     // Detect labels from file patterns
     let detectedLabels: string[] = [];
-    if (labelPatterns.length > 0) {
+    if (Object.keys(patterns.labels).length > 0) {
       const changedFiles = await fetchChangedFiles(gitApi, repositoryId, project, prId);
-      detectedLabels = detectLabels(changedFiles, ignorePatterns, labelPatterns);
+      detectedLabels = detectLabels(changedFiles, patterns.ignore, patterns.labels);
       if (detectedLabels.length > 0) {
         log.debug(`  #${prId} — detected labels: ${detectedLabels.join(", ")}`);
         // Add detected labels that aren't already on the PR
