@@ -1,6 +1,6 @@
 {
   "repositories": [
-    "https://dev.azure.com/{org}/{project}/_git/{repo}"
+    { "url": "https://dev.azure.com/{org}/{project}/_git/{repo}" }
   ],
   "orgManager": null,
   "teamMembers": [],

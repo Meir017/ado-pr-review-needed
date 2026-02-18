@@ -10,6 +10,7 @@ export interface RepoTarget {
   orgUrl: string;
   project: string;
   repository: string;
+  skipRestartMerge: boolean;
 }
 
 export interface MultiRepoConfig {
@@ -19,11 +20,15 @@ export interface MultiRepoConfig {
   botUsers: Set<string>;
   quantifier?: QuantifierConfig;
   restartMergeAfterDays: number;
-  skipRestartMergeRepositories: Set<string>;
+}
+
+interface RepositoryConfigEntry {
+  url: string;
+  skipRestartMerge?: boolean;
 }
 
 interface ConfigFile {
-  repositories?: string[];
+  repositories?: RepositoryConfigEntry[];
 
   teamMembers?: string[];
   manager?: string;
@@ -31,8 +36,6 @@ interface ConfigFile {
   ignoreManagers?: boolean;
 
   botUsers?: string[];
-
-  skipRestartMergeRepositories?: string[];
 
   quantifier?: {
     enabled?: boolean;
@@ -55,16 +58,16 @@ function loadConfigFile(configFilePath?: string): ConfigFile {
 function parseRepoTargets(cfg: ConfigFile): RepoTarget[] {
   if (!cfg.repositories || cfg.repositories.length === 0) {
     throw new Error(
-      "Config must specify 'repositories' (array of ADO URLs).",
+      "Config must specify 'repositories' (array of repository objects with a 'url' field).",
     );
   }
 
-  return cfg.repositories.map((url) => {
-    const parsed = parseAdoRemote(url);
+  return cfg.repositories.map((entry) => {
+    const parsed = parseAdoRemote(entry.url);
     if (!parsed) {
-      throw new Error(`Invalid ADO repository URL: ${url}`);
+      throw new Error(`Invalid ADO repository URL: ${entry.url}`);
     }
-    return parsed;
+    return { ...parsed, skipRestartMerge: entry.skipRestartMerge ?? false };
   });
 }
 
@@ -132,10 +135,7 @@ export async function getMultiRepoConfig(configFilePath?: string): Promise<Multi
   );
   const quantifier = resolveQuantifierConfig(cfg);
   const restartMergeAfterDays = cfg.restartMergeAfterDays ?? 30;
-  const skipRestartMergeRepositories = new Set<string>(
-    (cfg.skipRestartMergeRepositories ?? []).map((r) => r.toLowerCase()),
-  );
-  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays, skipRestartMergeRepositories };
+  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays };
 }
 
 

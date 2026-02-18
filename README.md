@@ -104,8 +104,8 @@ The tool reads repository targets from `pr-review-config.json`. You can specify 
 ```json
 {
   "repositories": [
-    "https://dev.azure.com/{org}/{project}/_git/{repo}",
-    "https://dev.azure.com/{org}/{project}/_git/{another-repo}"
+    { "url": "https://dev.azure.com/{org}/{project}/_git/{repo}" },
+    { "url": "https://dev.azure.com/{org}/{project}/_git/{another-repo}", "skipRestartMerge": true }
   ],
   "orgManager": "manager@example.com",
   "teamMembers": ["alice@example.com", "bob@example.com"]
@@ -123,7 +123,7 @@ When multiple repositories are configured, the markdown output groups PRs by rep
 
 | Field | Description |
 |-------------|-------------|
-| `repositories` | Array of full ADO repository URLs |
+| `repositories` | Array of repository objects (see below) |
 | `orgManager` | (Optional) Manager UPN — recursively fetches the full org tree via MS Graph |
 | `manager` | (Optional) Manager UPN — fetches only direct reports via MS Graph |
 | `teamMembers` | (Optional) Explicit list of team member emails to scope PR results |
@@ -131,7 +131,15 @@ When multiple repositories are configured, the markdown output groups PRs by rep
 | `botUsers` | (Optional) Array of user emails/unique names to treat as bots. Their activity is ignored and their PRs get the APPROVE action. |
 | `quantifier` | (Optional) PR size quantifier config — see [PR Quantifier](#pr-quantifier) below |
 | `restartMergeAfterDays` | (Optional) Trigger "restart merge" on PRs older than this many days. Default: `30`. Set to `-1` to disable. |
-| `skipRestartMergeRepositories` | (Optional) Array of repository names for which restart-merge should be skipped. |
+
+### Repository Object Fields
+
+Each entry in the `repositories` array is an object with the following fields:
+
+| Field | Description |
+|-------|-------------|
+| `url` | (Required) Full ADO repository URL |
+| `skipRestartMerge` | (Optional) When `true`, skip restart-merge for this repository. Default: `false`. |
 
 ## Example Output
 

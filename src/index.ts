@@ -102,7 +102,6 @@ async function processRepo(
   repo: RepoTarget,
   isMultiRepo: boolean,
   restartMergeAfterDays: number,
-  skipRestartMergeRepositories: Set<string>,
   quantifierConfig: import("./types.js").QuantifierConfig | undefined,
   teamMembers: Set<string>,
   ignoredUsers: Set<string>,
@@ -115,10 +114,9 @@ async function processRepo(
   const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, quantifierConfig);
   log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
 
-  const shouldSkipRestart = skipRestartMergeRepositories.has(repo.repository.toLowerCase());
-  const effectiveDays = shouldSkipRestart ? -1 : restartMergeAfterDays;
-  if (shouldSkipRestart) {
-    log.debug(`Skipping restart-merge for ${repoLabel} (configured in skipRestartMergeRepositories)`);
+  const effectiveDays = repo.skipRestartMerge ? -1 : restartMergeAfterDays;
+  if (repo.skipRestartMerge) {
+    log.debug(`Skipping restart-merge for ${repoLabel} (configured per repository)`);
   }
   const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, effectiveDays);
   await refreshMergeStatus(gitApi, repo.repository, repo.project, prs, restartResult.restartedPrIds);
@@ -153,7 +151,7 @@ async function runDashboard(verbose: boolean, configPath?: string): Promise<void
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
   const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
-    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.skipRestartMergeRepositories, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers, multiConfig.botUsers),
+    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers, multiConfig.botUsers),
   );
 
   for (const r of results) {
@@ -196,7 +194,7 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
   const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
-    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.skipRestartMergeRepositories, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers, multiConfig.botUsers),
+    processRepo(repo, isMultiRepo, multiConfig.restartMergeAfterDays, multiConfig.quantifier, multiConfig.teamMembers, multiConfig.ignoredUsers, multiConfig.botUsers),
   );
 
   for (const r of results) {
