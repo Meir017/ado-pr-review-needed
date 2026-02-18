@@ -22,6 +22,7 @@ import type { RepoTarget } from "./config.js";
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 
 const TEMPLATE_CONFIG = {
+  $schema: "https://raw.githubusercontent.com/Meir017/ado-pr-review-needed/main/pr-review-config.schema.json",
   repositories: [
     { url: "https://dev.azure.com/{org}/{project}/_git/{repo}" },
   ],
