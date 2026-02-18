@@ -19,6 +19,7 @@ export interface MultiRepoConfig {
   botUsers: Set<string>;
   quantifier?: QuantifierConfig;
   restartMergeAfterDays: number;
+  skipRestartMergeRepositories: Set<string>;
 }
 
 interface ConfigFile {
@@ -30,6 +31,8 @@ interface ConfigFile {
   ignoreManagers?: boolean;
 
   botUsers?: string[];
+
+  skipRestartMergeRepositories?: string[];
 
   quantifier?: {
     enabled?: boolean;
@@ -129,7 +132,10 @@ export async function getMultiRepoConfig(configFilePath?: string): Promise<Multi
   );
   const quantifier = resolveQuantifierConfig(cfg);
   const restartMergeAfterDays = cfg.restartMergeAfterDays ?? 30;
-  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays };
+  const skipRestartMergeRepositories = new Set<string>(
+    (cfg.skipRestartMergeRepositories ?? []).map((r) => r.toLowerCase()),
+  );
+  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays, skipRestartMergeRepositories };
 }
 
 

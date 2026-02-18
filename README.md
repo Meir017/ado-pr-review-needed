@@ -131,6 +131,7 @@ When multiple repositories are configured, the markdown output groups PRs by rep
 | `botUsers` | (Optional) Array of user emails/unique names to treat as bots. Their activity is ignored and their PRs get the APPROVE action. |
 | `quantifier` | (Optional) PR size quantifier config — see [PR Quantifier](#pr-quantifier) below |
 | `restartMergeAfterDays` | (Optional) Trigger "restart merge" on PRs older than this many days. Default: `30`. Set to `-1` to disable. |
+| `skipRestartMergeRepositories` | (Optional) Array of repository names for which restart-merge should be skipped. |
 
 ## Example Output
 
