@@ -2,8 +2,10 @@
 process.removeAllListeners("warning");
 process.on("warning", (w) => { if (w.name !== "DeprecationWarning" || (w as NodeJS.ErrnoException).code !== "DEP0169") console.warn(w); });
 
-import { existsSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { Command } from "commander";
 import { getGitApiForOrg } from "./ado-client.js";
 import { getMultiRepoConfig } from "./config.js";
 import { fetchOpenPullRequests } from "./fetch-prs.js";
@@ -28,58 +30,22 @@ const TEMPLATE_CONFIG = {
   ignoreManagers: false,
 };
 
+function getVersion(): string {
+  const pkgPath = resolve(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+  try {
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
+
 interface CliArgs {
   output: string;
   dryRun: boolean;
   verbose: boolean;
   dashboard: boolean;
   config?: string;
-}
-
-function parseRunArgs(argv: string[], startIndex: number): CliArgs {
-  const args: CliArgs = {
-    output: "pr-review-summary.md",
-    dryRun: false,
-    verbose: false,
-    dashboard: false,
-  };
-
-  for (let i = startIndex; i < argv.length; i++) {
-    switch (argv[i]) {
-      case "--output":
-        args.output = argv[++i];
-        break;
-      case "--dry-run":
-        args.dryRun = true;
-        break;
-      case "--verbose":
-        args.verbose = true;
-        break;
-      case "--dashboard":
-        args.dashboard = true;
-        break;
-      case "--config":
-        args.config = argv[++i];
-        break;
-    }
-  }
-
-  return args;
-}
-
-function printUsage(): void {
-  console.log(`Usage: pr-review-needed <command> [options]
-
-Commands:
-  setup   Generate a template pr-review-config.json in the current directory
-  run     Analyze PRs and generate a markdown summary or dashboard
-
-Run Options:
-  --output <path>   Output file path (default: pr-review-summary.md)
-  --config <path>   Path to a custom config file
-  --dry-run         Print markdown to stdout only
-  --dashboard       Interactive terminal dashboard view
-  --verbose         Enable debug logging`);
 }
 
 function runSetup(): void {
@@ -266,29 +232,35 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   console.log();
 }
 
-async function main(): Promise<void> {
-  const command = process.argv[2];
+const program = new Command()
+  .name("pr-review-needed")
+  .description("Generates a markdown summary of Azure DevOps PRs needing review")
+  .version(getVersion());
 
-  switch (command) {
-    case "setup":
-      runSetup();
-      break;
-    case "run": {
-      const args = parseRunArgs(process.argv, 3);
-      if (args.dashboard) {
-        await runDashboard(args.verbose, args.config);
-      } else {
-        await runMarkdownExport(args);
-      }
-      break;
+program
+  .command("setup")
+  .description("Generate a template pr-review-config.json in the current directory")
+  .action(() => {
+    runSetup();
+  });
+
+program
+  .command("run")
+  .description("Analyze PRs and generate a markdown summary or dashboard")
+  .option("--output <path>", "Output file path", "pr-review-summary.md")
+  .option("--config <path>", "Path to a custom config file")
+  .option("--dry-run", "Print markdown to stdout only", false)
+  .option("--dashboard", "Interactive terminal dashboard view", false)
+  .option("--verbose", "Enable debug logging", false)
+  .action(async (opts: CliArgs) => {
+    if (opts.dashboard) {
+      await runDashboard(opts.verbose, opts.config);
+    } else {
+      await runMarkdownExport(opts);
     }
-    default:
-      printUsage();
-      process.exit(command ? 1 : 0);
-  }
-}
+  });
 
-main().catch((err) => {
+program.parseAsync(process.argv).catch((err) => {
   log.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
 });
