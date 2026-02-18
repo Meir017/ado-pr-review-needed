@@ -112,8 +112,20 @@ async function processRepo(
   const repoLabel = `${repo.project}/${repo.repository}`;
   log.info(`Fetching open PRs from ${repoLabel}…`);
   const startFetch = Date.now();
+  // Merge repo-level ignorePatterns with quantifier excludedPatterns
+  let effectiveQuantifier = quantifierConfig;
+  if (quantifierConfig && repo.ignorePatterns.length > 0) {
+    effectiveQuantifier = {
+      ...quantifierConfig,
+      excludedPatterns: [...quantifierConfig.excludedPatterns, ...repo.ignorePatterns],
+    };
+  }
+
   const gitApi = await getGitApiForOrg(repo.orgUrl);
-  const prs = await fetchOpenPullRequests(gitApi, repo.repository, repo.project, repo.orgUrl, quantifierConfig);
+  const prs = await fetchOpenPullRequests(
+    gitApi, repo.repository, repo.project, repo.orgUrl,
+    effectiveQuantifier, repo.ignorePatterns, repo.labelPatterns,
+  );
   log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
 
   const effectiveDays = repo.skipRestartMerge ? -1 : restartMergeAfterDays;

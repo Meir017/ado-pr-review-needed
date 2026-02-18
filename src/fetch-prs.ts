@@ -9,6 +9,8 @@ import * as log from "./log.js";
 import { withRetry } from "./retry.js";
 import { computePrSize } from "./pr-quantifier.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
+import { detectLabels } from "./file-patterns.js";
+import type { LabelPatternConfig } from "./config.js";
 
 function filterCandidates(prs: GitPullRequest[]): GitPullRequest[] {
   const candidates: GitPullRequest[] = [];
@@ -35,12 +37,53 @@ function filterCandidates(prs: GitPullRequest[]): GitPullRequest[] {
   return candidates;
 }
 
+async function fetchChangedFiles(
+  gitApi: IGitApi,
+  repositoryId: string,
+  project: string,
+  pullRequestId: number,
+): Promise<string[]> {
+  const iterations = await withRetry(
+    `Fetch iterations for PR #${pullRequestId} (file patterns)`,
+    () => gitApi.getPullRequestIterations(repositoryId, pullRequestId, project),
+  );
+
+  if (!iterations || iterations.length === 0) return [];
+
+  const lastIteration = iterations[iterations.length - 1];
+  const iterationId = lastIteration.id!;
+
+  const paths: string[] = [];
+  let skip = 0;
+  const top = 100;
+
+  while (true) {
+    const iterChanges = await withRetry(
+      `Fetch iteration changes for PR #${pullRequestId} iter ${iterationId} (file patterns)`,
+      () => gitApi.getPullRequestIterationChanges(repositoryId, pullRequestId, iterationId, project, top, skip),
+    );
+
+    for (const entry of iterChanges.changeEntries ?? []) {
+      const path = entry.item?.path ?? "";
+      if (path) paths.push(path);
+    }
+
+    if ((iterChanges.nextSkip ?? 0) === 0 && (iterChanges.nextTop ?? 0) === 0) break;
+    skip = iterChanges.nextSkip ?? skip + top;
+    if ((iterChanges.changeEntries ?? []).length === 0) break;
+  }
+
+  return paths;
+}
+
 export async function fetchOpenPullRequests(
   gitApi: IGitApi,
   repositoryId: string,
   project: string,
   orgUrl: string,
   quantifierConfig?: QuantifierConfig,
+  ignorePatterns: string[] = [],
+  labelPatterns: LabelPatternConfig[] = [],
 ): Promise<PullRequestInfo[]> {
   // Convert old visualstudio.com URLs to dev.azure.com
   // e.g. https://microsoft.visualstudio.com -> https://dev.azure.com/microsoft
@@ -97,6 +140,31 @@ export async function fetchOpenPullRequests(
     const url = `${baseUrl}/${project}/_git/${repositoryId}/pullrequest/${prId}`;
     const labels = (pr.labels ?? []).map((l) => l.name ?? "");
 
+    // Detect labels from file patterns
+    let detectedLabels: string[] = [];
+    if (labelPatterns.length > 0) {
+      const changedFiles = await fetchChangedFiles(gitApi, repositoryId, project, prId);
+      detectedLabels = detectLabels(changedFiles, ignorePatterns, labelPatterns);
+      if (detectedLabels.length > 0) {
+        log.debug(`  #${prId} — detected labels: ${detectedLabels.join(", ")}`);
+        // Add detected labels that aren't already on the PR
+        for (const label of detectedLabels) {
+          if (!labels.some((l) => l.toLowerCase() === label.toLowerCase())) {
+            try {
+              await withRetry(`Add label '${label}' to PR #${prId}`, () =>
+                gitApi.createPullRequestLabel({ name: label }, repositoryId, prId, project),
+              );
+              labels.push(label);
+              log.debug(`  #${prId} — added label '${label}'`);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : String(err);
+              log.debug(`  #${prId} — failed to add label '${label}': ${msg}`);
+            }
+          }
+        }
+      }
+    }
+
     return {
       id: prId,
       title: pr.title ?? "(no title)",
@@ -107,6 +175,7 @@ export async function fetchOpenPullRequests(
       reviewers,
       threads,
       labels,
+      detectedLabels,
       mergeStatus: pr.mergeStatus ?? 0,
       lastSourcePushDate: pr.lastMergeSourceCommit?.committer?.date
         ? new Date(pr.lastMergeSourceCommit.committer.date)

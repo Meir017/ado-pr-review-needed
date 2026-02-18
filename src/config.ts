@@ -6,11 +6,18 @@ import { parseAdoRemote } from "./git-detect.js";
 import type { QuantifierConfig, SizeThreshold, PrSizeLabel } from "./types.js";
 import { DEFAULT_THRESHOLDS } from "./types.js";
 
+export interface LabelPatternConfig {
+  label: string;
+  patterns: string[];
+}
+
 export interface RepoTarget {
   orgUrl: string;
   project: string;
   repository: string;
   skipRestartMerge: boolean;
+  ignorePatterns: string[];
+  labelPatterns: LabelPatternConfig[];
 }
 
 export interface MultiRepoConfig {
@@ -25,6 +32,8 @@ export interface MultiRepoConfig {
 interface RepositoryConfigEntry {
   url: string;
   skipRestartMerge?: boolean;
+  ignorePatterns?: string[];
+  labelPatterns?: { label: string; patterns: string[] }[];
 }
 
 interface ConfigFile {
@@ -67,7 +76,12 @@ function parseRepoTargets(cfg: ConfigFile): RepoTarget[] {
     if (!parsed) {
       throw new Error(`Invalid ADO repository URL: ${entry.url}`);
     }
-    return { ...parsed, skipRestartMerge: entry.skipRestartMerge ?? false };
+    return {
+      ...parsed,
+      skipRestartMerge: entry.skipRestartMerge ?? false,
+      ignorePatterns: entry.ignorePatterns ?? [],
+      labelPatterns: entry.labelPatterns ?? [],
+    };
   });
 }
 

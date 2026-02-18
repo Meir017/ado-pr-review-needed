@@ -30,6 +30,41 @@
             "type": "boolean",
             "description": "When true, skip automatically restarting merge for stale pull requests in this repository. Defaults to false.",
             "default": false
+          },
+          "ignorePatterns": {
+            "type": "array",
+            "description": "List of glob patterns for files to ignore during review. These typically represent generated files that should not be reviewed. Ignored files are excluded from size calculations and label-pattern matching.",
+            "items": {
+              "type": "string",
+              "description": "A glob pattern such as '**/*.generated.cs' or '**/*.designer.cs'."
+            },
+            "default": []
+          },
+          "labelPatterns": {
+            "type": "array",
+            "description": "List of label rules. When changed files in a PR match the specified patterns (excluding ignored files), the PR is labeled with the given label.",
+            "items": {
+              "type": "object",
+              "required": ["label", "patterns"],
+              "additionalProperties": false,
+              "properties": {
+                "label": {
+                  "type": "string",
+                  "description": "The label to apply to the PR when any changed file matches the patterns.",
+                  "examples": ["azure-pipelines", "config-change", "docker"]
+                },
+                "patterns": {
+                  "type": "array",
+                  "description": "List of glob patterns. If any non-ignored changed file matches, the label is applied.",
+                  "items": {
+                    "type": "string",
+                    "description": "A glob pattern such as '**/azure-pipelines*.yml' or '**/Dockerfile'."
+                  },
+                  "minItems": 1
+                }
+              }
+            },
+            "default": []
           }
         }
       }
