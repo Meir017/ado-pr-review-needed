@@ -1,5 +1,7 @@
 # PR Review Needed
 
+[![CI](https://github.com/meir017/ado-pr-review-needed/actions/workflows/ci.yml/badge.svg)](https://github.com/meir017/ado-pr-review-needed/actions/workflows/ci.yml)
+
 A TypeScript CLI tool that queries Azure DevOps for open pull requests and generates a markdown summary of PRs needing reviewer feedback — inspired by [dotnet/aspire#13834](https://github.com/dotnet/aspire/issues/13834).
 
 ## How It Works
