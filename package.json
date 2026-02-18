@@ -20,13 +20,14 @@
     "build": "tsc",
     "bundle": "esbuild dist/index.js --bundle --minify --platform=node --format=esm --target=node22 --outfile=dist/index.min.js --banner:js=\"#!/usr/bin/env node\" --external:@azure/identity --external:azure-devops-node-api --external:picomatch",
     "prepublishOnly": "npm run build && npm run bundle",
-    "start": "tsx src/index.ts",
+    "start": "tsx src/index.ts run",
     "lint": "eslint src/",
     "test": "vitest run"
   },
   "dependencies": {
     "@azure/identity": "^4.6.0",
     "azure-devops-node-api": "^15.1.2",
+    "commander": "^14.0.3",
     "picomatch": "^4.0.3"
   },
   "engines": {

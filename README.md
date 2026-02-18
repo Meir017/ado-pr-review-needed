@@ -54,7 +54,8 @@ npm install -g @meir017/pr-review-needed --registry=https://npm.pkg.github.com
 4. Run the CLI:
 
    ```bash
-   pr-review-needed --help
+   pr-review-needed setup
+   pr-review-needed run
    ```
 
 ### From Source
@@ -63,28 +64,41 @@ npm install -g @meir017/pr-review-needed --registry=https://npm.pkg.github.com
 git clone https://github.com/meir017/ado-pr-review-needed.git
 cd ado-pr-review-needed
 npm install
+npm run build && npm run bundle
 ```
 
 ## Usage
 
+### Setup
+
+Generate a template configuration file in the current directory:
+
+```bash
+pr-review-needed setup
+```
+
+This creates a `pr-review-config.json` with placeholder values. Edit it to add your Azure DevOps repository URLs and team members.
+
+### Run
+
 ```bash
 # Generate pr-review-summary.md (default output)
-npm start
+pr-review-needed run
 
 # Custom output path
-npm start -- --output docs/review-status.md
+pr-review-needed run --output docs/review-status.md
 
 # Use a custom config file
-npm start -- --config path/to/my-config.json
+pr-review-needed run --config path/to/my-config.json
 
 # Print to stdout without writing a file
-npm start -- --dry-run
+pr-review-needed run --dry-run
 
 # Interactive terminal dashboard
-npm start -- --dashboard
+pr-review-needed run --dashboard
 
 # Enable verbose debug logging
-npm start -- --verbose
+pr-review-needed run --verbose
 ```
 
 ### CLI Flags
