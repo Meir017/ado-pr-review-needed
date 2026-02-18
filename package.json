@@ -1,11 +1,25 @@
 {
-  "name": "pr-review-needed",
-  "version": "1.0.0",
+  "name": "@meir017/pr-review-needed",
+  "version": "0.1.0",
   "description": "Generates a markdown summary of Azure DevOps PRs needing review",
-  "private": true,
   "type": "module",
+  "bin": {
+    "pr-review-needed": "dist/index.min.js"
+  },
+  "files": [
+    "dist/index.min.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/meir017/ado-pr-review-needed.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "tsc",
+    "bundle": "esbuild dist/index.js --bundle --minify --platform=node --format=esm --target=node22 --outfile=dist/index.min.js --banner:js=\"#!/usr/bin/env node\" --external:@azure/identity --external:azure-devops-node-api --external:picomatch",
+    "prepublishOnly": "npm run build && npm run bundle",
     "start": "tsx src/index.ts",
     "lint": "eslint src/",
     "test": "vitest run"
@@ -23,6 +37,7 @@
     "@types/node": "^25.2.3",
     "@types/picomatch": "^4.0.2",
     "@vitest/coverage-v8": "^4.0.18",
+    "esbuild": "^0.27.3",
     "eslint": "^10.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
