@@ -25,6 +25,12 @@ A PR is considered **"needing review"** when:
 
 ## Installation
 
+### Quick One-Liner
+
+```bash
+npm install -g @meir017/pr-review-needed --registry=https://npm.pkg.github.com
+```
+
 ### From GitHub Packages
 
 1. Create or edit an `.npmrc` file in your project (or home directory) to point the `@meir017` scope at the GitHub registry:
