@@ -23,9 +23,39 @@ A PR is considered **"needing review"** when:
 - Access to the target Azure DevOps organization
 - (Optional) **Microsoft Graph** access — for resolving team members from org hierarchy
 
-## Setup
+## Installation
+
+### From GitHub Packages
+
+1. Create or edit an `.npmrc` file in your project (or home directory) to point the `@meir017` scope at the GitHub registry:
+
+   ```
+   @meir017:registry=https://npm.pkg.github.com
+   ```
+
+2. Authenticate with the GitHub npm registry (you need a [personal access token](https://github.com/settings/tokens) with `read:packages` scope):
+
+   ```bash
+   npm login --registry=https://npm.pkg.github.com
+   ```
+
+3. Install the package:
+
+   ```bash
+   npm install -g @meir017/pr-review-needed
+   ```
+
+4. Run the CLI:
+
+   ```bash
+   pr-review-needed --help
+   ```
+
+### From Source
 
 ```bash
+git clone https://github.com/meir017/ado-pr-review-needed.git
+cd ado-pr-review-needed
 npm install
 ```
 
