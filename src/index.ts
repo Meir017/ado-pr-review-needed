@@ -2,7 +2,7 @@
 process.removeAllListeners("warning");
 process.on("warning", (w) => { if (w.name !== "DeprecationWarning" || (w as NodeJS.ErrnoException).code !== "DEP0169") console.warn(w); });
 
-import { writeFileSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { getGitApiForOrg } from "./ado-client.js";
 import { getMultiRepoConfig } from "./config.js";
@@ -19,6 +19,15 @@ import * as log from "./log.js";
 import type { RepoTarget } from "./config.js";
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 
+const TEMPLATE_CONFIG = {
+  repositories: [
+    { url: "https://dev.azure.com/{org}/{project}/_git/{repo}" },
+  ],
+  orgManager: null,
+  teamMembers: [],
+  ignoreManagers: false,
+};
+
 interface CliArgs {
   output: string;
   dryRun: boolean;
@@ -27,7 +36,7 @@ interface CliArgs {
   config?: string;
 }
 
-function parseArgs(argv: string[]): CliArgs {
+function parseRunArgs(argv: string[], startIndex: number): CliArgs {
   const args: CliArgs = {
     output: "pr-review-summary.md",
     dryRun: false,
@@ -35,7 +44,7 @@ function parseArgs(argv: string[]): CliArgs {
     dashboard: false,
   };
 
-  for (let i = 2; i < argv.length; i++) {
+  for (let i = startIndex; i < argv.length; i++) {
     switch (argv[i]) {
       case "--output":
         args.output = argv[++i];
@@ -56,6 +65,33 @@ function parseArgs(argv: string[]): CliArgs {
   }
 
   return args;
+}
+
+function printUsage(): void {
+  console.log(`Usage: pr-review-needed <command> [options]
+
+Commands:
+  setup   Generate a template pr-review-config.json in the current directory
+  run     Analyze PRs and generate a markdown summary or dashboard
+
+Run Options:
+  --output <path>   Output file path (default: pr-review-summary.md)
+  --config <path>   Path to a custom config file
+  --dry-run         Print markdown to stdout only
+  --dashboard       Interactive terminal dashboard view
+  --verbose         Enable debug logging`);
+}
+
+function runSetup(): void {
+  const configPath = resolve("pr-review-config.json");
+  if (existsSync(configPath)) {
+    log.warn(`Config file already exists: ${configPath}`);
+    log.info("Remove or rename the existing file and try again.");
+    process.exit(1);
+  }
+  writeFileSync(configPath, JSON.stringify(TEMPLATE_CONFIG, null, 2) + "\n", "utf-8");
+  log.success(`Created template config: ${configPath}`);
+  log.info("Edit the file to add your Azure DevOps repository URLs and team members.");
 }
 
 interface RepoResult {
@@ -231,12 +267,24 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv);
+  const command = process.argv[2];
 
-  if (args.dashboard) {
-    await runDashboard(args.verbose, args.config);
-  } else {
-    await runMarkdownExport(args);
+  switch (command) {
+    case "setup":
+      runSetup();
+      break;
+    case "run": {
+      const args = parseRunArgs(process.argv, 3);
+      if (args.dashboard) {
+        await runDashboard(args.verbose, args.config);
+      } else {
+        await runMarkdownExport(args);
+      }
+      break;
+    }
+    default:
+      printUsage();
+      process.exit(command ? 1 : 0);
   }
 }
 

@@ -20,7 +20,7 @@
     "build": "tsc",
     "bundle": "esbuild dist/index.js --bundle --minify --platform=node --format=esm --target=node22 --outfile=dist/index.min.js --banner:js=\"#!/usr/bin/env node\" --external:@azure/identity --external:azure-devops-node-api --external:picomatch",
     "prepublishOnly": "npm run build && npm run bundle",
-    "start": "tsx src/index.ts",
+    "start": "tsx src/index.ts run",
     "lint": "eslint src/",
     "test": "vitest run"
   },
