@@ -81,6 +81,7 @@ function renderPrRow(
   now: Date,
   action: PrAction,
   size?: PrSizeInfo,
+  detectedLabels?: string[],
 ): string {
   const { color, label } = ageColor(date, now);
   const ageText = `${color}${BOLD}${label}${RESET}`;
@@ -91,15 +92,18 @@ function renderPrRow(
   const conflict = conflictIndicator(hasMergeConflict);
   const sizeText = formatSize(size);
   const actionText = formatAction(action);
+  const labelsText = detectedLabels && detectedLabels.length > 0
+    ? " " + detectedLabels.map((l) => `${DIM}[${l}]${RESET}`).join(" ")
+    : "";
 
-  return `  ${ageText}  ${pad(prLink, 80)} ${authorText}${sizeText} ${actionText}${conflict}`;
+  return `  ${ageText}  ${pad(prLink, 80)} ${authorText}${sizeText} ${actionText}${conflict}${labelsText}`;
 }
 
 function renderSection<T>(
   title: string,
   bg: string,
   items: T[],
-  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo },
+  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo; detectedLabels?: string[] },
   now: Date,
   getRepo?: (item: T) => string | undefined,
 ): string {
@@ -122,15 +126,15 @@ function renderSection<T>(
     for (const [repo, repoItems] of groups) {
       lines.push(`  ${BOLD}${CYAN}📂 ${repo}${RESET}`);
       for (const item of repoItems) {
-        const { id, title, author, url, date, hasMergeConflict, action, size } = getRow(item);
-        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size));
+        const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels } = getRow(item);
+        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels));
       }
       lines.push("");
     }
   } else {
     for (const item of items) {
-      const { id, title, author, url, date, hasMergeConflict, action, size } = getRow(item);
-      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size));
+      const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels } = getRow(item);
+      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels));
     }
     lines.push("");
   }
@@ -157,15 +161,15 @@ export function renderDashboard(analysis: AnalysisResult, repoLabel: string, mul
     : undefined;
 
   lines.push(renderSection("✅ Approved", BG_GREEN, approved,
-    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size }),
+    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels }),
     now, repoGetter));
 
   lines.push(renderSection("👀 Needing Review", BG_YELLOW, needingReview,
-    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size }),
+    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels }),
     now, repoGetter));
 
   lines.push(renderSection("✍️  Waiting on Author", BG_RED, waitingOnAuthor,
-    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size }),
+    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels }),
     now, repoGetter));
 
   let summaryLine = `Total: ${total} open PRs — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author`;

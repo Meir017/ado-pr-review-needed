@@ -94,6 +94,7 @@ export function analyzePrs(
         action: determineAction("approved", pr.authorUniqueName, botUsers),
         repository: repoLabel,
         size: pr.size,
+        detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
       });
       continue;
     }
@@ -143,6 +144,7 @@ export function analyzePrs(
         action: determineAction("waitingOnAuthor", pr.authorUniqueName, botUsers),
         repository: repoLabel,
         size: pr.size,
+        detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
       });
       continue;
     }
@@ -178,6 +180,7 @@ export function analyzePrs(
       action: determineAction("needingReview", pr.authorUniqueName, botUsers),
       repository: repoLabel,
       size: pr.size,
+      detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
     });
   }
 
