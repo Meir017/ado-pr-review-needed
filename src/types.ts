@@ -57,6 +57,7 @@ export interface PullRequestInfo {
   reviewers: ReviewerInfo[];
   threads: ThreadInfo[];
   labels: string[];
+  detectedLabels: string[];
   mergeStatus: number;
   lastSourcePushDate: Date | undefined;
   size?: PrSizeInfo;
