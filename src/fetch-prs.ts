@@ -51,7 +51,8 @@ async function fetchChangedFiles(
   if (!iterations || iterations.length === 0) return [];
 
   const lastIteration = iterations[iterations.length - 1];
-  const iterationId = lastIteration.id!;
+  const iterationId = lastIteration.id;
+  if (iterationId == null) return [];
 
   const paths: string[] = [];
   let skip = 0;
