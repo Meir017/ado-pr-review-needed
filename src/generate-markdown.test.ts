@@ -308,4 +308,41 @@ describe("generateMarkdown", () => {
       expect(md).toContain("🟢 XS");
     });
   });
+
+  describe("detected labels", () => {
+    it("renders detected labels as badges after PR title", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({
+          id: 1,
+          title: "Update pipelines",
+          detectedLabels: ["azure-pipelines", "docker"],
+        })],
+      }));
+      expect(md).toContain("`azure-pipelines`");
+      expect(md).toContain("`docker`");
+    });
+
+    it("does not render label badges when no detected labels", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({ id: 1, title: "Simple fix" })],
+      }));
+      // No backtick-wrapped labels should appear in the PR row
+      const prRow = md.split("\n").find((l) => l.includes("Simple fix"))!;
+      expect(prRow).not.toMatch(/`[^`]+`/);
+    });
+
+    it("renders labels in approved section", () => {
+      const md = generateMarkdown(makeAnalysis({
+        approved: [makePrApproved({ detectedLabels: ["config-change"] })],
+      }));
+      expect(md).toContain("`config-change`");
+    });
+
+    it("renders labels in waiting on author section", () => {
+      const md = generateMarkdown(makeAnalysis({
+        waitingOnAuthor: [makePrWaiting({ detectedLabels: ["docker"] })],
+      }));
+      expect(md).toContain("`docker`");
+    });
+  });
 });

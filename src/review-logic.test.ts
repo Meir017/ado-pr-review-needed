@@ -14,6 +14,7 @@ function makePr(overrides: Partial<PullRequestInfo> = {}): PullRequestInfo {
     reviewers: [],
     threads: [],
     labels: [],
+    detectedLabels: [],
     mergeStatus: PullRequestAsyncStatus.NotSet,
     lastSourcePushDate: undefined,
     ...overrides,
@@ -265,6 +266,18 @@ describe("analyzePrs", () => {
     const pr = makePr();
     const { needingReview } = analyzePrs([pr]);
     expect(needingReview[0].repository).toBeUndefined();
+  });
+
+  it("propagates detectedLabels to analysis results", () => {
+    const pr = makePr({ detectedLabels: ["docker", "azure-pipelines"] });
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].detectedLabels).toEqual(["docker", "azure-pipelines"]);
+  });
+
+  it("omits detectedLabels when empty", () => {
+    const pr = makePr({ detectedLabels: [] });
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].detectedLabels).toBeUndefined();
   });
 
   it("excludes PRs from ignored users entirely", () => {

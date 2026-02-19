@@ -37,6 +37,7 @@ interface PrRow {
   action: PrAction;
   repository?: string;
   size?: PrSizeInfo;
+  detectedLabels?: string[];
 }
 
 function formatSizeLabel(size: PrSizeInfo): string {
@@ -54,6 +55,11 @@ function formatAction(action: PrAction): string {
     case "REVIEW": return "🔍 REVIEW";
     case "PENDING": return "⏳ PENDING";
   }
+}
+
+function formatLabels(labels?: string[]): string {
+  if (!labels || labels.length === 0) return "";
+  return " " + labels.map((l) => `\`${escapeMarkdown(l)}\``).join(" ");
 }
 
 function escapeMarkdown(text: string): string {
@@ -82,7 +88,8 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
       const title = escapeMarkdown(pr.title);
       const author = escapeMarkdown(pr.author);
       const repo = escapeMarkdown(pr.repository ?? "Unknown");
-      const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}`;
+      const labelsBadge = formatLabels(pr.detectedLabels);
+      const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}${labelsBadge}`;
       const timeSince = formatTimeSince(pr.dateColumn, now);
       const actionCol = formatAction(pr.action);
       const sizeCol = hasSize ? ` ${pr.size ? formatSizeLabel(pr.size) : ""} |` : "";
@@ -100,7 +107,8 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
     const conflictEmoji = pr.hasMergeConflict ? " ❌" : "";
     const title = escapeMarkdown(pr.title);
     const author = escapeMarkdown(pr.author);
-    const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}`;
+    const labelsBadge = formatLabels(pr.detectedLabels);
+    const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}${labelsBadge}`;
     const timeSince = formatTimeSince(pr.dateColumn, now);
     const actionCol = formatAction(pr.action);
     const sizeCol = hasSize ? ` ${pr.size ? formatSizeLabel(pr.size) : ""} |` : "";

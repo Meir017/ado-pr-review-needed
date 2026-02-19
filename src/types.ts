@@ -74,6 +74,7 @@ export interface PrNeedingReview {
   action: PrAction;
   repository?: string;
   size?: PrSizeInfo;
+  detectedLabels?: string[];
 }
 
 export interface PrWaitingOnAuthor {
@@ -87,6 +88,7 @@ export interface PrWaitingOnAuthor {
   action: PrAction;
   repository?: string;
   size?: PrSizeInfo;
+  detectedLabels?: string[];
 }
 
 export interface AnalysisResult {
@@ -106,6 +108,7 @@ export interface PrApproved {
   action: PrAction;
   repository?: string;
   size?: PrSizeInfo;
+  detectedLabels?: string[];
 }
 
 export interface SummaryStats {
