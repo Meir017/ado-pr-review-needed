@@ -109,7 +109,7 @@ export async function fetchOpenPullRequests(
   log.debug(`API returned ${prs.length} active pull requests`);
 
   const candidates = filterCandidates(prs);
-  log.info(`Fetching threads for ${candidates.length} PRs (concurrency: ${DEFAULT_CONCURRENCY})…`);
+  log.info(`Fetching threads for ${candidates.length} PRs in ${project}/${repositoryId} (concurrency: ${DEFAULT_CONCURRENCY})…`);
 
   const results = await runConcurrent(candidates, DEFAULT_CONCURRENCY, async (pr) => {
     const prId = pr.pullRequestId!;
