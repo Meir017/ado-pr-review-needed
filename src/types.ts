@@ -22,6 +22,22 @@ export interface QuantifierConfig {
   thresholds: SizeThreshold[];
 }
 
+export interface StalenessThreshold {
+  label: string;
+  minDays: number;
+}
+
+export interface StalenessConfig {
+  enabled: boolean;
+  thresholds: StalenessThreshold[];
+}
+
+export const DEFAULT_STALENESS_THRESHOLDS: StalenessThreshold[] = [
+  { label: "⚠️ Aging", minDays: 7 },
+  { label: "🔴 Stale", minDays: 14 },
+  { label: "💀 Abandoned", minDays: 30 },
+];
+
 export const DEFAULT_THRESHOLDS: SizeThreshold[] = [
   { label: "XS", maxChanges: 10 },
   { label: "S", maxChanges: 40 },
@@ -157,4 +173,18 @@ export function computeRepoSummaryStats(repoLabel: string, analysis: AnalysisRes
 
 export function identityUniqueName(identity: IdentityRef | undefined): string {
   return identity?.uniqueName?.toLowerCase() ?? "";
+}
+
+export interface NotificationFilter {
+  sections?: ("approved" | "needingReview" | "waitingOnAuthor")[];
+  minStalenessLevel?: string;
+}
+
+export interface TeamsNotificationConfig {
+  webhookUrl: string;
+  filters?: NotificationFilter;
+}
+
+export interface NotificationsConfig {
+  teams?: TeamsNotificationConfig;
 }

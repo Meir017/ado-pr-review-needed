@@ -1,4 +1,7 @@
-import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummaryStats } from "./types.js";
+import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummaryStats, StalenessConfig } from "./types.js";
+import { computeStalenessBadge } from "./staleness.js";
+import type { ReviewMetrics } from "./metrics.js";
+import type { ReviewerWorkload } from "./reviewer-workload.js";
 
 function formatTimeSince(date: Date, now: Date = new Date()): string {
   const diffMs = now.getTime() - date.getTime();
@@ -38,6 +41,7 @@ interface PrRow {
   repository?: string;
   size?: PrSizeInfo;
   detectedLabels?: string[];
+  stalenessBadge?: string | null;
 }
 
 function formatSizeLabel(size: PrSizeInfo): string {
@@ -77,11 +81,14 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
   }
 
   const hasSize = prs.some((pr) => pr.size != null);
+  const hasStaleness = prs.some((pr) => pr.stalenessBadge);
 
   if (multiRepo) {
-    let table = hasSize
-      ? `| PR | Repository | Author | Action | Size | ${dateHeader} |\n|---|---|---|---|---|---|\n`
-      : `| PR | Repository | Author | Action | ${dateHeader} |\n|---|---|---|---|---|\n`;
+    const headers = ["PR", "Repository", "Author", "Action"];
+    if (hasSize) headers.push("Size");
+    if (hasStaleness) headers.push("Staleness");
+    headers.push(dateHeader);
+    let table = `| ${headers.join(" | ")} |\n|${headers.map(() => "---").join("|")}|\n`;
 
     for (const pr of prs) {
       const conflictEmoji = pr.hasMergeConflict ? " ❌" : "";
@@ -93,15 +100,18 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
       const timeSince = formatTimeSince(pr.dateColumn, now);
       const actionCol = formatAction(pr.action);
       const sizeCol = hasSize ? ` ${pr.size ? formatSizeLabel(pr.size) : ""} |` : "";
-      table += `| ${prLink} | ${repo} | ${author} | ${actionCol} |${sizeCol} ${timeSince} |\n`;
+      const stalenessCol = hasStaleness ? ` ${pr.stalenessBadge ?? ""} |` : "";
+      table += `| ${prLink} | ${repo} | ${author} | ${actionCol} |${sizeCol}${stalenessCol} ${timeSince} |\n`;
     }
 
     return table + "\n";
   }
 
-  let table = hasSize
-    ? `| PR | Author | Action | Size | ${dateHeader} |\n|---|---|---|---|---|\n`
-    : `| PR | Author | Action | ${dateHeader} |\n|---|---|---|---|\n`;
+  const headers = ["PR", "Author", "Action"];
+  if (hasSize) headers.push("Size");
+  if (hasStaleness) headers.push("Staleness");
+  headers.push(dateHeader);
+  let table = `| ${headers.join(" | ")} |\n|${headers.map(() => "---").join("|")}|\n`;
 
   for (const pr of prs) {
     const conflictEmoji = pr.hasMergeConflict ? " ❌" : "";
@@ -112,7 +122,8 @@ function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: 
     const timeSince = formatTimeSince(pr.dateColumn, now);
     const actionCol = formatAction(pr.action);
     const sizeCol = hasSize ? ` ${pr.size ? formatSizeLabel(pr.size) : ""} |` : "";
-    table += `| ${prLink} | ${author} | ${actionCol} |${sizeCol} ${timeSince} |\n`;
+    const stalenessCol = hasStaleness ? ` ${pr.stalenessBadge ?? ""} |` : "";
+    table += `| ${prLink} | ${author} | ${actionCol} |${sizeCol}${stalenessCol} ${timeSince} |\n`;
   }
 
   return table + "\n";
@@ -177,26 +188,89 @@ function generateRepoStatsTable(repoStats: RepoSummaryStats[]): string {
   return table + "\n";
 }
 
-export function generateMarkdown(analysis: AnalysisResult, multiRepo: boolean = false, stats?: SummaryStats): string {
+function formatDays(days: number): string {
+  if (days < 1) return "< 1 day";
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
+function generateMetricsSection(metrics: ReviewMetrics): string {
+  let md = `## 📈 Review Metrics\n\n`;
+
+  // Aggregate table
+  md += `### Summary\n\n`;
+  md += `| Metric | Value |\n|---|---|\n`;
+  md += `| Total open PRs | ${metrics.aggregate.totalPrs} |\n`;
+  md += `| Median PR age | ${formatDays(metrics.aggregate.medianAgeInDays)} |\n`;
+  md += `| Avg time to first review | ${metrics.aggregate.avgTimeToFirstReviewInDays !== null ? formatDays(metrics.aggregate.avgTimeToFirstReviewInDays) : "N/A"} |\n`;
+  md += `| Avg review rounds | ${metrics.aggregate.avgReviewRounds} |\n`;
+  md += `| PRs with no review activity | ${metrics.aggregate.prsWithNoReviewActivity} |\n\n`;
+
+  // Per-author table
+  if (metrics.perAuthor.length > 0) {
+    md += `### Per-Author Summary\n\n`;
+    md += `| Author | Open PRs | Avg Age | Avg Rounds | Fastest Review |\n|---|---|---|---|---|\n`;
+    for (const author of metrics.perAuthor) {
+      const fastest = author.fastestReviewInDays !== null ? formatDays(author.fastestReviewInDays) : "N/A";
+      md += `| ${escapeMarkdown(author.author)} | ${author.openPrCount} | ${formatDays(author.avgAgeInDays)} | ${author.avgReviewRounds} | ${fastest} |\n`;
+    }
+    md += "\n";
+  }
+
+  return md;
+}
+
+function generateWorkloadSection(workload: ReviewerWorkload[]): string {
+  if (workload.length === 0) return "";
+
+  let md = `## 👥 Reviewer Workload\n\n`;
+  md += `| Reviewer | Assigned | Pending | Completed | Avg Response | Load |\n|---|---|---|---|---|---|\n`;
+
+  for (const r of workload) {
+    const responseTime = r.avgResponseTimeInDays !== null ? formatDays(r.avgResponseTimeInDays) : "N/A";
+    md += `| ${escapeMarkdown(r.displayName)} | ${r.assignedPrCount} | ${r.pendingReviewCount} | ${r.completedReviewCount} | ${responseTime} | ${r.loadIndicator} |\n`;
+  }
+
+  return md + "\n";
+}
+
+export interface GenerateMarkdownOptions {
+  analysis: AnalysisResult;
+  multiRepo?: boolean;
+  stats?: SummaryStats;
+  staleness?: StalenessConfig;
+  metrics?: ReviewMetrics;
+  workload?: ReviewerWorkload[];
+}
+
+export function generateMarkdown(analysis: AnalysisResult, multiRepo?: boolean, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[]): string {
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
+  const stalenessThresholds = staleness?.enabled !== false ? staleness?.thresholds ?? [] : [];
 
   let md = `_Last updated: ${now.toISOString()}_\n\n`;
 
   md += renderSection("✅ Approved", approved,
-    (pr) => ({ ...pr, dateColumn: pr.createdDate }),
+    (pr) => ({ ...pr, dateColumn: pr.createdDate, stalenessBadge: computeStalenessBadge(pr.createdDate, stalenessThresholds, now) }),
     "Created", "No approved PRs.", now, multiRepo);
 
   md += renderSection("👀 PRs Needing Review", needingReview,
-    (pr) => ({ ...pr, dateColumn: pr.waitingSince }),
+    (pr) => ({ ...pr, dateColumn: pr.waitingSince, stalenessBadge: computeStalenessBadge(pr.waitingSince, stalenessThresholds, now) }),
     "Waiting for feedback", "No PRs currently need review.", now, multiRepo);
 
   md += renderSection("✍️ Waiting on Author", waitingOnAuthor,
-    (pr) => ({ ...pr, dateColumn: pr.lastReviewerActivityDate }),
+    (pr) => ({ ...pr, dateColumn: pr.lastReviewerActivityDate, stalenessBadge: computeStalenessBadge(pr.lastReviewerActivityDate, stalenessThresholds, now) }),
     "Last reviewer activity", "No PRs waiting on author.", now, multiRepo);
 
   if (stats?.repoStats && stats.repoStats.length > 1) {
     md += generateRepoStatsTable(stats.repoStats);
+  }
+
+  if (metrics) {
+    md += generateMetricsSection(metrics);
+  }
+
+  if (workload && workload.length > 0) {
+    md += generateWorkloadSection(workload);
   }
 
   const total = approved.length + needingReview.length + waitingOnAuthor.length;

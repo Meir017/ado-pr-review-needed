@@ -3,8 +3,8 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchDirectReports, fetchOrgMembers } from "./graph-client.js";
 import { parseAdoRemote } from "./git-detect.js";
-import type { QuantifierConfig, SizeThreshold, PrSizeLabel } from "./types.js";
-import { DEFAULT_THRESHOLDS } from "./types.js";
+import type { QuantifierConfig, SizeThreshold, PrSizeLabel, StalenessConfig, NotificationsConfig } from "./types.js";
+import { DEFAULT_THRESHOLDS, DEFAULT_STALENESS_THRESHOLDS } from "./types.js";
 
 export interface RepoPatternsConfig {
   ignore: string[];
@@ -26,6 +26,8 @@ export interface MultiRepoConfig {
   botUsers: Set<string>;
   quantifier?: QuantifierConfig;
   restartMergeAfterDays: number;
+  staleness: StalenessConfig;
+  notifications?: NotificationsConfig;
 }
 
 interface RepositoryConfigEntry {
@@ -54,6 +56,21 @@ interface ConfigFile {
   };
 
   restartMergeAfterDays?: number;
+
+  staleness?: {
+    enabled?: boolean;
+    thresholds?: { label: string; minDays: number }[];
+  };
+
+  notifications?: {
+    teams?: {
+      webhookUrl: string;
+      filters?: {
+        sections?: string[];
+        minStalenessLevel?: string;
+      };
+    };
+  };
 }
 
 function loadConfigFile(configFilePath?: string): ConfigFile {
@@ -143,6 +160,20 @@ function resolveQuantifierConfig(cfg: ConfigFile): QuantifierConfig | undefined 
   return { enabled: true, excludedPatterns, thresholds };
 }
 
+function resolveStalenessConfig(cfg: ConfigFile): StalenessConfig {
+  if (cfg.staleness?.enabled === false) {
+    return { enabled: false, thresholds: [] };
+  }
+
+  const thresholds = cfg.staleness?.thresholds
+    ? cfg.staleness.thresholds
+        .map((t) => ({ label: t.label, minDays: t.minDays }))
+        .sort((a, b) => b.minDays - a.minDays) // descending for matching
+    : DEFAULT_STALENESS_THRESHOLDS.slice().sort((a, b) => b.minDays - a.minDays);
+
+  return { enabled: true, thresholds };
+}
+
 export async function getMultiRepoConfig(configFilePath?: string): Promise<MultiRepoConfig> {
   const cfg = loadConfigFile(configFilePath);
   const repos = parseRepoTargets(cfg);
@@ -152,7 +183,9 @@ export async function getMultiRepoConfig(configFilePath?: string): Promise<Multi
   );
   const quantifier = resolveQuantifierConfig(cfg);
   const restartMergeAfterDays = cfg.restartMergeAfterDays ?? 30;
-  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays };
+  const staleness = resolveStalenessConfig(cfg);
+  const notifications = cfg.notifications as NotificationsConfig | undefined;
+  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays, staleness, notifications };
 }
 
 

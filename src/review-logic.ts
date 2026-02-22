@@ -27,12 +27,12 @@ function determineAction(category: "approved" | "needingReview" | "waitingOnAuth
   }
 }
 
-interface Activity {
+export interface Activity {
   date: Date;
   isAuthor: boolean;
 }
 
-function collectActivities(pr: PullRequestInfo, botUsers: Set<string> = new Set()): Activity[] {
+export function collectActivities(pr: PullRequestInfo, botUsers: Set<string> = new Set()): Activity[] {
   const authorId = pr.authorUniqueName;
   const activities: Activity[] = [];
 
