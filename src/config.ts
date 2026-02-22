@@ -63,13 +63,6 @@ interface ConfigFile {
   };
 
   notifications?: {
-    slack?: {
-      webhookUrl: string;
-      filters?: {
-        sections?: string[];
-        minStalenessLevel?: string;
-      };
-    };
     teams?: {
       webhookUrl: string;
       filters?: {

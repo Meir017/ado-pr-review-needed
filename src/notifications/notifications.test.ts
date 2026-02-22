@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { buildTeamsPayload } from "./teams.js";
-import { buildSlackPayload } from "./slack.js";
 import type { AnalysisResult, SummaryStats, StalenessConfig } from "../types.js";
 
 const STALENESS: StalenessConfig = {
@@ -66,54 +65,5 @@ describe("Teams notification", () => {
 
     // PR #2 is from 2026-01-01, should be "💀 Abandoned"
     expect(texts.some((t) => t!.includes("💀 Abandoned"))).toBe(true);
-  });
-});
-
-describe("Slack notification", () => {
-  it("builds Block Kit payload with all sections", () => {
-    const payload = buildSlackPayload(makeAnalysis(), STATS, STALENESS);
-
-    expect(payload.blocks.length).toBeGreaterThan(2);
-
-    const header = payload.blocks[0];
-    expect(header.type).toBe("header");
-    expect(header.text?.text).toContain("4 open PRs");
-
-    const texts = payload.blocks
-      .filter((b) => b.type === "section")
-      .map((b) => b.text?.text)
-      .filter(Boolean);
-
-    expect(texts.some((t) => t!.includes("Needing Review"))).toBe(true);
-    expect(texts.some((t) => t!.includes("Waiting on Author"))).toBe(true);
-    expect(texts.some((t) => t!.includes("Approved"))).toBe(true);
-  });
-
-  it("filters to only requested sections", () => {
-    const payload = buildSlackPayload(makeAnalysis(), STATS, STALENESS, ["waitingOnAuthor"]);
-    const texts = payload.blocks
-      .filter((b) => b.type === "section")
-      .map((b) => b.text?.text)
-      .filter(Boolean);
-
-    expect(texts.some((t) => t!.includes("Waiting on Author"))).toBe(true);
-    expect(texts.some((t) => t!.includes("Needing Review (2)"))).toBe(false);
-  });
-
-  it("uses Slack mrkdwn link format", () => {
-    const payload = buildSlackPayload(makeAnalysis(), STATS, STALENESS);
-    const texts = payload.blocks
-      .filter((b) => b.type === "section")
-      .map((b) => b.text?.text)
-      .filter(Boolean);
-
-    // Should contain Slack-style links
-    expect(texts.some((t) => t!.includes("<https://example.com/pr/2|#2"))).toBe(true);
-  });
-
-  it("includes staleness badges", () => {
-    const payload = buildSlackPayload(makeAnalysis(), STATS, STALENESS);
-    const allText = payload.blocks.map((b) => b.text?.text ?? "").join(" ");
-    expect(allText).toContain("💀 Abandoned");
   });
 });

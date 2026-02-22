@@ -180,17 +180,11 @@ export interface NotificationFilter {
   minStalenessLevel?: string;
 }
 
-export interface SlackNotificationConfig {
-  webhookUrl: string;
-  filters?: NotificationFilter;
-}
-
 export interface TeamsNotificationConfig {
   webhookUrl: string;
   filters?: NotificationFilter;
 }
 
 export interface NotificationsConfig {
-  slack?: SlackNotificationConfig;
   teams?: TeamsNotificationConfig;
 }

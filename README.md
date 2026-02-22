@@ -107,6 +107,8 @@ pr-review-needed run --verbose
 | `--config <path>` | Path to a custom config file (default: `pr-review-config.json` in project root) |
 | `--dashboard` | Interactive terminal dashboard view |
 | `--verbose` | Enable debug logging |
+| `--notify` | Send notifications (default: true if webhooks configured) |
+| `--no-notify` | Disable notifications |
 
 ## Configuration
 
@@ -142,6 +144,8 @@ When multiple repositories are configured, the markdown output groups PRs by rep
 | `botUsers` | (Optional) Array of user emails/unique names to treat as bots. Their activity is ignored and their PRs get the APPROVE action. |
 | `quantifier` | (Optional) PR size quantifier config — see [PR Quantifier](#pr-quantifier) below |
 | `restartMergeAfterDays` | (Optional) Trigger "restart merge" on PRs older than this many days. Default: `30`. Set to `-1` to disable. |
+| `staleness` | (Optional) Staleness alert configuration — see [Staleness Alerts](#staleness-alerts) below |
+| `notifications` | (Optional) Teams notification configuration — see [Teams Notifications](#teams-notifications) below |
 
 ### Repository Object Fields
 
@@ -230,6 +234,89 @@ To customize thresholds or file exclusions:
 4. Sums additions + deletions and maps to a size label using the configured thresholds
 5. Displays the size label as a column in the markdown table and terminal dashboard
 
+## Staleness Alerts
+
+PRs are automatically tagged with staleness badges based on how long they have been waiting. This helps surface ancient PRs that need attention.
+
+### Default Thresholds
+
+| Badge | Min Days |
+|-------|----------|
+| ⚠️ Aging | 7 days |
+| 🔴 Stale | 14 days |
+| 💀 Abandoned | 30 days |
+
+Staleness badges appear as a column in the markdown tables and inline in the terminal dashboard.
+
+### Customizing Thresholds
+
+```json
+{
+  "staleness": {
+    "enabled": true,
+    "thresholds": [
+      { "label": "⏰ Overdue", "minDays": 3 },
+      { "label": "🔥 Critical", "minDays": 14 }
+    ]
+  }
+}
+```
+
+Set `"enabled": false` to disable staleness badges entirely. Defaults are applied when the `staleness` section is omitted.
+
+## Review Metrics
+
+The tool computes review cycle time metrics from existing PR thread and push data and adds a **📈 Review Metrics** section to the output:
+
+- **Per-PR**: time to first review, number of review rounds, age
+- **Aggregate**: median PR age, average time to first review, average review rounds, count of PRs with no review activity
+- **Per-Author**: open PR count, average age, average rounds, fastest review time
+
+The dashboard shows a compact aggregate summary.
+
+## Reviewer Workload
+
+A **👥 Reviewer Workload** section shows per-reviewer statistics to help identify bottlenecks:
+
+| Column | Description |
+|--------|-------------|
+| Assigned | Total PRs where the reviewer is assigned |
+| Pending | PRs in "needing review" where the reviewer hasn't approved |
+| Completed | PRs where the reviewer voted to approve |
+| Avg Response | Average time from PR creation to the reviewer's first comment |
+| Load | 🟢 Light / 🟡 Medium / 🔴 Heavy indicator |
+
+Default load thresholds: 🟢 ≤10 pending & ≤2d response, 🟡 ≤20 pending & ≤4d response, 🔴 above. The dashboard shows the top 5 bottleneck reviewers.
+
+## Teams Notifications
+
+Send PR review summaries to a Microsoft Teams channel via incoming webhook. Notifications are sent as Adaptive Cards with collapsible sections.
+
+### Configuration
+
+```json
+{
+  "notifications": {
+    "teams": {
+      "webhookUrl": "https://outlook.office.com/webhook/...",
+      "filters": {
+        "sections": ["needingReview", "waitingOnAuthor"]
+      }
+    }
+  }
+}
+```
+
+### Config Fields
+
+| Field | Description |
+|-------|-------------|
+| `webhookUrl` | (Required) Teams incoming webhook URL |
+| `filters.sections` | (Optional) Array of sections to include: `"approved"`, `"needingReview"`, `"waitingOnAuthor"`. Defaults to all. |
+| `filters.minStalenessLevel` | (Optional) Only include PRs at or above this staleness level |
+
+Notifications are sent automatically after generating the report. Use `--no-notify` to suppress, or `--notify` to explicitly enable.
+
 ## Running Tests
 
 ```bash
@@ -249,17 +336,21 @@ src/
 ├── fetch-prs.ts                # Fetch & filter open PRs
 ├── review-logic.ts             # Determine which PRs need review
 ├── pr-quantifier.ts            # PR size classification (XS/S/M/L/XL)
+├── staleness.ts                # PR staleness badge computation
+├── metrics.ts                  # Review cycle time metrics
+├── reviewer-workload.ts        # Reviewer workload analysis
 ├── generate-markdown.ts        # Markdown table generation (grouped by repo)
 ├── dashboard.ts                # Interactive terminal dashboard
 ├── git-detect.ts               # Auto-detect ADO repo from git remote
 ├── graph-client.ts             # Microsoft Graph API for org/team resolution
 ├── restart-merge.ts            # Restart merge for stale PRs
+├── file-patterns.ts            # Glob pattern matching for file labels
+├── concurrency.ts              # Batched concurrent operations
 ├── retry.ts                    # Retry with exponential backoff
 ├── log.ts                      # Structured colored logging
 ├── types.ts                    # Shared type definitions
-├── review-logic.test.ts        # Tests for review logic
-├── generate-markdown.test.ts   # Tests for markdown generation
-├── git-detect.test.ts          # Tests for ADO URL parsing
-├── pr-quantifier.test.ts       # Tests for PR size classification
-└── restart-merge.test.ts       # Tests for restart merge logic
+├── notifications/
+│   ├── index.ts                # Notification orchestrator
+│   └── teams.ts                # Teams Adaptive Card formatter
+└── *.test.ts                   # Test files (vitest)
 ```

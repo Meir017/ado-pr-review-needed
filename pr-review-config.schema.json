@@ -197,42 +197,9 @@
     },
     "notifications": {
       "type": "object",
-      "description": "Configuration for push notifications via Slack and/or Microsoft Teams incoming webhooks.",
+      "description": "Configuration for push notifications via Microsoft Teams incoming webhooks.",
       "additionalProperties": false,
       "properties": {
-        "slack": {
-          "type": "object",
-          "description": "Slack incoming webhook configuration.",
-          "required": ["webhookUrl"],
-          "additionalProperties": false,
-          "properties": {
-            "webhookUrl": {
-              "type": "string",
-              "description": "The Slack incoming webhook URL.",
-              "format": "uri",
-              "examples": ["https://hooks.slack.com/services/T00/B00/xxx"]
-            },
-            "filters": {
-              "type": "object",
-              "description": "Control which sections to include in the notification.",
-              "additionalProperties": false,
-              "properties": {
-                "sections": {
-                  "type": "array",
-                  "description": "Which PR sections to include. Defaults to all sections.",
-                  "items": {
-                    "type": "string",
-                    "enum": ["approved", "needingReview", "waitingOnAuthor"]
-                  }
-                },
-                "minStalenessLevel": {
-                  "type": "string",
-                  "description": "Only include PRs at or above this staleness level."
-                }
-              }
-            }
-          }
-        },
         "teams": {
           "type": "object",
           "description": "Microsoft Teams incoming webhook configuration.",
