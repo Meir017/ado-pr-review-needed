@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PR Review Dashboard</title>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --text-dim: #8b949e; --accent: #58a6ff; --green: #3fb950; --yellow: #d29922; --red: #f85149; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 1rem; }
+  .container { max-width: 1400px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+  header h1 { font-size: 1.5rem; }
+  header .meta { color: var(--text-dim); font-size: 0.85rem; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+  .card .label { color: var(--text-dim); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .card .value { font-size: 1.8rem; font-weight: 600; margin-top: 0.25rem; }
+  .card.green .value { color: var(--green); }
+  .card.yellow .value { color: var(--yellow); }
+  .card.red .value { color: var(--red); }
+  .tabs { display: flex; gap: 0.25rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .tab { background: var(--surface); border: 1px solid var(--border); border-radius: 6px 6px 0 0; padding: 0.5rem 1rem; cursor: pointer; color: var(--text-dim); font-size: 0.9rem; }
+  .tab.active { background: var(--border); color: var(--text); border-bottom-color: var(--border); }
+  .search-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .search-bar input, .search-bar select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.75rem; color: var(--text); font-size: 0.9rem; }
+  .search-bar input { flex: 1; min-width: 200px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+  th { background: var(--surface); color: var(--text-dim); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; user-select: none; }
+  th:hover { color: var(--accent); }
+  th, td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+  tr:hover { background: rgba(88,166,255,0.04); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+  .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge-yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .badge-red { background: rgba(248,81,73,0.15); color: var(--red); }
+  .section { margin-bottom: 2rem; }
+  .section h2 { font-size: 1.1rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .export-bar { display: flex; gap: 0.5rem; margin-top: 1rem; }
+  .btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.75rem; color: var(--text); cursor: pointer; font-size: 0.85rem; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .empty { color: var(--text-dim); text-align: center; padding: 2rem; }
+  @media print { body { background: #fff; color: #000; } .card { border: 1px solid #ccc; } th { background: #f5f5f5; } .search-bar, .tabs, .export-bar { display: none; } }
+  @media (max-width: 768px) { .cards { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📋 PR Review Dashboard</h1>
+    <div class="meta">Generated: <span id="timestamp"></span> · <span id="repo-count"></span> repos</div>
+  </header>
+
+  <div class="cards" id="summary-cards"></div>
+
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="Search PRs by title, author, ID..." oninput="filterTable()">
+    <select id="status-filter" onchange="filterTable()">
+      <option value="all">All Status</option>
+      <option value="needingReview">Needing Review</option>
+      <option value="waitingOnAuthor">Waiting on Author</option>
+      <option value="approved">Approved</option>
+    </select>
+    <select id="repo-filter" onchange="filterTable()"></select>
+  </div>
+
+  <div class="tabs" id="repo-tabs"></div>
+
+  <div class="section">
+    <h2>Pull Requests</h2>
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">ID ↕</th>
+          <th onclick="sortTable(1)">Title ↕</th>
+          <th onclick="sortTable(2)">Author ↕</th>
+          <th onclick="sortTable(3)">Status ↕</th>
+          <th onclick="sortTable(4)">Repo ↕</th>
+          <th onclick="sortTable(5)">Size ↕</th>
+          <th onclick="sortTable(6)">Staleness ↕</th>
+        </tr>
+      </thead>
+      <tbody id="pr-table"></tbody>
+    </table>
+    <div id="empty-message" class="empty" style="display:none">No PRs match your filters.</div>
+  </div>
+
+  <div class="section" id="metrics-section" style="display:none">
+    <h2>📊 Aggregate Metrics</h2>
+    <div class="cards" id="metrics-cards"></div>
+  </div>
+
+  <div class="export-bar">
+    <button class="btn" onclick="exportCsv()">📥 Export CSV</button>
+    <button class="btn" onclick="window.print()">🖨️ Print</button>
+  </div>
+</div>
+
+<script>
+const DATA = {{DATA_PLACEHOLDER}};
+
+function init() {
+  document.getElementById('timestamp').textContent = new Date(DATA.generatedAt).toLocaleString();
+  document.getElementById('repo-count').textContent = DATA.repositories.length;
+
+  renderSummaryCards();
+  renderRepoFilter();
+  renderPrTable();
+  renderMetrics();
+}
+
+function renderSummaryCards() {
+  const agg = DATA.aggregate;
+  const total = agg.totalPrs;
+  let needingReview = 0, approved = 0, waitingOnAuthor = 0;
+  for (const repo of DATA.repositories) {
+    needingReview += repo.analysis.needingReview.length;
+    approved += repo.analysis.approved.length;
+    waitingOnAuthor += repo.analysis.waitingOnAuthor.length;
+  }
+
+  const cards = [
+    { label: 'Total PRs', value: total, cls: '' },
+    { label: 'Needing Review', value: needingReview, cls: 'yellow' },
+    { label: 'Approved', value: approved, cls: 'green' },
+    { label: 'Waiting on Author', value: waitingOnAuthor, cls: 'red' },
+  ];
+
+  if (agg.metrics) {
+    cards.push({ label: 'Median Age', value: agg.metrics.medianAgeInDays.toFixed(1) + 'd', cls: '' });
+  }
+
+  const el = document.getElementById('summary-cards');
+  el.innerHTML = cards.map(c => `<div class="card ${c.cls}"><div class="label">${c.label}</div><div class="value">${c.value}</div></div>`).join('');
+}
+
+function renderRepoFilter() {
+  const sel = document.getElementById('repo-filter');
+  sel.innerHTML = '<option value="all">All Repos</option>';
+  for (const repo of DATA.repositories) {
+    sel.innerHTML += `<option value="${repo.repoLabel}">${repo.repoLabel}</option>`;
+  }
+}
+
+function getAllPrs() {
+  const rows = [];
+  for (const repo of DATA.repositories) {
+    for (const pr of repo.analysis.needingReview) rows.push({ ...pr, status: 'needingReview', repo: repo.repoLabel, date: pr.waitingSince });
+    for (const pr of repo.analysis.approved) rows.push({ ...pr, status: 'approved', repo: repo.repoLabel, date: pr.createdDate });
+    for (const pr of repo.analysis.waitingOnAuthor) rows.push({ ...pr, status: 'waitingOnAuthor', repo: repo.repoLabel, date: pr.lastReviewerActivityDate });
+  }
+  return rows;
+}
+
+let allPrs = [];
+let sortCol = 0, sortDir = 1;
+
+function renderPrTable() {
+  allPrs = getAllPrs();
+  filterTable();
+}
+
+function filterTable() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const sf = document.getElementById('status-filter').value;
+  const rf = document.getElementById('repo-filter').value;
+
+  let filtered = allPrs.filter(pr => {
+    if (q && !`${pr.id} ${pr.title} ${pr.author}`.toLowerCase().includes(q)) return false;
+    if (sf !== 'all' && pr.status !== sf) return false;
+    if (rf !== 'all' && pr.repo !== rf) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    const va = getCellValue(a, sortCol);
+    const vb = getCellValue(b, sortCol);
+    return (va < vb ? -1 : va > vb ? 1 : 0) * sortDir;
+  });
+
+  const tbody = document.getElementById('pr-table');
+  const empty = document.getElementById('empty-message');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(pr => {
+    const statusBadge = pr.status === 'needingReview' ? '<span class="badge badge-yellow">Needs Review</span>'
+      : pr.status === 'approved' ? '<span class="badge badge-green">Approved</span>'
+      : '<span class="badge badge-red">Waiting</span>';
+    const size = pr.size ? pr.size.label : '—';
+    const staleness = getStaleness(pr);
+    return `<tr>
+      <td><a href="${pr.url}" target="_blank">#${pr.id}</a></td>
+      <td>${escapeHtml(pr.title)}</td>
+      <td>${escapeHtml(pr.author)}</td>
+      <td>${statusBadge}</td>
+      <td>${escapeHtml(pr.repo)}</td>
+      <td>${size}</td>
+      <td>${staleness}</td>
+    </tr>`;
+  }).join('');
+}
+
+function getCellValue(pr, col) {
+  switch(col) {
+    case 0: return pr.id;
+    case 1: return pr.title.toLowerCase();
+    case 2: return pr.author.toLowerCase();
+    case 3: return pr.status;
+    case 4: return pr.repo;
+    case 5: return pr.size ? pr.size.totalChanges : 0;
+    case 6: return pr.date ? new Date(pr.date).getTime() : 0;
+    default: return '';
+  }
+}
+
+function sortTable(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = 1; }
+  filterTable();
+}
+
+function getStaleness(pr) {
+  if (!pr.date) return '—';
+  const days = Math.floor((Date.now() - new Date(pr.date).getTime()) / 86400000);
+  if (days >= 30) return '<span class="badge badge-red">💀 ' + days + 'd</span>';
+  if (days >= 14) return '<span class="badge badge-red">🔴 ' + days + 'd</span>';
+  if (days >= 7) return '<span class="badge badge-yellow">⚠️ ' + days + 'd</span>';
+  return days + 'd';
+}
+
+function renderMetrics() {
+  const agg = DATA.aggregate;
+  if (!agg.metrics) return;
+  const el = document.getElementById('metrics-section');
+  el.style.display = 'block';
+  const m = agg.metrics;
+  const cards = [
+    { label: 'Median PR Age', value: m.medianAgeInDays.toFixed(1) + ' days' },
+    { label: 'Avg First Review', value: m.avgTimeToFirstReviewInDays !== null ? m.avgTimeToFirstReviewInDays.toFixed(1) + ' days' : 'N/A' },
+    { label: 'Avg Review Rounds', value: m.avgReviewRounds.toFixed(1) },
+    { label: 'No Review Activity', value: m.prsWithNoReviewActivity },
+  ];
+  document.getElementById('metrics-cards').innerHTML = cards.map(c =>
+    `<div class="card"><div class="label">${c.label}</div><div class="value">${c.value}</div></div>`
+  ).join('');
+}
+
+function exportCsv() {
+  const rows = [['ID','Title','Author','Status','Repo','Size','Age (days)']];
+  for (const pr of allPrs) {
+    const days = pr.date ? Math.floor((Date.now() - new Date(pr.date).getTime()) / 86400000) : '';
+    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, pr.author, pr.status, pr.repo, pr.size?.label || '', days]);
+  }
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pr-review-report.csv';
+  a.click();
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+init();
+</script>
+</body>
+</html>

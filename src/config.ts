@@ -3,7 +3,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchDirectReports, fetchOrgMembers } from "./graph-client.js";
 import { parseAdoRemote } from "./git-detect.js";
-import type { QuantifierConfig, SizeThreshold, PrSizeLabel, StalenessConfig, NotificationsConfig } from "./types.js";
+import type { QuantifierConfig, SizeThreshold, PrSizeLabel, StalenessConfig, NotificationsConfig, WebhookConfig, NudgeConfig } from "./types.js";
 import { DEFAULT_THRESHOLDS, DEFAULT_STALENESS_THRESHOLDS } from "./types.js";
 
 export interface RepoPatternsConfig {
@@ -28,6 +28,8 @@ export interface MultiRepoConfig {
   restartMergeAfterDays: number;
   staleness: StalenessConfig;
   notifications?: NotificationsConfig;
+  webhook?: WebhookConfig;
+  autoNudge?: NudgeConfig;
 }
 
 interface RepositoryConfigEntry {
@@ -70,6 +72,21 @@ interface ConfigFile {
         minStalenessLevel?: string;
       };
     };
+  };
+
+  webhook?: {
+    url: string;
+    headers?: Record<string, string>;
+    method?: "POST" | "PUT";
+  };
+
+  autoNudge?: {
+    enabled?: boolean;
+    minStalenessLevel?: string;
+    cooldownDays?: number;
+    commentTemplate?: string;
+    dryRun?: boolean;
+    historyFile?: string;
   };
 }
 
@@ -174,6 +191,18 @@ function resolveStalenessConfig(cfg: ConfigFile): StalenessConfig {
   return { enabled: true, thresholds };
 }
 
+function resolveNudgeConfig(cfg: ConfigFile): NudgeConfig | undefined {
+  if (!cfg.autoNudge || cfg.autoNudge.enabled === false) return undefined;
+  return {
+    enabled: true,
+    minStalenessLevel: cfg.autoNudge.minStalenessLevel,
+    cooldownDays: cfg.autoNudge.cooldownDays ?? 7,
+    commentTemplate: cfg.autoNudge.commentTemplate ?? "⏰ This PR has been waiting for review for {{days}} days. Reviewers: {{reviewers}}. Please take a look!",
+    dryRun: cfg.autoNudge.dryRun ?? false,
+    historyFile: cfg.autoNudge.historyFile ?? ".pr-nudge-history.json",
+  };
+}
+
 export async function getMultiRepoConfig(configFilePath?: string): Promise<MultiRepoConfig> {
   const cfg = loadConfigFile(configFilePath);
   const repos = parseRepoTargets(cfg);
@@ -185,7 +214,9 @@ export async function getMultiRepoConfig(configFilePath?: string): Promise<Multi
   const restartMergeAfterDays = cfg.restartMergeAfterDays ?? 30;
   const staleness = resolveStalenessConfig(cfg);
   const notifications = cfg.notifications as NotificationsConfig | undefined;
-  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays, staleness, notifications };
+  const webhook = cfg.webhook as WebhookConfig | undefined;
+  const autoNudge = resolveNudgeConfig(cfg);
+  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays, staleness, notifications, webhook, autoNudge };
 }
 
 

@@ -183,6 +183,9 @@ export async function fetchOpenPullRequests(
       size: quantifierConfig
         ? await computePrSize(gitApi, repositoryId, project, prId, quantifierConfig)
         : undefined,
+      description: pr.description ?? undefined,
+      sourceBranch: pr.sourceRefName ?? undefined,
+      targetBranch: pr.targetRefName ?? undefined,
     } satisfies PullRequestInfo;
   });
 

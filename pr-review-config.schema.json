@@ -234,6 +234,133 @@
           }
         }
       }
+    },
+    "webhook": {
+      "type": "object",
+      "description": "Configuration for sending the full JSON report to an external webhook endpoint (e.g. Grafana, Power BI).",
+      "additionalProperties": false,
+      "required": ["url"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "The webhook URL to POST the JSON report to.",
+          "format": "uri",
+          "examples": ["https://my-grafana/api/push"]
+        },
+        "headers": {
+          "type": "object",
+          "description": "Additional HTTP headers to include in the webhook request.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "method": {
+          "type": "string",
+          "description": "HTTP method for the webhook request. Defaults to POST.",
+          "enum": ["POST", "PUT"],
+          "default": "POST"
+        }
+      }
+    },
+    "autoNudge": {
+      "type": "object",
+      "description": "Configuration for automatically posting reminder comments on stale PRs that need review.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to enable auto-nudge comments. Defaults to false.",
+          "default": false
+        },
+        "minStalenessLevel": {
+          "type": "string",
+          "description": "Only nudge PRs at or above this staleness level. Must match a label from staleness thresholds.",
+          "examples": ["🔴 Stale", "💀 Abandoned"]
+        },
+        "cooldownDays": {
+          "type": "integer",
+          "description": "Minimum number of days between nudges for the same PR. Defaults to 7.",
+          "default": 7,
+          "minimum": 1
+        },
+        "commentTemplate": {
+          "type": "string",
+          "description": "Template for the nudge comment. Supports {{days}}, {{reviewers}}, {{title}}, {{author}} placeholders.",
+          "default": "⏰ This PR has been waiting for review for {{days}} days. Reviewers: {{reviewers}}. Please take a look!"
+        },
+        "dryRun": {
+          "type": "boolean",
+          "description": "When true, log nudge actions without actually posting comments. Defaults to false.",
+          "default": false
+        },
+        "historyFile": {
+          "type": "string",
+          "description": "Path to the nudge history JSON file for cooldown tracking. Defaults to .pr-nudge-history.json.",
+          "default": ".pr-nudge-history.json"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Configuration for PR dependency tracking. Detects relationships between open PRs based on branches, file overlap, or mentions.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to enable dependency detection. Defaults to false.",
+          "default": false
+        },
+        "strategies": {
+          "type": "array",
+          "description": "Which detection strategies to use.",
+          "items": {
+            "type": "string",
+            "enum": ["branch", "fileOverlap", "mention"]
+          },
+          "default": ["branch", "mention"]
+        },
+        "fileOverlapThreshold": {
+          "type": "integer",
+          "description": "Minimum number of shared changed files to consider PRs dependent. Defaults to 2.",
+          "default": 2,
+          "minimum": 1
+        },
+        "mentionPattern": {
+          "type": "string",
+          "description": "Regex pattern to detect PR dependency mentions in title/description. Defaults to matching 'depends on #123' patterns.",
+          "default": "depends on.*#(\\d+)"
+        }
+      }
+    },
+    "dora": {
+      "type": "object",
+      "description": "Configuration for DORA metrics (Change Lead Time, Deployment Frequency, Change Failure Rate, Mean Time to Restore).",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to compute and display DORA metrics. Defaults to false.",
+          "default": false
+        },
+        "periodDays": {
+          "type": "integer",
+          "description": "Number of days to look back for DORA metric computation. Defaults to 30.",
+          "default": 30,
+          "minimum": 7
+        },
+        "buildDefinitionIds": {
+          "type": "array",
+          "description": "Specific build definition IDs to include. If omitted, all builds are included.",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "historyFile": {
+          "type": "string",
+          "description": "Path to the DORA history JSON file for trend tracking. Defaults to .dora-history.json.",
+          "default": ".dora-history.json"
+        }
+      }
     }
   }
 }
