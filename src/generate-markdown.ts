@@ -1,4 +1,4 @@
-import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats } from "./types.js";
+import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummaryStats } from "./types.js";
 
 function formatTimeSince(date: Date, now: Date = new Date()): string {
   const diffMs = now.getTime() - date.getTime();
@@ -159,6 +159,24 @@ function renderSection<T extends { isTeamMember: boolean }>(
   return md;
 }
 
+function generateRepoStatsTable(repoStats: RepoSummaryStats[]): string {
+  let table = `## 📊 Statistics per Repository\n\n`;
+  table += `| Repository | Open PRs | ✅ Approved | 👀 Needs Review | ✍️ Waiting on Author | ❌ Conflicts | 🔄 Merge Restarted |\n`;
+  table += `|---|---|---|---|---|---|---|\n`;
+
+  for (const repo of repoStats) {
+    const total = repo.approved + repo.needingReview + repo.waitingOnAuthor;
+    const restartCol = repo.mergeRestarted > 0
+      ? repo.mergeRestartFailed > 0
+        ? `${repo.mergeRestarted} (${repo.mergeRestartFailed} failed)`
+        : `${repo.mergeRestarted}`
+      : "0";
+    table += `| ${escapeMarkdown(repo.repoLabel)} | ${total} | ${repo.approved} | ${repo.needingReview} | ${repo.waitingOnAuthor} | ${repo.conflicts} | ${restartCol} |\n`;
+  }
+
+  return table + "\n";
+}
+
 export function generateMarkdown(analysis: AnalysisResult, multiRepo: boolean = false, stats?: SummaryStats): string {
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
@@ -176,6 +194,10 @@ export function generateMarkdown(analysis: AnalysisResult, multiRepo: boolean = 
   md += renderSection("✍️ Waiting on Author", waitingOnAuthor,
     (pr) => ({ ...pr, dateColumn: pr.lastReviewerActivityDate }),
     "Last reviewer activity", "No PRs waiting on author.", now, multiRepo);
+
+  if (stats?.repoStats && stats.repoStats.length > 1) {
+    md += generateRepoStatsTable(stats.repoStats);
+  }
 
   const total = approved.length + needingReview.length + waitingOnAuthor.length;
   let summaryLine = `Total: ${total} open PR${total === 1 ? "" : "s"} — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author`;

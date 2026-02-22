@@ -345,4 +345,61 @@ describe("generateMarkdown", () => {
       expect(md).toContain("`docker`");
     });
   });
+
+  describe("per-repo statistics", () => {
+    it("renders repo stats table when multiple repos in stats", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({ id: 1, repository: "Proj/RepoA" })],
+        approved: [makePrApproved({ id: 2, repository: "Proj/RepoB" })],
+      }), true, {
+        totalConflicts: 1,
+        mergeRestarted: 0,
+        mergeRestartFailed: 0,
+        repoStats: [
+          { repoLabel: "Proj/RepoA", approved: 0, needingReview: 1, waitingOnAuthor: 0, conflicts: 0, mergeRestarted: 0, mergeRestartFailed: 0 },
+          { repoLabel: "Proj/RepoB", approved: 1, needingReview: 0, waitingOnAuthor: 0, conflicts: 1, mergeRestarted: 0, mergeRestartFailed: 0 },
+        ],
+      });
+      expect(md).toContain("## 📊 Statistics per Repository");
+      expect(md).toContain("| Proj/RepoA | 1 | 0 | 1 | 0 | 0 | 0 |");
+      expect(md).toContain("| Proj/RepoB | 1 | 1 | 0 | 0 | 1 | 0 |");
+    });
+
+    it("does not render repo stats table for a single repo", () => {
+      const md = generateMarkdown(makeAnalysis({
+        needingReview: [makePrNeeding({ id: 1 })],
+      }), false, {
+        totalConflicts: 0,
+        mergeRestarted: 0,
+        mergeRestartFailed: 0,
+        repoStats: [
+          { repoLabel: "Proj/Repo", approved: 0, needingReview: 1, waitingOnAuthor: 0, conflicts: 0, mergeRestarted: 0, mergeRestartFailed: 0 },
+        ],
+      });
+      expect(md).not.toContain("## 📊 Statistics per Repository");
+    });
+
+    it("shows merge restarted with failures in repo stats", () => {
+      const md = generateMarkdown(makeAnalysis(), true, {
+        totalConflicts: 0,
+        mergeRestarted: 5,
+        mergeRestartFailed: 2,
+        repoStats: [
+          { repoLabel: "Proj/A", approved: 0, needingReview: 0, waitingOnAuthor: 0, conflicts: 0, mergeRestarted: 3, mergeRestartFailed: 1 },
+          { repoLabel: "Proj/B", approved: 0, needingReview: 0, waitingOnAuthor: 0, conflicts: 0, mergeRestarted: 2, mergeRestartFailed: 1 },
+        ],
+      });
+      expect(md).toContain("| Proj/A | 0 | 0 | 0 | 0 | 0 | 3 (1 failed) |");
+      expect(md).toContain("| Proj/B | 0 | 0 | 0 | 0 | 0 | 2 (1 failed) |");
+    });
+
+    it("does not render repo stats table when repoStats is undefined", () => {
+      const md = generateMarkdown(makeAnalysis(), true, {
+        totalConflicts: 0,
+        mergeRestarted: 0,
+        mergeRestartFailed: 0,
+      });
+      expect(md).not.toContain("## 📊 Statistics per Repository");
+    });
+  });
 });
