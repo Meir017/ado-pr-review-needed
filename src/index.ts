@@ -14,7 +14,7 @@ import { analyzePrs, mergeAnalysisResults } from "./review-logic.js";
 import { generateMarkdown } from "./generate-markdown.js";
 import { renderDashboard } from "./dashboard.js";
 import type { AnalysisResult, PullRequestInfo } from "./types.js";
-import { computeSummaryStats } from "./types.js";
+import { computeSummaryStats, computeRepoSummaryStats } from "./types.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 import { withRetry } from "./retry.js";
 import * as log from "./log.js";
@@ -175,7 +175,8 @@ async function runDashboard(verbose: boolean, configPath?: string): Promise<void
   }
 
   const merged = mergeAnalysisResults(allAnalyses);
-  const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed);
+  const repoStats = results.map((r) => computeRepoSummaryStats(r.repoLabel, r.analysis, r.restarted, r.restartFailed));
+  const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed, repoStats);
   const repoLabel = isMultiRepo
     ? `${repos.length} repositories`
     : `${repos[0].project}/${repos[0].repository}`;
@@ -220,7 +221,8 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   }
 
   const merged = mergeAnalysisResults(allAnalyses);
-  const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed);
+  const repoStats = results.map((r) => computeRepoSummaryStats(r.repoLabel, r.analysis, r.restarted, r.restartFailed));
+  const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed, repoStats);
 
   log.info("Generating markdown…");
   const markdown = generateMarkdown(merged, isMultiRepo, stats);
