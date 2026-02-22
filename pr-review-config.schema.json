@@ -155,6 +155,118 @@
       "description": "Number of days after which a pull request with a stale merge status will have its merge automatically restarted. Set to a negative value to disable auto-restart globally. Defaults to 30.",
       "default": 30,
       "examples": [30, 7, -1]
+    },
+    "staleness": {
+      "type": "object",
+      "description": "Configuration for PR staleness/aging alerts. When enabled, PRs are tagged with staleness badges based on how long they have been waiting.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether to compute and display staleness badges. Defaults to true.",
+          "default": true
+        },
+        "thresholds": {
+          "type": "array",
+          "description": "Ordered list of staleness thresholds. Each threshold defines a minimum number of days and a label. The highest matching threshold (by minDays) is applied.",
+          "items": {
+            "type": "object",
+            "required": ["label", "minDays"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "The badge label to display when a PR exceeds this threshold.",
+                "examples": ["⚠️ Aging", "🔴 Stale", "💀 Abandoned"]
+              },
+              "minDays": {
+                "type": "integer",
+                "description": "Minimum number of days a PR must be waiting to receive this badge.",
+                "minimum": 1,
+                "examples": [7, 14, 30]
+              }
+            }
+          },
+          "default": [
+            { "label": "⚠️ Aging", "minDays": 7 },
+            { "label": "🔴 Stale", "minDays": 14 },
+            { "label": "💀 Abandoned", "minDays": 30 }
+          ]
+        }
+      }
+    },
+    "notifications": {
+      "type": "object",
+      "description": "Configuration for push notifications via Slack and/or Microsoft Teams incoming webhooks.",
+      "additionalProperties": false,
+      "properties": {
+        "slack": {
+          "type": "object",
+          "description": "Slack incoming webhook configuration.",
+          "required": ["webhookUrl"],
+          "additionalProperties": false,
+          "properties": {
+            "webhookUrl": {
+              "type": "string",
+              "description": "The Slack incoming webhook URL.",
+              "format": "uri",
+              "examples": ["https://hooks.slack.com/services/T00/B00/xxx"]
+            },
+            "filters": {
+              "type": "object",
+              "description": "Control which sections to include in the notification.",
+              "additionalProperties": false,
+              "properties": {
+                "sections": {
+                  "type": "array",
+                  "description": "Which PR sections to include. Defaults to all sections.",
+                  "items": {
+                    "type": "string",
+                    "enum": ["approved", "needingReview", "waitingOnAuthor"]
+                  }
+                },
+                "minStalenessLevel": {
+                  "type": "string",
+                  "description": "Only include PRs at or above this staleness level."
+                }
+              }
+            }
+          }
+        },
+        "teams": {
+          "type": "object",
+          "description": "Microsoft Teams incoming webhook configuration.",
+          "required": ["webhookUrl"],
+          "additionalProperties": false,
+          "properties": {
+            "webhookUrl": {
+              "type": "string",
+              "description": "The Teams incoming webhook URL.",
+              "format": "uri",
+              "examples": ["https://outlook.office.com/webhook/..."]
+            },
+            "filters": {
+              "type": "object",
+              "description": "Control which sections to include in the notification.",
+              "additionalProperties": false,
+              "properties": {
+                "sections": {
+                  "type": "array",
+                  "description": "Which PR sections to include. Defaults to all sections.",
+                  "items": {
+                    "type": "string",
+                    "enum": ["approved", "needingReview", "waitingOnAuthor"]
+                  }
+                },
+                "minStalenessLevel": {
+                  "type": "string",
+                  "description": "Only include PRs at or above this staleness level."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

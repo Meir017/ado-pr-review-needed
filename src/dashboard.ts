@@ -1,4 +1,7 @@
-import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats } from "./types.js";
+import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats, StalenessConfig } from "./types.js";
+import { computeStalenessBadge } from "./staleness.js";
+import type { ReviewMetrics } from "./metrics.js";
+import type { ReviewerWorkload } from "./reviewer-workload.js";
 
 const RESET = "\x1b[0m";
 const DIM = "\x1b[2m";
@@ -82,6 +85,7 @@ function renderPrRow(
   action: PrAction,
   size?: PrSizeInfo,
   detectedLabels?: string[],
+  stalenessBadge?: string | null,
 ): string {
   const { color, label } = ageColor(date, now);
   const ageText = `${color}${BOLD}${label}${RESET}`;
@@ -95,15 +99,16 @@ function renderPrRow(
   const labelsText = detectedLabels && detectedLabels.length > 0
     ? " " + detectedLabels.map((l) => `${DIM}[${l}]${RESET}`).join(" ")
     : "";
+  const stalenessText = stalenessBadge ? ` ${YELLOW}${stalenessBadge}${RESET}` : "";
 
-  return `  ${ageText}  ${pad(prLink, 80)} ${authorText}${sizeText} ${actionText}${conflict}${labelsText}`;
+  return `  ${ageText}  ${pad(prLink, 80)} ${authorText}${sizeText} ${actionText}${conflict}${stalenessText}${labelsText}`;
 }
 
 function renderSection<T>(
   title: string,
   bg: string,
   items: T[],
-  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo; detectedLabels?: string[] },
+  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo; detectedLabels?: string[]; stalenessBadge?: string | null },
   now: Date,
   getRepo?: (item: T) => string | undefined,
 ): string {
@@ -126,15 +131,15 @@ function renderSection<T>(
     for (const [repo, repoItems] of groups) {
       lines.push(`  ${BOLD}${CYAN}📂 ${repo}${RESET}`);
       for (const item of repoItems) {
-        const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels } = getRow(item);
-        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels));
+        const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge } = getRow(item);
+        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge));
       }
       lines.push("");
     }
   } else {
     for (const item of items) {
-      const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels } = getRow(item);
-      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels));
+      const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge } = getRow(item);
+      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge));
     }
     lines.push("");
   }
@@ -142,10 +147,35 @@ function renderSection<T>(
   return lines.join("\n");
 }
 
-export function renderDashboard(analysis: AnalysisResult, repoLabel: string, multiRepo: boolean = false, stats?: SummaryStats): string {
+function renderMetricsSummary(metrics: ReviewMetrics): string {
+  const lines: string[] = [];
+  lines.push(`\n ${badge(BG_YELLOW, `📈 Review Metrics`)}\n`);
+  lines.push(`  ${DIM}Median PR age:${RESET} ${BOLD}${metrics.aggregate.medianAgeInDays}d${RESET}` +
+    `  ${DIM}Avg first review:${RESET} ${BOLD}${metrics.aggregate.avgTimeToFirstReviewInDays ?? "N/A"}d${RESET}` +
+    `  ${DIM}Avg rounds:${RESET} ${BOLD}${metrics.aggregate.avgReviewRounds}${RESET}` +
+    `  ${DIM}No review:${RESET} ${BOLD}${metrics.aggregate.prsWithNoReviewActivity}${RESET}`);
+  lines.push("");
+  return lines.join("\n");
+}
+
+function renderWorkloadSummary(workload: ReviewerWorkload[]): string {
+  if (workload.length === 0) return "";
+  const lines: string[] = [];
+  lines.push(`\n ${badge(BG_RED, `👥 Top Reviewer Bottlenecks`)}\n`);
+  const top5 = workload.slice(0, 5);
+  for (const r of top5) {
+    const responseText = r.avgResponseTimeInDays !== null ? `${r.avgResponseTimeInDays}d avg` : "no response";
+    lines.push(`  ${r.loadIndicator} ${BOLD}${r.displayName}${RESET} — ${r.pendingReviewCount} pending / ${r.assignedPrCount} assigned (${responseText})`);
+  }
+  lines.push("");
+  return lines.join("\n");
+}
+
+export function renderDashboard(analysis: AnalysisResult, repoLabel: string, multiRepo: boolean = false, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[]): string {
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
   const total = approved.length + needingReview.length + waitingOnAuthor.length;
+  const stalenessThresholds = staleness?.enabled !== false ? staleness?.thresholds ?? [] : [];
 
   const lines: string[] = [];
 
@@ -161,16 +191,24 @@ export function renderDashboard(analysis: AnalysisResult, repoLabel: string, mul
     : undefined;
 
   lines.push(renderSection("✅ Approved", BG_GREEN, approved,
-    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels }),
+    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.createdDate, stalenessThresholds, now) }),
     now, repoGetter));
 
   lines.push(renderSection("👀 Needing Review", BG_YELLOW, needingReview,
-    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels }),
+    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.waitingSince, stalenessThresholds, now) }),
     now, repoGetter));
 
   lines.push(renderSection("✍️  Waiting on Author", BG_RED, waitingOnAuthor,
-    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels }),
+    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.lastReviewerActivityDate, stalenessThresholds, now) }),
     now, repoGetter));
+
+  if (metrics) {
+    lines.push(renderMetricsSummary(metrics));
+  }
+
+  if (workload && workload.length > 0) {
+    lines.push(renderWorkloadSummary(workload));
+  }
 
   let summaryLine = `Total: ${total} open PRs — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author`;
   if (stats) {

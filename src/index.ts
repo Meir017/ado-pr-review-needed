@@ -13,6 +13,9 @@ import { restartMergeForStalePrs } from "./restart-merge.js";
 import { analyzePrs, mergeAnalysisResults } from "./review-logic.js";
 import { generateMarkdown } from "./generate-markdown.js";
 import { renderDashboard } from "./dashboard.js";
+import { computeReviewMetrics } from "./metrics.js";
+import { computeReviewerWorkload } from "./reviewer-workload.js";
+import { sendNotifications } from "./notifications/index.js";
 import type { AnalysisResult, PullRequestInfo } from "./types.js";
 import { computeSummaryStats, computeRepoSummaryStats } from "./types.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
@@ -46,6 +49,7 @@ interface CliArgs {
   verbose: boolean;
   dashboard: boolean;
   config?: string;
+  notify?: boolean;
 }
 
 function runSetup(): void {
@@ -177,11 +181,18 @@ async function runDashboard(verbose: boolean, configPath?: string): Promise<void
   const merged = mergeAnalysisResults(allAnalyses);
   const repoStats = results.map((r) => computeRepoSummaryStats(r.repoLabel, r.analysis, r.restarted, r.restartFailed));
   const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed, repoStats);
+  const allPrs = results.flatMap((r) => r.prs);
+  const metrics = computeReviewMetrics(allPrs, multiConfig.botUsers);
+  const workload = computeReviewerWorkload(allPrs, merged, multiConfig.botUsers);
   const repoLabel = isMultiRepo
     ? `${repos.length} repositories`
     : `${repos[0].project}/${repos[0].repository}`;
-  const output = renderDashboard(merged, repoLabel, isMultiRepo, stats);
+  const output = renderDashboard(merged, repoLabel, isMultiRepo, stats, multiConfig.staleness, metrics, workload);
   console.log(output);
+
+  if (multiConfig.notifications) {
+    await sendNotifications(merged, stats, multiConfig.notifications, multiConfig.staleness);
+  }
 }
 
 async function runMarkdownExport(args: CliArgs): Promise<void> {
@@ -223,9 +234,12 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   const merged = mergeAnalysisResults(allAnalyses);
   const repoStats = results.map((r) => computeRepoSummaryStats(r.repoLabel, r.analysis, r.restarted, r.restartFailed));
   const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed, repoStats);
+  const allPrs = results.flatMap((r) => r.prs);
+  const metrics = computeReviewMetrics(allPrs, multiConfig.botUsers);
+  const workload = computeReviewerWorkload(allPrs, merged, multiConfig.botUsers);
 
   log.info("Generating markdown…");
-  const markdown = generateMarkdown(merged, isMultiRepo, stats);
+  const markdown = generateMarkdown(merged, isMultiRepo, stats, multiConfig.staleness, metrics, workload);
 
   const outputPath = resolve(args.output);
   writeFileSync(outputPath, markdown, "utf-8");
@@ -239,6 +253,10 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   log.summary("Waiting on author", merged.waitingOnAuthor.length);
   log.summary("Output file", resolve(args.output));
   console.log();
+
+  if (args.notify !== false && multiConfig.notifications) {
+    await sendNotifications(merged, stats, multiConfig.notifications, multiConfig.staleness);
+  }
 }
 
 const program = new Command()
@@ -260,6 +278,8 @@ program
   .option("--config <path>", "Path to a custom config file")
   .option("--dashboard", "Interactive terminal dashboard view", false)
   .option("--verbose", "Enable debug logging", false)
+  .option("--notify", "Send notifications (default: true if webhooks configured)")
+  .option("--no-notify", "Disable notifications")
   .action(async (opts: CliArgs) => {
     if (opts.dashboard) {
       await runDashboard(opts.verbose, opts.config);
