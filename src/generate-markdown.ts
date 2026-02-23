@@ -300,9 +300,12 @@ export interface GenerateMarkdownOptions {
   staleness?: StalenessConfig;
   metrics?: ReviewMetrics;
   workload?: ReviewerWorkload[];
+  dependencyGraph?: DependencyGraph;
+  doraTrend?: DoraTrend;
 }
 
-export function generateMarkdown(analysis: AnalysisResult, multiRepo?: boolean, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[], dependencyGraph?: DependencyGraph, doraTrend?: DoraTrend): string {
+export function generateMarkdown(options: GenerateMarkdownOptions): string {
+  const { analysis, multiRepo, stats, staleness, metrics, workload, dependencyGraph, doraTrend } = options;
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
   const stalenessThresholds = staleness?.enabled !== false ? staleness?.thresholds ?? [] : [];

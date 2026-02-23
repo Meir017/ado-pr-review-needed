@@ -147,21 +147,6 @@ export async function fetchOpenPullRequests(
       detectedLabels = detectLabels(changedFiles, patterns.ignore, patterns.labels);
       if (detectedLabels.length > 0) {
         log.debug(`  #${prId} — detected labels: ${detectedLabels.join(", ")}`);
-        // Add detected labels that aren't already on the PR
-        for (const label of detectedLabels) {
-          if (!labels.some((l) => l.toLowerCase() === label.toLowerCase())) {
-            try {
-              await withRetry(`Add label '${label}' to PR #${prId}`, () =>
-                gitApi.createPullRequestLabel({ name: label }, repositoryId, prId, project),
-              );
-              labels.push(label);
-              log.debug(`  #${prId} — added label '${label}'`);
-            } catch (err: unknown) {
-              const msg = err instanceof Error ? err.message : String(err);
-              log.debug(`  #${prId} — failed to add label '${label}': ${msg}`);
-            }
-          }
-        }
       }
     }
 
@@ -191,4 +176,33 @@ export async function fetchOpenPullRequests(
 
   log.debug(`${results.length} PRs remain after filtering`);
   return results;
+}
+
+/**
+ * Apply detected labels to PRs in Azure DevOps.
+ * Separated from fetchOpenPullRequests to keep data fetching pure.
+ */
+export async function applyDetectedLabels(
+  gitApi: IGitApi,
+  repositoryId: string,
+  project: string,
+  prs: PullRequestInfo[],
+): Promise<void> {
+  for (const pr of prs) {
+    if (pr.detectedLabels.length === 0) continue;
+    for (const label of pr.detectedLabels) {
+      if (!pr.labels.some((l) => l.toLowerCase() === label.toLowerCase())) {
+        try {
+          await withRetry(`Add label '${label}' to PR #${pr.id}`, () =>
+            gitApi.createPullRequestLabel({ name: label }, repositoryId, pr.id, project),
+          );
+          pr.labels.push(label);
+          log.debug(`  #${pr.id} — added label '${label}'`);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          log.debug(`  #${pr.id} — failed to add label '${label}': ${msg}`);
+        }
+      }
+    }
+  }
 }

@@ -171,7 +171,19 @@ function renderWorkloadSummary(workload: ReviewerWorkload[]): string {
   return lines.join("\n");
 }
 
-export function renderDashboard(analysis: AnalysisResult, repoLabel: string, multiRepo: boolean = false, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[], dependencyGraph?: DependencyGraph): string {
+export interface RenderDashboardOptions {
+  analysis: AnalysisResult;
+  repoLabel: string;
+  multiRepo?: boolean;
+  stats?: SummaryStats;
+  staleness?: StalenessConfig;
+  metrics?: ReviewMetrics;
+  workload?: ReviewerWorkload[];
+  dependencyGraph?: DependencyGraph;
+}
+
+export function renderDashboard(options: RenderDashboardOptions): string {
+  const { analysis, repoLabel, multiRepo = false, stats, staleness, metrics, workload, dependencyGraph } = options;
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
   const total = approved.length + needingReview.length + waitingOnAuthor.length;
