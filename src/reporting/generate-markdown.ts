@@ -1,7 +1,7 @@
-import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummaryStats, StalenessConfig, DependencyGraph, DoraTrend, DoraRating } from "./types.js";
-import { computeStalenessBadge } from "./analysis/staleness.js";
-import type { ReviewMetrics } from "./metrics.js";
-import type { ReviewerWorkload } from "./reviewer-workload.js";
+import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummaryStats, StalenessConfig, DependencyGraph, DoraTrend, DoraRating } from "../types.js";
+import { computeStalenessBadge } from "../analysis/staleness.js";
+import type { ReviewMetrics } from "../metrics.js";
+import type { ReviewerWorkload } from "../reviewer-workload.js";
 import { computeTimeAge, computeSizeUrgency, buildSummaryLine } from "./report-data.js";
 import type { PrRowData } from "./report-data.js";
 

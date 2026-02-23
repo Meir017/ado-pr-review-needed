@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateMarkdown } from "./generate-markdown.js";
-import type { PrNeedingReview, PrWaitingOnAuthor, PrApproved, AnalysisResult } from "./types.js";
+import type { PrNeedingReview, PrWaitingOnAuthor, PrApproved, AnalysisResult } from "../types.js";
 
 function makePrNeeding(
   overrides: Partial<PrNeedingReview> = {},

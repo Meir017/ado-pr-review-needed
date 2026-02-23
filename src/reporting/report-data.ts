@@ -1,5 +1,5 @@
-import type { PrSizeInfo, PrSizeLabel, PrAction, SummaryStats } from "./types.js";
-import type { AnalysisResult } from "./types.js";
+import type { PrSizeInfo, PrSizeLabel, PrAction, SummaryStats } from "../types.js";
+import type { AnalysisResult } from "../types.js";
 
 export type Urgency = "low" | "medium" | "high";
 

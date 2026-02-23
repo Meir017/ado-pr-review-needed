@@ -1,4 +1,4 @@
-import type { JsonReport } from "../types.js";
+import type { JsonReport } from "../../types.js";
 
 // The template is embedded as a string so it works in the esbuild single-file bundle.
 // Maintained in src/html-report/template.html — keep in sync.
