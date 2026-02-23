@@ -101,7 +101,7 @@ export function createMockGitApi(options: MockGitApiOptions = {}): IGitApi {
   const getPullRequestById =
     options.getPullRequestByIdFn
       ? vi.fn().mockImplementation(options.getPullRequestByIdFn)
-      : vi.fn().mockImplementation((_prId: number) => Promise.resolve(prs[0] ?? {}));
+      : vi.fn().mockResolvedValue(prs[0] ?? {});
 
   return {
     getPullRequests,
