@@ -89,19 +89,14 @@ export function detectFileOverlap(
 ): PrDependency[] {
   const deps: PrDependency[] = [];
 
-  // Currently PullRequestInfo doesn't have changedFiles.
-  // This will be populated when the fetch-prs extension (task 13.3) adds it.
-  // For now, skip if not available.
   const prsWithFiles = prs.filter(
-    (pr) => (pr as PullRequestInfo & { changedFiles?: string[] }).changedFiles?.length,
+    (pr) => pr.changedFiles && pr.changedFiles.length > 0,
   );
 
   for (let i = 0; i < prsWithFiles.length; i++) {
-    const filesA = new Set(
-      ((prsWithFiles[i] as PullRequestInfo & { changedFiles?: string[] }).changedFiles ?? []),
-    );
+    const filesA = new Set(prsWithFiles[i].changedFiles ?? []);
     for (let j = i + 1; j < prsWithFiles.length; j++) {
-      const filesB = (prsWithFiles[j] as PullRequestInfo & { changedFiles?: string[] }).changedFiles ?? [];
+      const filesB = prsWithFiles[j].changedFiles ?? [];
       const overlap = filesB.filter((f) => filesA.has(f));
       if (overlap.length >= threshold) {
         deps.push({

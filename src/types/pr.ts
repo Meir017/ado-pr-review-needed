@@ -64,6 +64,7 @@ export interface PullRequestInfo {
   description?: string;
   sourceBranch?: string;
   targetBranch?: string;
+  changedFiles?: string[];
 }
 
 export function identityUniqueName(identity: IdentityRef | undefined): string {
