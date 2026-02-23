@@ -11,7 +11,7 @@ import type {
   StalenessConfig,
   NudgeConfig,
   NudgeHistory,
-} from "./types.js";
+} from "../types.js";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 vi.mock("node:fs", async () => {

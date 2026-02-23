@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildTeamsPayload } from "./teams.js";
-import type { AnalysisResult, SummaryStats, StalenessConfig } from "../types.js";
+import type { AnalysisResult, SummaryStats, StalenessConfig } from "../../types.js";
 
 const STALENESS: StalenessConfig = {
   enabled: true,

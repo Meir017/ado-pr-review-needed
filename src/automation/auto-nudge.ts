@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { computeStalenessBadge } from "./analysis/staleness.js";
+import { computeStalenessBadge } from "../analysis/staleness.js";
 import type {
   AnalysisResult,
   PrNeedingReview,
@@ -9,8 +9,8 @@ import type {
   NudgeHistory,
   NudgeHistoryEntry,
   NudgeResult,
-} from "./types.js";
-import * as log from "./log.js";
+} from "../types.js";
+import * as log from "../log.js";
 
 export function loadNudgeHistory(filePath: string): NudgeHistory {
   const fullPath = resolve(filePath);
