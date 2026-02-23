@@ -77,6 +77,9 @@ export interface PullRequestInfo {
   mergeStatus: number;
   lastSourcePushDate: Date | undefined;
   size?: PrSizeInfo;
+  description?: string;
+  sourceBranch?: string;
+  targetBranch?: string;
 }
 
 export interface PrNeedingReview {
@@ -91,6 +94,7 @@ export interface PrNeedingReview {
   repository?: string;
   size?: PrSizeInfo;
   detectedLabels?: string[];
+  reviewerNames?: string[];
 }
 
 export interface PrWaitingOnAuthor {
@@ -187,4 +191,148 @@ export interface TeamsNotificationConfig {
 
 export interface NotificationsConfig {
   teams?: TeamsNotificationConfig;
+}
+
+// --- Feature 12: JSON/Webhook API Output ---
+
+export type OutputFormat = "markdown" | "dashboard" | "json" | "html";
+
+export interface JsonRepoReport {
+  repoLabel: string;
+  analysis: AnalysisResult;
+  metrics?: import("./metrics.js").ReviewMetrics;
+  workload?: import("./reviewer-workload.js").ReviewerWorkload[];
+  staleness?: Record<string, number>;
+  stats: RepoSummaryStats;
+}
+
+export interface JsonAggregateReport {
+  totalPrs: number;
+  metrics?: import("./metrics.js").AggregateMetrics;
+  staleness?: Record<string, number>;
+}
+
+export interface JsonReport {
+  generatedAt: string;
+  version: string;
+  repositories: JsonRepoReport[];
+  aggregate: JsonAggregateReport;
+}
+
+export interface WebhookConfig {
+  url: string;
+  headers?: Record<string, string>;
+  method?: "POST" | "PUT";
+}
+
+// --- Feature 10: Auto-Comment / Nudge on Stale PRs ---
+
+export interface NudgeConfig {
+  enabled: boolean;
+  minStalenessLevel?: string;
+  cooldownDays: number;
+  commentTemplate: string;
+  dryRun: boolean;
+  historyFile: string;
+}
+
+export interface NudgeHistoryEntry {
+  prId: number;
+  repoUrl: string;
+  lastNudgedAt: string;
+  nudgeCount: number;
+}
+
+export interface NudgeHistory {
+  entries: NudgeHistoryEntry[];
+}
+
+export interface NudgeResult {
+  nudged: number;
+  skipped: number;
+  errors: number;
+}
+
+// --- Feature 13: PR Dependency Tracking ---
+
+export type DependencyReason = "branch" | "fileOverlap" | "mention";
+
+export interface PrDependency {
+  fromPrId: number;
+  toPrId: number;
+  reason: DependencyReason;
+  details: string;
+}
+
+export interface DependencyChain {
+  chainId: number;
+  prIds: number[];
+  status: "ready" | "blocked";
+  blockerDescription?: string;
+}
+
+export interface DependencyGraph {
+  dependencies: PrDependency[];
+  chains: DependencyChain[];
+  blockedPrIds: number[];
+}
+
+export interface DependencyConfig {
+  enabled: boolean;
+  strategies: DependencyReason[];
+  fileOverlapThreshold: number;
+  mentionPattern: string;
+}
+
+// --- Feature 11: DORA Metrics ---
+
+export type DoraRating = "elite" | "high" | "medium" | "low";
+
+export interface DoraMetricValue {
+  value: number;
+  rating: DoraRating;
+}
+
+export interface DoraMetrics {
+  period: { start: Date; end: Date };
+  changeLeadTime: DoraMetricValue & { medianDays: number };
+  deploymentFrequency: DoraMetricValue & { perWeek: number };
+  changeFailureRate: DoraMetricValue & { percentage: number };
+  meanTimeToRestore: DoraMetricValue & { medianHours: number };
+}
+
+export interface DoraTrend {
+  current: DoraMetrics;
+  previous?: DoraMetrics;
+  deltas: {
+    changeLeadTime: number | null;
+    deploymentFrequency: number | null;
+    changeFailureRate: number | null;
+    meanTimeToRestore: number | null;
+  };
+}
+
+export interface DoraConfig {
+  enabled: boolean;
+  periodDays: number;
+  buildDefinitionIds?: number[];
+  historyFile: string;
+}
+
+export interface BuildInfo {
+  id: number;
+  definitionName: string;
+  startTime: Date;
+  finishTime: Date;
+  result: "succeeded" | "failed" | "canceled" | "partiallySucceeded";
+  sourceBranch: string;
+  sourceVersion: string;
+}
+
+export interface DoraHistoryEntry {
+  period: { start: string; end: string };
+  changeLeadTimeDays: number;
+  deploymentFrequencyPerWeek: number;
+  changeFailureRatePercent: number;
+  meanTimeToRestoreHours: number;
 }

@@ -1,4 +1,4 @@
-import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummaryStats, StalenessConfig } from "./types.js";
+import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummaryStats, StalenessConfig, DependencyGraph, DoraTrend, DoraRating } from "./types.js";
 import { computeStalenessBadge } from "./staleness.js";
 import type { ReviewMetrics } from "./metrics.js";
 import type { ReviewerWorkload } from "./reviewer-workload.js";
@@ -233,6 +233,66 @@ function generateWorkloadSection(workload: ReviewerWorkload[]): string {
   return md + "\n";
 }
 
+function generateDependencySection(graph: DependencyGraph): string {
+  let md = "## 🔗 PR Dependencies\n\n";
+
+  if (graph.chains.length > 0) {
+    md += "### Dependency Chains\n\n";
+    md += "| Chain | PRs | Status |\n";
+    md += "|-------|-----|--------|\n";
+    for (const chain of graph.chains) {
+      const prList = chain.prIds.map((id) => `#${id}`).join(" → ");
+      const status = chain.status === "blocked"
+        ? `⚠️ ${chain.blockerDescription ?? "Blocked"}`
+        : "✅ Ready to merge in order";
+      md += `| ${chain.chainId} | ${prList} | ${status} |\n`;
+    }
+    md += "\n";
+  }
+
+  if (graph.blockedPrIds.length > 0) {
+    md += "### Blocked PRs\n\n";
+    md += "| PR | Blocked By | Reason |\n";
+    md += "|----|-----------|--------|\n";
+    for (const dep of graph.dependencies) {
+      if (graph.blockedPrIds.includes(dep.fromPrId)) {
+        md += `| #${dep.fromPrId} | #${dep.toPrId} | ${dep.details} |\n`;
+      }
+    }
+    md += "\n";
+  }
+
+  return md;
+}
+
+function formatDoraRating(rating: DoraRating): string {
+  switch (rating) {
+    case "elite": return "🟢 Elite";
+    case "high": return "🟢 High";
+    case "medium": return "🟡 Medium";
+    case "low": return "🔴 Low";
+  }
+}
+
+function formatDoraTrendArrow(delta: number | null): string {
+  if (delta === null) return "—";
+  if (delta === 0) return "→ stable";
+  return delta > 0 ? `↗️ +${delta}` : `↘️ ${delta}`;
+}
+
+function generateDoraSection(trend: DoraTrend): string {
+  const m = trend.current;
+  let md = "## 📈 DORA Metrics\n\n";
+  md += "| Metric | Value | Rating | Trend |\n";
+  md += "|--------|-------|--------|-------|\n";
+  md += `| Change Lead Time | ${m.changeLeadTime.medianDays} days | ${formatDoraRating(m.changeLeadTime.rating)} | ${formatDoraTrendArrow(trend.deltas.changeLeadTime)} |\n`;
+  md += `| Deployment Frequency | ${m.deploymentFrequency.perWeek}/week | ${formatDoraRating(m.deploymentFrequency.rating)} | ${formatDoraTrendArrow(trend.deltas.deploymentFrequency)} |\n`;
+  md += `| Change Failure Rate | ${m.changeFailureRate.percentage}% | ${formatDoraRating(m.changeFailureRate.rating)} | ${formatDoraTrendArrow(trend.deltas.changeFailureRate)} |\n`;
+  md += `| Mean Time to Restore | ${m.meanTimeToRestore.medianHours}h | ${formatDoraRating(m.meanTimeToRestore.rating)} | ${formatDoraTrendArrow(trend.deltas.meanTimeToRestore)} |\n`;
+  md += "\n";
+  return md;
+}
+
 export interface GenerateMarkdownOptions {
   analysis: AnalysisResult;
   multiRepo?: boolean;
@@ -242,7 +302,7 @@ export interface GenerateMarkdownOptions {
   workload?: ReviewerWorkload[];
 }
 
-export function generateMarkdown(analysis: AnalysisResult, multiRepo?: boolean, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[]): string {
+export function generateMarkdown(analysis: AnalysisResult, multiRepo?: boolean, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[], dependencyGraph?: DependencyGraph, doraTrend?: DoraTrend): string {
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
   const stalenessThresholds = staleness?.enabled !== false ? staleness?.thresholds ?? [] : [];
@@ -271,6 +331,14 @@ export function generateMarkdown(analysis: AnalysisResult, multiRepo?: boolean, 
 
   if (workload && workload.length > 0) {
     md += generateWorkloadSection(workload);
+  }
+
+  if (dependencyGraph && dependencyGraph.dependencies.length > 0) {
+    md += generateDependencySection(dependencyGraph);
+  }
+
+  if (doraTrend) {
+    md += generateDoraSection(doraTrend);
   }
 
   const total = approved.length + needingReview.length + waitingOnAuthor.length;

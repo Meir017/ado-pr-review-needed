@@ -1,4 +1,4 @@
-import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats, StalenessConfig } from "./types.js";
+import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats, StalenessConfig, DependencyGraph } from "./types.js";
 import { computeStalenessBadge } from "./staleness.js";
 import type { ReviewMetrics } from "./metrics.js";
 import type { ReviewerWorkload } from "./reviewer-workload.js";
@@ -171,7 +171,7 @@ function renderWorkloadSummary(workload: ReviewerWorkload[]): string {
   return lines.join("\n");
 }
 
-export function renderDashboard(analysis: AnalysisResult, repoLabel: string, multiRepo: boolean = false, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[]): string {
+export function renderDashboard(analysis: AnalysisResult, repoLabel: string, multiRepo: boolean = false, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[], dependencyGraph?: DependencyGraph): string {
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
   const total = approved.length + needingReview.length + waitingOnAuthor.length;
@@ -210,6 +210,10 @@ export function renderDashboard(analysis: AnalysisResult, repoLabel: string, mul
     lines.push(renderWorkloadSummary(workload));
   }
 
+  if (dependencyGraph && dependencyGraph.dependencies.length > 0) {
+    lines.push(renderDependencySummary(dependencyGraph));
+  }
+
   let summaryLine = `Total: ${total} open PRs — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author`;
   if (stats) {
     summaryLine += `, ${stats.totalConflicts} with conflicts`;
@@ -224,5 +228,24 @@ export function renderDashboard(analysis: AnalysisResult, repoLabel: string, mul
   lines.push(`  ${DIM}Updated: ${now.toLocaleString()}${RESET}`);
   lines.push("");
 
+  return lines.join("\n");
+}
+
+function renderDependencySummary(graph: DependencyGraph): string {
+  const lines: string[] = [];
+  lines.push(`  ${BOLD}🔗 PR Dependencies${RESET}`);
+  lines.push(`  ${DIM}${graph.chains.length} chain(s), ${graph.blockedPrIds.length} blocked PR(s), ${graph.dependencies.length} dependency link(s)${RESET}`);
+
+  for (const chain of graph.chains.slice(0, 5)) {
+    const prList = chain.prIds.map((id) => `#${id}`).join(" → ");
+    const status = chain.status === "blocked" ? `${RED}⚠️ blocked${RESET}` : `${GREEN}✅ ready${RESET}`;
+    lines.push(`    Chain ${chain.chainId}: ${prList} ${status}`);
+  }
+
+  if (graph.chains.length > 5) {
+    lines.push(`    ${DIM}... and ${graph.chains.length - 5} more chain(s)${RESET}`);
+  }
+
+  lines.push("");
   return lines.join("\n");
 }

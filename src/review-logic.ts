@@ -181,6 +181,7 @@ export function analyzePrs(
       repository: repoLabel,
       size: pr.size,
       detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
+      reviewerNames: pr.reviewers.map((r) => r.displayName),
     });
   }
 

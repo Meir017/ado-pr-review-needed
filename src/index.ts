@@ -16,12 +16,16 @@ import { renderDashboard } from "./dashboard.js";
 import { computeReviewMetrics } from "./metrics.js";
 import { computeReviewerWorkload } from "./reviewer-workload.js";
 import { sendNotifications } from "./notifications/index.js";
-import type { AnalysisResult, PullRequestInfo } from "./types.js";
+import { buildJsonReport, writeJsonOutput, sendWebhookPayload } from "./api-output.js";
+import { runAutoNudge } from "./auto-nudge.js";
+import { generateHtmlReport } from "./html-report/generate-html.js";
+import type { AnalysisResult, PullRequestInfo, JsonRepoReport } from "./types.js";
 import { computeSummaryStats, computeRepoSummaryStats } from "./types.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 import { withRetry } from "./retry.js";
 import * as log from "./log.js";
 import type { RepoTarget } from "./config.js";
+import { computeStalenessBadge } from "./staleness.js";
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 
 const TEMPLATE_CONFIG = {
@@ -50,6 +54,10 @@ interface CliArgs {
   dashboard: boolean;
   config?: string;
   notify?: boolean;
+  format?: string;
+  webhookUrl?: string;
+  nudge?: boolean;
+  dryRun?: boolean;
 }
 
 function runSetup(): void {
@@ -70,6 +78,39 @@ interface RepoResult {
   analysis: AnalysisResult;
   restarted: number;
   restartFailed: number;
+}
+
+function buildRepoReport(
+  r: RepoResult,
+  multiConfig: import("./config.js").MultiRepoConfig,
+): JsonRepoReport {
+  const metrics = computeReviewMetrics(r.prs, multiConfig.botUsers);
+  const workload = computeReviewerWorkload(r.prs, r.analysis, multiConfig.botUsers);
+
+  let staleness: Record<string, number> | undefined;
+  if (multiConfig.staleness.enabled) {
+    staleness = {};
+    const allCategorized = [
+      ...r.analysis.approved.map((pr) => pr.createdDate),
+      ...r.analysis.needingReview.map((pr) => pr.waitingSince),
+      ...r.analysis.waitingOnAuthor.map((pr) => pr.lastReviewerActivityDate),
+    ];
+    for (const date of allCategorized) {
+      const badge = computeStalenessBadge(date, multiConfig.staleness.thresholds);
+      if (badge) {
+        staleness[badge] = (staleness[badge] ?? 0) + 1;
+      }
+    }
+  }
+
+  return {
+    repoLabel: r.repoLabel,
+    analysis: r.analysis,
+    metrics,
+    workload,
+    staleness,
+    stats: computeRepoSummaryStats(r.repoLabel, r.analysis, r.restarted, r.restartFailed),
+  };
 }
 
 /**
@@ -238,12 +279,38 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
   const metrics = computeReviewMetrics(allPrs, multiConfig.botUsers);
   const workload = computeReviewerWorkload(allPrs, merged, multiConfig.botUsers);
 
-  log.info("Generating markdown…");
-  const markdown = generateMarkdown(merged, isMultiRepo, stats, multiConfig.staleness, metrics, workload);
+  const format = args.format ?? "markdown";
 
-  const outputPath = resolve(args.output);
-  writeFileSync(outputPath, markdown, "utf-8");
-  log.success(`Output written to ${outputPath}`);
+  if (format === "json" || format === "html") {
+    const repoReports = results.map((r) => buildRepoReport(r, multiConfig));
+    const jsonReport = buildJsonReport(repoReports, getVersion());
+
+    if (format === "html") {
+      log.info("Generating HTML report…");
+      const html = generateHtmlReport(jsonReport);
+      const outputPath = args.output === "pr-review-summary.md" ? "pr-review-summary.html" : args.output;
+      writeFileSync(resolve(outputPath), html, "utf-8");
+      log.success(`HTML report written to ${resolve(outputPath)}`);
+    } else {
+      log.info("Generating JSON report…");
+      const outputPath = args.output === "pr-review-summary.md" ? "pr-review-summary.json" : args.output;
+      await writeJsonOutput(jsonReport, resolve(outputPath));
+    }
+
+    const webhookConfig = args.webhookUrl
+      ? { url: args.webhookUrl }
+      : multiConfig.webhook;
+    if (webhookConfig) {
+      await sendWebhookPayload(jsonReport, webhookConfig);
+    }
+  } else {
+    log.info("Generating markdown…");
+    const markdown = generateMarkdown(merged, isMultiRepo, stats, multiConfig.staleness, metrics, workload);
+
+    const outputPath = resolve(args.output);
+    writeFileSync(outputPath, markdown, "utf-8");
+    log.success(`Output written to ${outputPath}`);
+  }
 
   log.heading("Summary");
   log.summary("Repositories", repos.length);
@@ -256,6 +323,13 @@ async function runMarkdownExport(args: CliArgs): Promise<void> {
 
   if (args.notify !== false && multiConfig.notifications) {
     await sendNotifications(merged, stats, multiConfig.notifications, multiConfig.staleness);
+  }
+
+  // Auto-nudge stale PRs
+  const nudgeConfig = multiConfig.autoNudge;
+  if (nudgeConfig && args.nudge !== false) {
+    if (args.dryRun) nudgeConfig.dryRun = true;
+    await runAutoNudge(merged, multiConfig.staleness, nudgeConfig);
   }
 }
 
@@ -276,10 +350,15 @@ program
   .description("Analyze PRs and generate a markdown summary or dashboard")
   .option("--output <path>", "Output file path", "pr-review-summary.md")
   .option("--config <path>", "Path to a custom config file")
+  .option("--format <type>", "Output format: markdown, json, html", "markdown")
+  .option("--webhook-url <url>", "Send JSON report to webhook URL")
   .option("--dashboard", "Interactive terminal dashboard view", false)
   .option("--verbose", "Enable debug logging", false)
   .option("--notify", "Send notifications (default: true if webhooks configured)")
   .option("--no-notify", "Disable notifications")
+  .option("--nudge", "Send nudge comments on stale PRs (default: true if configured)")
+  .option("--no-nudge", "Disable auto-nudge comments")
+  .option("--dry-run", "Log actions without making changes", false)
   .action(async (opts: CliArgs) => {
     if (opts.dashboard) {
       await runDashboard(opts.verbose, opts.config);
