@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
-import type { JsonReport, JsonRepoReport, JsonAggregateReport, WebhookConfig } from "./types.js";
-import type { AggregateMetrics } from "./metrics.js";
-import * as log from "./log.js";
+import type { JsonReport, JsonRepoReport, JsonAggregateReport, WebhookConfig } from "../types.js";
+import type { AggregateMetrics } from "../metrics.js";
+import * as log from "../log.js";
 
 export function buildJsonReport(
   repos: JsonRepoReport[],

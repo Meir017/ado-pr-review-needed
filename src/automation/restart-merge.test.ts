@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { restartMergeForStalePrs } from "./restart-merge.js";
-import { NonRetryableError } from "./retry.js";
-import type { PullRequestInfo } from "./types.js";
+import { NonRetryableError } from "../retry.js";
+import type { PullRequestInfo } from "../types.js";
 
 function makePr(overrides: Partial<PullRequestInfo> = {}): PullRequestInfo {
   return {

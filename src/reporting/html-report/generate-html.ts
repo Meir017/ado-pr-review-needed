@@ -1,7 +1,7 @@
-import type { JsonReport } from "../types.js";
+import type { JsonReport } from "../../types.js";
 
 // The template is embedded as a string so it works in the esbuild single-file bundle.
-// Maintained in src/html-report/template.html — keep in sync.
+// Maintained in src/reporting/html-report/template.html — keep in sync.
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,7 +13,7 @@ function loadTemplate(): string {
   // In the esbuild bundle, fallback to the src path relative to cwd.
   const candidates = [
     resolve(__dirname, "template.html"),
-    resolve(process.cwd(), "src", "html-report", "template.html"),
+    resolve(process.cwd(), "src", "reporting", "html-report", "template.html"),
   ];
   for (const p of candidates) {
     try {

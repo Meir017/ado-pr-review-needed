@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateHtmlReport } from "./generate-html.js";
-import type { JsonReport, JsonRepoReport } from "../types.js";
+import type { JsonReport, JsonRepoReport } from "../../types.js";
 
 function makeReport(overrides: Partial<JsonReport> = {}): JsonReport {
   return {

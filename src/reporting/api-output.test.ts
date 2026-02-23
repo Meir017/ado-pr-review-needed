@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { buildJsonReport, writeJsonOutput, sendWebhookPayload } from "./api-output.js";
-import type { JsonRepoReport, WebhookConfig } from "./types.js";
+import type { JsonRepoReport, WebhookConfig } from "../types.js";
 
 function makeRepoReport(overrides: Partial<JsonRepoReport> = {}): JsonRepoReport {
   return {

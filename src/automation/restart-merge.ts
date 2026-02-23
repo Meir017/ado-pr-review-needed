@@ -1,7 +1,7 @@
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
-import type { PullRequestInfo } from "./types.js";
-import { withRetry, NonRetryableError } from "./retry.js";
-import * as log from "./log.js";
+import type { PullRequestInfo } from "../types.js";
+import { withRetry, NonRetryableError } from "../retry.js";
+import * as log from "../log.js";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 

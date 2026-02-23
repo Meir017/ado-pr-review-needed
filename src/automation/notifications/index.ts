@@ -1,6 +1,6 @@
-import type { AnalysisResult, SummaryStats, NotificationsConfig, StalenessConfig } from "../types.js";
+import type { AnalysisResult, SummaryStats, NotificationsConfig, StalenessConfig } from "../../types.js";
 import { sendTeamsNotification } from "./teams.js";
-import * as log from "../log.js";
+import * as log from "../../log.js";
 
 export async function sendNotifications(
   analysis: AnalysisResult,

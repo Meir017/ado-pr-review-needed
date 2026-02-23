@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { analyzePrs, mergeAnalysisResults, isBotAuthor } from "./review-logic.js";
-import type { PullRequestInfo } from "./types.js";
+import type { PullRequestInfo } from "../types.js";
 import { PullRequestAsyncStatus } from "azure-devops-node-api/interfaces/GitInterfaces.js";
 
 function makePr(overrides: Partial<PullRequestInfo> = {}): PullRequestInfo {

@@ -7,7 +7,7 @@ import {
   buildDependencyGraph,
   DEFAULT_DEPENDENCY_CONFIG,
 } from "./pr-dependencies.js";
-import type { PullRequestInfo, AnalysisResult, DependencyConfig } from "./types.js";
+import type { PullRequestInfo, AnalysisResult, DependencyConfig } from "../types.js";
 
 function makePr(overrides: Partial<PullRequestInfo> = {}): PullRequestInfo {
   return {

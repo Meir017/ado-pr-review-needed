@@ -1,7 +1,8 @@
-import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats, StalenessConfig, DependencyGraph } from "./types.js";
-import { computeStalenessBadge } from "./staleness.js";
-import type { ReviewMetrics } from "./metrics.js";
-import type { ReviewerWorkload } from "./reviewer-workload.js";
+import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats, StalenessConfig, DependencyGraph } from "../types.js";
+import { computeStalenessBadge } from "../analysis/staleness.js";
+import type { ReviewMetrics } from "../metrics.js";
+import type { ReviewerWorkload } from "../reviewer-workload.js";
+import { computeTimeAge, computeSizeUrgency, buildSummaryLine } from "./report-data.js";
 
 const RESET = "\x1b[0m";
 const DIM = "\x1b[2m";
@@ -21,18 +22,15 @@ function link(text: string, url: string): string {
 }
 
 function ageColor(date: Date, now: Date): { color: string; label: string } {
-  const diffMs = now.getTime() - date.getTime();
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  const mins = Math.floor(diffMs / (1000 * 60));
+  const age = computeTimeAge(date, now);
 
   let label: string;
-  if (days > 0) label = `${days}d`;
-  else if (hours > 0) label = `${hours}h`;
-  else label = `${mins}m`;
+  if (age.days > 0) label = `${age.days}d`;
+  else if (age.hours > 0) label = `${age.hours}h`;
+  else label = `${age.minutes}m`;
 
-  if (days > 3) return { color: RED, label };
-  if (days > 1) return { color: YELLOW, label };
+  if (age.urgency === "high") return { color: RED, label };
+  if (age.urgency === "medium") return { color: YELLOW, label };
   return { color: GREEN, label };
 }
 
@@ -46,11 +44,8 @@ function conflictIndicator(has: boolean): string {
 
 function formatSize(size?: PrSizeInfo): string {
   if (!size) return "";
-  const color = size.label === "XS" || size.label === "S"
-    ? GREEN
-    : size.label === "M"
-      ? YELLOW
-      : RED;
+  const urgency = computeSizeUrgency(size.label);
+  const color = urgency === "low" ? GREEN : urgency === "medium" ? YELLOW : RED;
   return ` ${color}${BOLD}${size.label}${RESET}`;
 }
 
@@ -171,10 +166,21 @@ function renderWorkloadSummary(workload: ReviewerWorkload[]): string {
   return lines.join("\n");
 }
 
-export function renderDashboard(analysis: AnalysisResult, repoLabel: string, multiRepo: boolean = false, stats?: SummaryStats, staleness?: StalenessConfig, metrics?: ReviewMetrics, workload?: ReviewerWorkload[], dependencyGraph?: DependencyGraph): string {
+export interface RenderDashboardOptions {
+  analysis: AnalysisResult;
+  repoLabel: string;
+  multiRepo?: boolean;
+  stats?: SummaryStats;
+  staleness?: StalenessConfig;
+  metrics?: ReviewMetrics;
+  workload?: ReviewerWorkload[];
+  dependencyGraph?: DependencyGraph;
+}
+
+export function renderDashboard(options: RenderDashboardOptions): string {
+  const { analysis, repoLabel, multiRepo = false, stats, staleness, metrics, workload, dependencyGraph } = options;
   const now = new Date();
   const { approved, needingReview, waitingOnAuthor } = analysis;
-  const total = approved.length + needingReview.length + waitingOnAuthor.length;
   const stalenessThresholds = staleness?.enabled !== false ? staleness?.thresholds ?? [] : [];
 
   const lines: string[] = [];
@@ -214,17 +220,7 @@ export function renderDashboard(analysis: AnalysisResult, repoLabel: string, mul
     lines.push(renderDependencySummary(dependencyGraph));
   }
 
-  let summaryLine = `Total: ${total} open PRs — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author`;
-  if (stats) {
-    summaryLine += `, ${stats.totalConflicts} with conflicts`;
-    if (stats.mergeRestarted > 0 || stats.mergeRestartFailed > 0) {
-      summaryLine += `, ${stats.mergeRestarted} merge restarted`;
-      if (stats.mergeRestartFailed > 0) {
-        summaryLine += ` (${stats.mergeRestartFailed} failed)`;
-      }
-    }
-  }
-  lines.push(`  ${DIM}${summaryLine}${RESET}`);
+  lines.push(`  ${DIM}${buildSummaryLine(analysis, stats)}${RESET}`);
   lines.push(`  ${DIM}Updated: ${now.toLocaleString()}${RESET}`);
   lines.push("");
 

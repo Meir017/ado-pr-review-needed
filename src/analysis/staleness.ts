@@ -1,4 +1,4 @@
-import type { StalenessThreshold } from "./types.js";
+import type { StalenessThreshold } from "../types.js";
 
 /**
  * Compute the staleness badge for a PR based on its date and configured thresholds.

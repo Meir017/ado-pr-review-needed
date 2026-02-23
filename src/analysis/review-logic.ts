@@ -1,8 +1,8 @@
 import {
   PullRequestAsyncStatus,
 } from "azure-devops-node-api/interfaces/GitInterfaces.js";
-import type { PullRequestInfo, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrAction, AnalysisResult } from "./types.js";
-import * as log from "./log.js";
+import type { PullRequestInfo, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrAction, AnalysisResult } from "../types.js";
+import * as log from "../log.js";
 
 const BOT_PATTERNS = ["build", "[bot]", "team foundation", "microsoft.visualstudio.com"];
 

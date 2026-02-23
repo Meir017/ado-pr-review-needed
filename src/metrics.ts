@@ -1,5 +1,5 @@
 import type { PullRequestInfo } from "./types.js";
-import { collectActivities } from "./review-logic.js";
+import { collectActivities } from "./analysis/review-logic.js";
 
 export interface PrCycleMetrics {
   prId: number;
