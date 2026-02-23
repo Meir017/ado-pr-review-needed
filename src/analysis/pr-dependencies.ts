@@ -5,7 +5,7 @@ import type {
   DependencyChain,
   DependencyGraph,
   DependencyConfig,
-} from "./types.js";
+} from "../types.js";
 
 const DEFAULT_MENTION_PATTERN = "depends on.*#(\\d+)";
 

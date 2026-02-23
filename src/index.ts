@@ -10,7 +10,7 @@ import { getGitApiForOrg } from "./ado-client.js";
 import { getMultiRepoConfig } from "./config.js";
 import { fetchOpenPullRequests, applyDetectedLabels } from "./fetch-prs.js";
 import { restartMergeForStalePrs } from "./restart-merge.js";
-import { analyzePrs, mergeAnalysisResults } from "./review-logic.js";
+import { analyzePrs, mergeAnalysisResults } from "./analysis/review-logic.js";
 import { generateMarkdown } from "./generate-markdown.js";
 import { renderDashboard } from "./dashboard.js";
 import { computeReviewMetrics } from "./metrics.js";
@@ -25,7 +25,7 @@ import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 import { withRetry } from "./retry.js";
 import * as log from "./log.js";
 import type { RepoTarget } from "./config.js";
-import { computeStalenessBadge } from "./staleness.js";
+import { computeStalenessBadge } from "./analysis/staleness.js";
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 
 const TEMPLATE_CONFIG = {

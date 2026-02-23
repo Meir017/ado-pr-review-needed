@@ -9,10 +9,10 @@ import {
   VersionControlChangeType,
 } from "azure-devops-node-api/interfaces/GitInterfaces.js";
 import picomatch from "picomatch";
-import type { PrSizeInfo, PrSizeLabel, SizeThreshold, QuantifierConfig } from "./types.js";
-import { DEFAULT_THRESHOLDS } from "./types.js";
-import { withRetry } from "./retry.js";
-import * as log from "./log.js";
+import type { PrSizeInfo, PrSizeLabel, SizeThreshold, QuantifierConfig } from "../types.js";
+import { DEFAULT_THRESHOLDS } from "../types.js";
+import { withRetry } from "../retry.js";
+import * as log from "../log.js";
 
 export function classifyPrSize(
   totalChanges: number,

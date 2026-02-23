@@ -7,9 +7,9 @@ import type { PullRequestInfo, ThreadInfo, ThreadComment, QuantifierConfig } fro
 import { identityUniqueName } from "./types.js";
 import * as log from "./log.js";
 import { withRetry } from "./retry.js";
-import { computePrSize } from "./pr-quantifier.js";
+import { computePrSize } from "./analysis/pr-quantifier.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
-import { detectLabels } from "./file-patterns.js";
+import { detectLabels } from "./analysis/file-patterns.js";
 import type { RepoPatternsConfig } from "./config.js";
 
 function filterCandidates(prs: GitPullRequest[]): GitPullRequest[] {

@@ -1,5 +1,5 @@
 import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats, StalenessConfig, DependencyGraph } from "./types.js";
-import { computeStalenessBadge } from "./staleness.js";
+import { computeStalenessBadge } from "./analysis/staleness.js";
 import type { ReviewMetrics } from "./metrics.js";
 import type { ReviewerWorkload } from "./reviewer-workload.js";
 import { computeTimeAge, computeSizeUrgency, buildSummaryLine } from "./report-data.js";

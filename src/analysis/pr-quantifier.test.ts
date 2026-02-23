@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { classifyPrSize } from "./pr-quantifier.js";
-import type { SizeThreshold } from "./types.js";
+import type { SizeThreshold } from "../types.js";
 
 describe("classifyPrSize", () => {
   it("classifies 0 changes as XS", () => {

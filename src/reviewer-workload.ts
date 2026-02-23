@@ -1,5 +1,5 @@
 import type { PullRequestInfo, AnalysisResult } from "./types.js";
-import { isBotAuthor } from "./review-logic.js";
+import { isBotAuthor } from "./analysis/review-logic.js";
 
 export interface ReviewerWorkload {
   reviewer: string;

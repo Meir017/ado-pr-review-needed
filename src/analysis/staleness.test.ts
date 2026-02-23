@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { computeStalenessBadge } from "./staleness.js";
-import type { StalenessThreshold } from "./types.js";
+import type { StalenessThreshold } from "../types.js";
 
 const DEFAULT_THRESHOLDS: StalenessThreshold[] = [
   { label: "💀 Abandoned", minDays: 30 },

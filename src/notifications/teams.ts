@@ -1,5 +1,5 @@
 import type { AnalysisResult, SummaryStats, TeamsNotificationConfig, StalenessConfig } from "../types.js";
-import { computeStalenessBadge } from "../staleness.js";
+import { computeStalenessBadge } from "../analysis/staleness.js";
 import * as log from "../log.js";
 
 interface AdaptiveCardAction {

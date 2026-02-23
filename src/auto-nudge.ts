@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { computeStalenessBadge } from "./staleness.js";
+import { computeStalenessBadge } from "./analysis/staleness.js";
 import type {
   AnalysisResult,
   PrNeedingReview,
