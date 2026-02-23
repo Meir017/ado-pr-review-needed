@@ -2,3 +2,4 @@ node_modules/
 dist/
 coverage/
 pr-review-summary.md
+pr-review-summary.html

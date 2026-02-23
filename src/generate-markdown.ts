@@ -2,54 +2,29 @@ import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummarySta
 import { computeStalenessBadge } from "./staleness.js";
 import type { ReviewMetrics } from "./metrics.js";
 import type { ReviewerWorkload } from "./reviewer-workload.js";
+import { computeTimeAge, computeSizeUrgency, buildSummaryLine } from "./report-data.js";
+import type { PrRowData } from "./report-data.js";
 
 function formatTimeSince(date: Date, now: Date = new Date()): string {
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const age = computeTimeAge(date, now);
 
-  let circle: string;
-  if (diffDays > 3) {
-    circle = "🔴";
-  } else if (diffDays > 1) {
-    circle = "🟡";
-  } else {
-    circle = "🟢";
-  }
+  const circle = age.urgency === "high" ? "🔴" : age.urgency === "medium" ? "🟡" : "🟢";
 
   let timeText: string;
-  if (diffDays > 0) {
-    timeText = `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
-  } else if (diffHours > 0) {
-    timeText = `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+  if (age.days > 0) {
+    timeText = `${age.days} day${age.days === 1 ? "" : "s"} ago`;
+  } else if (age.hours > 0) {
+    timeText = `${age.hours} hour${age.hours === 1 ? "" : "s"} ago`;
   } else {
-    timeText = `${diffMins} minute${diffMins === 1 ? "" : "s"} ago`;
+    timeText = `${age.minutes} minute${age.minutes === 1 ? "" : "s"} ago`;
   }
 
   return `${circle} ${timeText}`;
 }
 
-interface PrRow {
-  id: number;
-  title: string;
-  author: string;
-  url: string;
-  hasMergeConflict: boolean;
-  dateColumn: Date;
-  action: PrAction;
-  repository?: string;
-  size?: PrSizeInfo;
-  detectedLabels?: string[];
-  stalenessBadge?: string | null;
-}
-
 function formatSizeLabel(size: PrSizeInfo): string {
-  const emoji = size.label === "XS" || size.label === "S"
-    ? "🟢"
-    : size.label === "M"
-      ? "🟡"
-      : "🔴";
+  const urgency = computeSizeUrgency(size.label);
+  const emoji = urgency === "low" ? "🟢" : urgency === "medium" ? "🟡" : "🔴";
   return `${emoji} ${size.label}`;
 }
 
@@ -75,7 +50,7 @@ function escapeMarkdown(text: string): string {
     .replace(/\|/g, "\\|");
 }
 
-function generateTable(prs: PrRow[], dateHeader: string, emptyMsg: string, now: Date, multiRepo: boolean = false): string {
+function generateTable(prs: PrRowData[], dateHeader: string, emptyMsg: string, now: Date, multiRepo: boolean = false): string {
   if (prs.length === 0) {
     return `_${emptyMsg}_\n\n`;
   }
@@ -148,7 +123,7 @@ function splitTeamCommunity<T extends { isTeamMember: boolean }>(
 function renderSection<T extends { isTeamMember: boolean }>(
   heading: string,
   items: T[],
-  toRow: (item: T) => PrRow,
+  toRow: (item: T) => PrRowData,
   dateHeader: string,
   emptyMsg: string,
   now: Date,
@@ -344,18 +319,7 @@ export function generateMarkdown(options: GenerateMarkdownOptions): string {
     md += generateDoraSection(doraTrend);
   }
 
-  const total = approved.length + needingReview.length + waitingOnAuthor.length;
-  let summaryLine = `Total: ${total} open PR${total === 1 ? "" : "s"} — ${approved.length} approved, ${needingReview.length} needing review, ${waitingOnAuthor.length} waiting on author`;
-  if (stats) {
-    summaryLine += `, ${stats.totalConflicts} with conflicts`;
-    if (stats.mergeRestarted > 0 || stats.mergeRestartFailed > 0) {
-      summaryLine += `, ${stats.mergeRestarted} merge restarted`;
-      if (stats.mergeRestartFailed > 0) {
-        summaryLine += ` (${stats.mergeRestartFailed} failed)`;
-      }
-    }
-  }
-  md += `_${summaryLine}._\n`;
+  md += `_${buildSummaryLine(analysis, stats)}._\n`;
 
   return md;
 }
