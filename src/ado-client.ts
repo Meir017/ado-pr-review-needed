@@ -1,4 +1,4 @@
-import { AzureCliCredential } from "@azure/identity";
+import { DefaultAzureCredential } from "@azure/identity";
 import * as azdev from "azure-devops-node-api";
 import { IGitApi } from "azure-devops-node-api/GitApi.js";
 import { ICoreApi } from "azure-devops-node-api/CoreApi.js";
@@ -8,9 +8,16 @@ import * as log from "./log.js";
 const ADO_RESOURCE = "499b84ac-1321-427f-aa17-267ca6975798";
 
 async function getAdoToken(): Promise<string> {
+  // In Azure Pipelines the agent exposes SYSTEM_ACCESSTOKEN which can be used directly
+  const systemToken = process.env.SYSTEM_ACCESSTOKEN;
+  if (systemToken) {
+    log.debug("Using SYSTEM_ACCESSTOKEN from Azure Pipelines environment");
+    return systemToken;
+  }
+
   try {
-    log.debug("Requesting token for Azure DevOps resource…");
-    const credential = new AzureCliCredential();
+    log.debug("Requesting token for Azure DevOps resource via DefaultAzureCredential…");
+    const credential = new DefaultAzureCredential();
     const response = await credential.getToken(`${ADO_RESOURCE}/.default`);
     log.debug("Token acquired successfully");
     return response.token;
@@ -18,8 +25,10 @@ async function getAdoToken(): Promise<string> {
     const msg =
       err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Failed to obtain Azure DevOps token via AzureCliCredential. ` +
-        `Make sure you are logged in with \`az login\`.\n${msg}`,
+      `Failed to obtain Azure DevOps token. ` +
+        `Set SYSTEM_ACCESSTOKEN in Azure Pipelines, or configure environment ` +
+        `credentials (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET), ` +
+        `or log in with \`az login\`.\n${msg}`,
       { cause: err },
     );
   }
