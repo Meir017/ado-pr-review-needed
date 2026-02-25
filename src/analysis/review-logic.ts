@@ -6,7 +6,7 @@ import * as log from "../log.js";
 
 const BOT_PATTERNS = ["build", "[bot]", "team foundation", "microsoft.visualstudio.com"];
 
-const KNOWN_BOT_AUTHORS = ["dependabot[bot]", "renovate[bot]", "github-actions[bot]", "snyk-bot", "greenkeeper[bot]", "depfu[bot]", "imgbot[bot]", "allcontributors[bot]"];
+const KNOWN_BOT_AUTHORS = ["dependabot[bot]", "renovate[bot]", "github-actions[bot]", "snyk-bot", "greenkeeper[bot]", "depfu[bot]", "imgbot[bot]", "allcontributors[bot]", "github copilot"];
 
 function isBotAccount(uniqueName: string, botUsers: Set<string> = new Set(), displayName?: string): boolean {
   const lower = uniqueName.toLowerCase();
