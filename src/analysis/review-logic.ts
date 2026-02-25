@@ -8,18 +8,20 @@ const BOT_PATTERNS = ["build", "[bot]", "team foundation", "microsoft.visualstud
 
 const KNOWN_BOT_AUTHORS = ["dependabot[bot]", "renovate[bot]", "github-actions[bot]", "snyk-bot", "greenkeeper[bot]", "depfu[bot]", "imgbot[bot]", "allcontributors[bot]"];
 
-function isBotAccount(uniqueName: string, botUsers: Set<string> = new Set()): boolean {
+function isBotAccount(uniqueName: string, botUsers: Set<string> = new Set(), displayName?: string): boolean {
   const lower = uniqueName.toLowerCase();
-  return botUsers.has(lower) || BOT_PATTERNS.some((p) => lower.includes(p));
+  if (botUsers.has(lower) || BOT_PATTERNS.some((p) => lower.includes(p))) return true;
+  if (displayName && botUsers.has(displayName.toLowerCase())) return true;
+  return false;
 }
 
-export function isBotAuthor(authorUniqueName: string, botUsers: Set<string> = new Set()): boolean {
+export function isBotAuthor(authorUniqueName: string, botUsers: Set<string> = new Set(), displayName?: string): boolean {
   const lower = authorUniqueName.toLowerCase();
-  return KNOWN_BOT_AUTHORS.some((b) => lower.includes(b)) || isBotAccount(lower, botUsers);
+  return KNOWN_BOT_AUTHORS.some((b) => lower.includes(b)) || isBotAccount(lower, botUsers, displayName);
 }
 
-function determineAction(category: "approved" | "needingReview" | "waitingOnAuthor", authorUniqueName: string, botUsers: Set<string> = new Set()): PrAction {
-  if (isBotAuthor(authorUniqueName, botUsers)) return "APPROVE";
+function determineAction(category: "approved" | "needingReview" | "waitingOnAuthor", authorUniqueName: string, botUsers: Set<string> = new Set(), authorDisplayName?: string): PrAction {
+  if (isBotAuthor(authorUniqueName, botUsers, authorDisplayName)) return "APPROVE";
   switch (category) {
     case "approved": return "APPROVE";
     case "needingReview": return "REVIEW";
@@ -77,7 +79,7 @@ export function analyzePrs(
 
     // Skip if any reviewer approved (vote >= 5)
     const isApproved = pr.reviewers.some(
-      (r) => r.vote >= 5 && !isBotAccount(r.uniqueName, botUsers),
+      (r) => r.vote >= 5 && !isBotAccount(r.uniqueName, botUsers, r.displayName),
     );
     if (isApproved) {
       const hasMergeConflict =
@@ -91,7 +93,7 @@ export function analyzePrs(
         createdDate: pr.createdDate,
         hasMergeConflict,
         isTeamMember,
-        action: determineAction("approved", pr.authorUniqueName, botUsers),
+        action: determineAction("approved", pr.authorUniqueName, botUsers, pr.author),
         repository: repoLabel,
         size: pr.size,
         detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
@@ -141,7 +143,7 @@ export function analyzePrs(
         lastReviewerActivityDate: lastReviewerActivity!.date,
         hasMergeConflict,
         isTeamMember,
-        action: determineAction("waitingOnAuthor", pr.authorUniqueName, botUsers),
+        action: determineAction("waitingOnAuthor", pr.authorUniqueName, botUsers, pr.author),
         repository: repoLabel,
         size: pr.size,
         detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
@@ -177,7 +179,7 @@ export function analyzePrs(
       waitingSince,
       hasMergeConflict,
       isTeamMember,
-      action: determineAction("needingReview", pr.authorUniqueName, botUsers),
+      action: determineAction("needingReview", pr.authorUniqueName, botUsers, pr.author),
       repository: repoLabel,
       size: pr.size,
       detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,

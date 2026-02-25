@@ -56,10 +56,10 @@ export function computeReviewerWorkload(
   }>();
 
   for (const pr of prs) {
-    if (isBotAuthor(pr.authorUniqueName, botUsers)) continue;
+    if (isBotAuthor(pr.authorUniqueName, botUsers, pr.author)) continue;
 
     for (const reviewer of pr.reviewers) {
-      if (isBotAuthor(reviewer.uniqueName, botUsers)) continue;
+      if (isBotAuthor(reviewer.uniqueName, botUsers, reviewer.displayName)) continue;
 
       const key = reviewer.uniqueName.toLowerCase();
       if (!reviewerMap.has(key)) {

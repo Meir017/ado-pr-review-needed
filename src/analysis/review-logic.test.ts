@@ -411,6 +411,16 @@ describe("isBotAuthor", () => {
     const botUsers = new Set(["custom-bot@example.com"]);
     expect(isBotAuthor("Custom-Bot@Example.com", botUsers)).toBe(true);
   });
+
+  it("detects bot by display name", () => {
+    const botUsers = new Set(["my ci bot"]);
+    expect(isBotAuthor("service@example.com", botUsers, "My CI Bot")).toBe(true);
+  });
+
+  it("does not flag user when display name does not match", () => {
+    const botUsers = new Set(["my ci bot"]);
+    expect(isBotAuthor("alice@example.com", botUsers, "Alice Smith")).toBe(false);
+  });
 });
 
 describe("action field", () => {
