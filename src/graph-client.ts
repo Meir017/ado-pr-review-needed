@@ -1,4 +1,4 @@
-import { AzureCliCredential } from "@azure/identity";
+import { DefaultAzureCredential } from "@azure/identity";
 import * as log from "./log.js";
 import { withRetry, NonRetryableError } from "./retry.js";
 
@@ -18,14 +18,15 @@ interface GraphResponse {
 
 async function getGraphToken(): Promise<string> {
   try {
-    const credential = new AzureCliCredential();
+    const credential = new DefaultAzureCredential();
     const response = await credential.getToken(GRAPH_SCOPE);
     return response.token;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Failed to get Microsoft Graph token via AzureCliCredential. ` +
-        `Make sure you are logged in with \`az login\`.\n${msg}`,
+      `Failed to get Microsoft Graph token. ` +
+        `Configure environment credentials (AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET), ` +
+        `or log in with \`az login\`.\n${msg}`,
       { cause: err },
     );
   }
