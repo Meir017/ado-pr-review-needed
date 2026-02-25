@@ -99,6 +99,16 @@
       },
       "default": []
     },
+    "aiBotUsers": {
+      "type": "array",
+      "description": "List of AI bot email addresses or display names. Their activity is filtered like bots, but their PRs still require human review (action stays REVIEW instead of APPROVE).",
+      "items": {
+        "type": "string",
+        "description": "An email address, ADO unique name, or display name identifying an AI bot account.",
+        "examples": ["copilot-bot@example.com"]
+      },
+      "default": []
+    },
     "quantifier": {
       "type": "object",
       "description": "Configuration for the PR size quantifier, which labels pull requests by the total number of changed lines.",

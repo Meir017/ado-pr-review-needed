@@ -141,7 +141,8 @@ When multiple repositories are configured, the markdown output groups PRs by rep
 | `manager` | (Optional) Manager UPN — fetches only direct reports via MS Graph |
 | `teamMembers` | (Optional) Explicit list of team member emails to scope PR results |
 | `ignoreManagers` | (Optional) When `true`, hides PRs authored by managers (anyone with direct reports in the org tree) |
-| `botUsers` | (Optional) Array of user emails, unique names, or display names to treat as bots. Their activity is ignored and their PRs get the APPROVE action. |
+| `botUsers` | (Optional) Array of user emails, unique names, or display names to treat as deterministic bots. Their activity is ignored and their PRs get the APPROVE action. |
+| `aiBotUsers` | (Optional) Array of user emails, unique names, or display names to treat as AI bots (e.g. GitHub Copilot, Claude, Codex). Their activity is filtered like bots, but their PRs still require human review (action stays REVIEW). Built-in AI bot patterns are detected automatically. |
 | `quantifier` | (Optional) PR size quantifier config — see [PR Quantifier](#pr-quantifier) below |
 | `restartMergeAfterDays` | (Optional) Trigger "restart merge" on PRs older than this many days. Default: `30`. Set to `-1` to disable. |
 | `staleness` | (Optional) Staleness alert configuration — see [Staleness Alerts](#staleness-alerts) below |

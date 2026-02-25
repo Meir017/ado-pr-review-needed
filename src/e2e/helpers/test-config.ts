@@ -13,6 +13,7 @@ export interface TestConfigOptions {
   manager?: string | null;
   ignoreManagers?: boolean;
   botUsers?: string[];
+  aiBotUsers?: string[];
   quantifier?: { enabled?: boolean; excludedPatterns?: string[]; thresholds?: Array<{ label: string; maxChanges: number }> };
   restartMergeAfterDays?: number;
   staleness?: { enabled?: boolean; thresholds?: Array<{ label: string; minDays: number }> };

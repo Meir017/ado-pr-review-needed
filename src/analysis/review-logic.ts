@@ -6,7 +6,9 @@ import * as log from "../log.js";
 
 const BOT_PATTERNS = ["build", "[bot]", "team foundation", "microsoft.visualstudio.com"];
 
-const KNOWN_BOT_AUTHORS = ["dependabot[bot]", "renovate[bot]", "github-actions[bot]", "snyk-bot", "greenkeeper[bot]", "depfu[bot]", "imgbot[bot]", "allcontributors[bot]", "github copilot"];
+const KNOWN_DETERMINISTIC_BOT_AUTHORS = ["dependabot[bot]", "renovate[bot]", "github-actions[bot]", "snyk-bot", "greenkeeper[bot]", "depfu[bot]", "imgbot[bot]", "allcontributors[bot]"];
+
+const KNOWN_AI_BOT_AUTHORS = ["github copilot", "copilot[bot]", "claude", "codex"];
 
 function isBotAccount(uniqueName: string, botUsers: Set<string> = new Set(), displayName?: string): boolean {
   const lower = uniqueName.toLowerCase();
@@ -15,13 +17,39 @@ function isBotAccount(uniqueName: string, botUsers: Set<string> = new Set(), dis
   return false;
 }
 
-export function isBotAuthor(authorUniqueName: string, botUsers: Set<string> = new Set(), displayName?: string): boolean {
-  const lower = authorUniqueName.toLowerCase();
-  return KNOWN_BOT_AUTHORS.some((b) => lower.includes(b)) || isBotAccount(lower, botUsers, displayName);
+function isAiBotAccount(uniqueName: string, aiBotUsers: Set<string> = new Set(), displayName?: string): boolean {
+  const lower = uniqueName.toLowerCase();
+  if (aiBotUsers.has(lower) || KNOWN_AI_BOT_AUTHORS.some((b) => lower.includes(b))) return true;
+  if (displayName) {
+    const lowerDisplay = displayName.toLowerCase();
+    if (aiBotUsers.has(lowerDisplay) || KNOWN_AI_BOT_AUTHORS.some((b) => lowerDisplay.includes(b))) return true;
+  }
+  return false;
 }
 
-function determineAction(category: "approved" | "needingReview" | "waitingOnAuthor", authorUniqueName: string, botUsers: Set<string> = new Set(), authorDisplayName?: string): PrAction {
-  if (isBotAuthor(authorUniqueName, botUsers, authorDisplayName)) return "APPROVE";
+/** Returns true for any bot (deterministic or AI). Used to filter out bot activity. */
+export function isBotAuthor(authorUniqueName: string, botUsers: Set<string> = new Set(), displayName?: string, aiBotUsers: Set<string> = new Set()): boolean {
+  const lower = authorUniqueName.toLowerCase();
+  return KNOWN_DETERMINISTIC_BOT_AUTHORS.some((b) => lower.includes(b))
+    || isBotAccount(lower, botUsers, displayName)
+    || isAiBotAccount(lower, aiBotUsers, displayName);
+}
+
+/** Returns true only for AI bots whose PRs still require human review. */
+export function isAiBotAuthor(authorUniqueName: string, aiBotUsers: Set<string> = new Set(), displayName?: string): boolean {
+  return isAiBotAccount(authorUniqueName, aiBotUsers, displayName);
+}
+
+function determineAction(category: "approved" | "needingReview" | "waitingOnAuthor", authorUniqueName: string, botUsers: Set<string> = new Set(), authorDisplayName?: string, aiBotUsers: Set<string> = new Set()): PrAction {
+  // AI bot PRs always need human review — don't auto-approve
+  if (isAiBotAuthor(authorUniqueName, aiBotUsers, authorDisplayName)) {
+    switch (category) {
+      case "approved": return "APPROVE";
+      case "needingReview": return "REVIEW";
+      case "waitingOnAuthor": return "PENDING";
+    }
+  }
+  if (isBotAuthor(authorUniqueName, botUsers, authorDisplayName, aiBotUsers)) return "APPROVE";
   switch (category) {
     case "approved": return "APPROVE";
     case "needingReview": return "REVIEW";
@@ -34,14 +62,14 @@ export interface Activity {
   isAuthor: boolean;
 }
 
-export function collectActivities(pr: PullRequestInfo, botUsers: Set<string> = new Set()): Activity[] {
+export function collectActivities(pr: PullRequestInfo, botUsers: Set<string> = new Set(), aiBotUsers: Set<string> = new Set()): Activity[] {
   const authorId = pr.authorUniqueName;
   const activities: Activity[] = [];
 
   // Thread comments
   for (const thread of pr.threads) {
     for (const comment of thread.comments) {
-      if (isBotAccount(comment.authorUniqueName, botUsers)) continue;
+      if (isBotAccount(comment.authorUniqueName, botUsers) || isAiBotAccount(comment.authorUniqueName, aiBotUsers)) continue;
       activities.push({
         date: comment.publishedDate,
         isAuthor: comment.authorUniqueName === authorId,
@@ -63,6 +91,7 @@ export function analyzePrs(
   repoLabel?: string,
   ignoredUsers: Set<string> = new Set(),
   botUsers: Set<string> = new Set(),
+  aiBotUsers: Set<string> = new Set(),
 ): AnalysisResult {
   const approved: PrApproved[] = [];
   const needingReview: PrNeedingReview[] = [];
@@ -79,7 +108,7 @@ export function analyzePrs(
 
     // Skip if any reviewer approved (vote >= 5)
     const isApproved = pr.reviewers.some(
-      (r) => r.vote >= 5 && !isBotAccount(r.uniqueName, botUsers, r.displayName),
+      (r) => r.vote >= 5 && !isBotAccount(r.uniqueName, botUsers, r.displayName) && !isAiBotAccount(r.uniqueName, aiBotUsers, r.displayName),
     );
     if (isApproved) {
       const hasMergeConflict =
@@ -93,7 +122,7 @@ export function analyzePrs(
         createdDate: pr.createdDate,
         hasMergeConflict,
         isTeamMember,
-        action: determineAction("approved", pr.authorUniqueName, botUsers, pr.author),
+        action: determineAction("approved", pr.authorUniqueName, botUsers, pr.author, aiBotUsers),
         repository: repoLabel,
         size: pr.size,
         detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
@@ -101,7 +130,7 @@ export function analyzePrs(
       continue;
     }
 
-    const activities = collectActivities(pr, botUsers);
+    const activities = collectActivities(pr, botUsers, aiBotUsers);
     const authorActivities = activities
       .filter((a) => a.isAuthor)
       .sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -143,7 +172,7 @@ export function analyzePrs(
         lastReviewerActivityDate: lastReviewerActivity!.date,
         hasMergeConflict,
         isTeamMember,
-        action: determineAction("waitingOnAuthor", pr.authorUniqueName, botUsers, pr.author),
+        action: determineAction("waitingOnAuthor", pr.authorUniqueName, botUsers, pr.author, aiBotUsers),
         repository: repoLabel,
         size: pr.size,
         detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
@@ -179,7 +208,7 @@ export function analyzePrs(
       waitingSince,
       hasMergeConflict,
       isTeamMember,
-      action: determineAction("needingReview", pr.authorUniqueName, botUsers, pr.author),
+      action: determineAction("needingReview", pr.authorUniqueName, botUsers, pr.author, aiBotUsers),
       repository: repoLabel,
       size: pr.size,
       detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,

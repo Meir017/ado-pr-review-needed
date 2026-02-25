@@ -27,11 +27,9 @@ const EMPTY_ANALYSIS: AnalysisResult = {
   waitingOnAuthor: [],
 };
 
-const NOW = new Date("2026-02-22T12:00:00Z");
-
 describe("computeReviewerWorkload", () => {
   it("handles empty PR list", () => {
-    const result = computeReviewerWorkload([], EMPTY_ANALYSIS, new Set(), DEFAULT_WORKLOAD_THRESHOLDS, NOW);
+    const result = computeReviewerWorkload([], EMPTY_ANALYSIS, new Set(), DEFAULT_WORKLOAD_THRESHOLDS);
     expect(result).toHaveLength(0);
   });
 
@@ -47,7 +45,7 @@ describe("computeReviewerWorkload", () => {
       needingReview: [{ id: 1, title: "Test PR", author: "Alice", url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, action: "REVIEW" }],
     };
 
-    const result = computeReviewerWorkload([pr], analysis, new Set(), DEFAULT_WORKLOAD_THRESHOLDS, NOW);
+    const result = computeReviewerWorkload([pr], analysis, new Set(), DEFAULT_WORKLOAD_THRESHOLDS);
     expect(result).toHaveLength(1);
     expect(result[0].displayName).toBe("Bob");
     expect(result[0].assignedPrCount).toBe(1);
@@ -63,7 +61,7 @@ describe("computeReviewerWorkload", () => {
       ],
     });
 
-    const result = computeReviewerWorkload([pr], EMPTY_ANALYSIS, new Set(), DEFAULT_WORKLOAD_THRESHOLDS, NOW);
+    const result = computeReviewerWorkload([pr], EMPTY_ANALYSIS, new Set(), DEFAULT_WORKLOAD_THRESHOLDS);
     expect(result[0].completedReviewCount).toBe(1);
     expect(result[0].pendingReviewCount).toBe(0);
   });
@@ -77,7 +75,7 @@ describe("computeReviewerWorkload", () => {
       ],
     });
 
-    const result = computeReviewerWorkload([pr], EMPTY_ANALYSIS, bots, DEFAULT_WORKLOAD_THRESHOLDS, NOW);
+    const result = computeReviewerWorkload([pr], EMPTY_ANALYSIS, bots, DEFAULT_WORKLOAD_THRESHOLDS);
     expect(result).toHaveLength(1);
     expect(result[0].displayName).toBe("Bob");
   });
@@ -98,7 +96,7 @@ describe("computeReviewerWorkload", () => {
       }],
     });
 
-    const result = computeReviewerWorkload([pr], EMPTY_ANALYSIS, new Set(), DEFAULT_WORKLOAD_THRESHOLDS, NOW);
+    const result = computeReviewerWorkload([pr], EMPTY_ANALYSIS, new Set(), DEFAULT_WORKLOAD_THRESHOLDS);
     expect(result[0].avgResponseTimeInDays).toBe(2);
   });
 
@@ -109,7 +107,7 @@ describe("computeReviewerWorkload", () => {
       ],
     });
 
-    const result = computeReviewerWorkload([pr], EMPTY_ANALYSIS, new Set(), DEFAULT_WORKLOAD_THRESHOLDS, NOW);
+    const result = computeReviewerWorkload([pr], EMPTY_ANALYSIS, new Set(), DEFAULT_WORKLOAD_THRESHOLDS);
     expect(result[0].avgResponseTimeInDays).toBeNull();
   });
 
@@ -129,7 +127,7 @@ describe("computeReviewerWorkload", () => {
     }
 
     const analysis: AnalysisResult = { ...EMPTY_ANALYSIS, needingReview };
-    const result = computeReviewerWorkload(prs, analysis, new Set(), DEFAULT_WORKLOAD_THRESHOLDS, NOW);
+    const result = computeReviewerWorkload(prs, analysis, new Set(), DEFAULT_WORKLOAD_THRESHOLDS);
 
     expect(result[0].pendingReviewCount).toBe(25);
     expect(result[0].loadIndicator).toBe("🔴");
@@ -161,7 +159,7 @@ describe("computeReviewerWorkload", () => {
       ],
     };
 
-    const result = computeReviewerWorkload(prs, analysis, new Set(), DEFAULT_WORKLOAD_THRESHOLDS, NOW);
+    const result = computeReviewerWorkload(prs, analysis, new Set(), DEFAULT_WORKLOAD_THRESHOLDS);
     expect(result[0].displayName).toBe("Bob");
     expect(result[0].pendingReviewCount).toBe(2);
     expect(result[1].displayName).toBe("Alice");
