@@ -24,6 +24,7 @@ export interface MultiRepoConfig {
   teamMembers: Set<string>;
   ignoredUsers: Set<string>;
   botUsers: Set<string>;
+  aiBotUsers: Set<string>;
   quantifier?: QuantifierConfig;
   restartMergeAfterDays: number;
   staleness: StalenessConfig;
@@ -50,6 +51,7 @@ interface ConfigFile {
   ignoreManagers?: boolean;
 
   botUsers?: string[];
+  aiBotUsers?: string[];
 
   quantifier?: {
     enabled?: boolean;
@@ -210,13 +212,16 @@ export async function getMultiRepoConfig(configFilePath?: string): Promise<Multi
   const botUsers = new Set<string>(
     (cfg.botUsers ?? []).map((e) => e.toLowerCase()),
   );
+  const aiBotUsers = new Set<string>(
+    (cfg.aiBotUsers ?? []).map((e) => e.toLowerCase()),
+  );
   const quantifier = resolveQuantifierConfig(cfg);
   const restartMergeAfterDays = cfg.restartMergeAfterDays ?? 30;
   const staleness = resolveStalenessConfig(cfg);
   const notifications = cfg.notifications as NotificationsConfig | undefined;
   const webhook = cfg.webhook as WebhookConfig | undefined;
   const autoNudge = resolveNudgeConfig(cfg);
-  return { repos, teamMembers, ignoredUsers, botUsers, quantifier, restartMergeAfterDays, staleness, notifications, webhook, autoNudge };
+  return { repos, teamMembers, ignoredUsers, botUsers, aiBotUsers, quantifier, restartMergeAfterDays, staleness, notifications, webhook, autoNudge };
 }
 
 

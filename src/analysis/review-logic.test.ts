@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { analyzePrs, mergeAnalysisResults, isBotAuthor } from "./review-logic.js";
+import { analyzePrs, mergeAnalysisResults, isBotAuthor, isAiBotAuthor } from "./review-logic.js";
 import type { PullRequestInfo } from "../types.js";
 import { PullRequestAsyncStatus } from "azure-devops-node-api/interfaces/GitInterfaces.js";
 
@@ -411,6 +411,43 @@ describe("isBotAuthor", () => {
     const botUsers = new Set(["custom-bot@example.com"]);
     expect(isBotAuthor("Custom-Bot@Example.com", botUsers)).toBe(true);
   });
+
+  it("detects bot by display name", () => {
+    const botUsers = new Set(["my ci bot"]);
+    expect(isBotAuthor("service@example.com", botUsers, "My CI Bot")).toBe(true);
+  });
+
+  it("does not flag user when display name does not match", () => {
+    const botUsers = new Set(["my ci bot"]);
+    expect(isBotAuthor("alice@example.com", botUsers, "Alice Smith")).toBe(false);
+  });
+  it("detects AI bot authors via aiBotUsers param", () => {
+    const aiBotUsers = new Set(["copilot-svc@example.com"]);
+    expect(isBotAuthor("copilot-svc@example.com", new Set(), undefined, aiBotUsers)).toBe(true);
+  });
+});
+
+describe("isAiBotAuthor", () => {
+  it("detects GitHub Copilot as an AI bot", () => {
+    expect(isAiBotAuthor("copilot-svc@example.com", new Set(), "GitHub Copilot")).toBe(true);
+  });
+
+  it("detects GitHub Copilot by display name", () => {
+    expect(isAiBotAuthor("svc@example.com", new Set(), "GitHub Copilot")).toBe(true);
+  });
+
+  it("detects custom AI bot users", () => {
+    const aiBotUsers = new Set(["my-ai@example.com"]);
+    expect(isAiBotAuthor("my-ai@example.com", aiBotUsers)).toBe(true);
+  });
+
+  it("does not flag deterministic bots as AI bots", () => {
+    expect(isAiBotAuthor("dependabot[bot]")).toBe(false);
+  });
+
+  it("does not flag regular users as AI bots", () => {
+    expect(isAiBotAuthor("alice@example.com")).toBe(false);
+  });
 });
 
 describe("action field", () => {
@@ -486,5 +523,31 @@ describe("action field", () => {
     const botUsers = new Set(["custom-bot@example.com"]);
     const { needingReview } = analyzePrs([pr], new Set(), undefined, new Set(), botUsers);
     expect(needingReview).toHaveLength(1);
+  });
+
+  it("sets action to REVIEW for AI bot-authored PRs needing review", () => {
+    const pr = makePr({ author: "GitHub Copilot", authorUniqueName: "copilot-svc@example.com" });
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].action).toBe("REVIEW");
+  });
+
+  it("sets action to PENDING for AI bot-authored PRs waiting on author", () => {
+    const pr = makePr({
+      author: "GitHub Copilot",
+      authorUniqueName: "copilot-svc@example.com",
+      threads: [{
+        id: 1, publishedDate: new Date("2025-01-02"),
+        comments: [{ authorUniqueName: "bob@example.com", publishedDate: new Date("2025-01-03") }],
+      }],
+    });
+    const { waitingOnAuthor } = analyzePrs([pr]);
+    expect(waitingOnAuthor[0].action).toBe("PENDING");
+  });
+
+  it("sets action to REVIEW for custom AI bot user PRs needing review", () => {
+    const pr = makePr({ authorUniqueName: "my-ai@example.com" });
+    const aiBotUsers = new Set(["my-ai@example.com"]);
+    const { needingReview } = analyzePrs([pr], new Set(), undefined, new Set(), new Set(), aiBotUsers);
+    expect(needingReview[0].action).toBe("REVIEW");
   });
 });

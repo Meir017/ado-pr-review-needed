@@ -148,10 +148,11 @@ interface ProcessRepoOptions {
   teamMembers: Set<string>;
   ignoredUsers: Set<string>;
   botUsers: Set<string>;
+  aiBotUsers: Set<string>;
 }
 
 async function processRepo(options: ProcessRepoOptions): Promise<RepoResult> {
-  const { repo, isMultiRepo, restartMergeAfterDays, quantifierConfig, teamMembers, ignoredUsers, botUsers } = options;
+  const { repo, isMultiRepo, restartMergeAfterDays, quantifierConfig, teamMembers, ignoredUsers, botUsers, aiBotUsers } = options;
   const repoLabel = `${repo.project}/${repo.repository}`;
   log.info(`Fetching open PRs from ${repoLabel}…`);
   const startFetch = Date.now();
@@ -180,7 +181,7 @@ async function processRepo(options: ProcessRepoOptions): Promise<RepoResult> {
   const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, effectiveDays);
   await refreshMergeStatus(gitApi, repo.repository, repo.project, prs, restartResult.restartedPrIds);
 
-  const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers);
+  const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers);
   return {
     repoLabel,
     prs,
@@ -225,7 +226,7 @@ export async function runPipeline(configPath?: string): Promise<PipelineResult> 
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
   const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
-    processRepo({ repo, isMultiRepo, restartMergeAfterDays: multiConfig.restartMergeAfterDays, quantifierConfig: multiConfig.quantifier, teamMembers: multiConfig.teamMembers, ignoredUsers: multiConfig.ignoredUsers, botUsers: multiConfig.botUsers }),
+    processRepo({ repo, isMultiRepo, restartMergeAfterDays: multiConfig.restartMergeAfterDays, quantifierConfig: multiConfig.quantifier, teamMembers: multiConfig.teamMembers, ignoredUsers: multiConfig.ignoredUsers, botUsers: multiConfig.botUsers, aiBotUsers: multiConfig.aiBotUsers }),
   );
 
   for (const r of results) {

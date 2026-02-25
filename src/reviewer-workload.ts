@@ -43,6 +43,7 @@ export function computeReviewerWorkload(
   analysis: AnalysisResult,
   botUsers: Set<string> = new Set(),
   thresholds: WorkloadThresholds = DEFAULT_WORKLOAD_THRESHOLDS,
+  aiBotUsers: Set<string> = new Set(),
 ): ReviewerWorkload[] {
   const needingReviewIds = new Set(analysis.needingReview.map((pr) => pr.id));
 
@@ -56,10 +57,10 @@ export function computeReviewerWorkload(
   }>();
 
   for (const pr of prs) {
-    if (isBotAuthor(pr.authorUniqueName, botUsers)) continue;
+    if (isBotAuthor(pr.authorUniqueName, botUsers, pr.author, aiBotUsers)) continue;
 
     for (const reviewer of pr.reviewers) {
-      if (isBotAuthor(reviewer.uniqueName, botUsers)) continue;
+      if (isBotAuthor(reviewer.uniqueName, botUsers, reviewer.displayName, aiBotUsers)) continue;
 
       const key = reviewer.uniqueName.toLowerCase();
       if (!reviewerMap.has(key)) {

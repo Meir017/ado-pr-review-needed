@@ -91,11 +91,21 @@
     },
     "botUsers": {
       "type": "array",
-      "description": "List of bot or service-account email addresses to exclude from reviewer and author calculations entirely.",
+      "description": "List of bot or service-account email addresses or display names to exclude from reviewer and author calculations entirely.",
       "items": {
         "type": "string",
-        "description": "An email address or ADO unique name identifying a bot or service account.",
+        "description": "An email address, ADO unique name, or display name identifying a bot or service account.",
         "examples": ["ci-bot@example.com"]
+      },
+      "default": []
+    },
+    "aiBotUsers": {
+      "type": "array",
+      "description": "List of AI bot email addresses or display names. Their activity is filtered like bots, but their PRs still require human review (action stays REVIEW instead of APPROVE).",
+      "items": {
+        "type": "string",
+        "description": "An email address, ADO unique name, or display name identifying an AI bot account.",
+        "examples": ["copilot-bot@example.com"]
       },
       "default": []
     },
