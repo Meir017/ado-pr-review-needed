@@ -126,4 +126,40 @@ describe("generateHtmlReport", () => {
     expect(html).toContain("org/repo-b");
     expect(html).toContain("org/repo-c");
   });
+
+  it("contains Pipelines column header and badge rendering function", () => {
+    const html = generateHtmlReport(makeReport());
+    expect(html).toContain("Pipelines ↕");
+    expect(html).toContain("getPipelineBadge");
+  });
+
+  it("embeds pipeline status data in the report", () => {
+    const report = makeReport({
+      repositories: [
+        makeRepoReport({
+          analysis: {
+            needingReview: [
+              {
+                id: 1,
+                title: "Test PR",
+                author: "user",
+                url: "https://example.com",
+                waitingSince: "2025-01-01",
+                hasMergeConflict: false,
+                isTeamMember: true,
+                action: "REVIEW",
+                pipelineStatus: { total: 2, succeeded: 1, failed: 1, inProgress: 0, other: 0, runs: [] },
+              },
+            ],
+            approved: [],
+            waitingOnAuthor: [],
+          },
+        }),
+      ],
+      aggregate: { totalPrs: 1 },
+    });
+    const html = generateHtmlReport(report);
+    expect(html).toContain('"pipelineStatus"');
+    expect(html).toContain('"failed":1');
+  });
 });

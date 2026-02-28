@@ -346,6 +346,76 @@ describe("generateMarkdown", () => {
     });
   });
 
+  describe("pipeline status column", () => {
+    it("shows Pipelines column when PRs have pipeline status", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        needingReview: [makePrNeeding({
+          id: 1,
+          pipelineStatus: { total: 3, succeeded: 3, failed: 0, inProgress: 0, other: 0, runs: [] },
+        })],
+      }) });
+      expect(md).toContain("| Pipelines |");
+      expect(md).toContain("🟢 3/3 passed");
+    });
+
+    it("shows failed badge when pipelines have failures", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        needingReview: [makePrNeeding({
+          id: 1,
+          pipelineStatus: { total: 2, succeeded: 0, failed: 2, inProgress: 0, other: 0, runs: [] },
+        })],
+      }) });
+      expect(md).toContain("🔴 2/2 failed");
+    });
+
+    it("shows running badge when pipelines are in progress", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        needingReview: [makePrNeeding({
+          id: 1,
+          pipelineStatus: { total: 2, succeeded: 1, failed: 0, inProgress: 1, other: 0, runs: [] },
+        })],
+      }) });
+      expect(md).toContain("🟡 1/2 running");
+    });
+
+    it("does not show Pipelines column when no PRs have pipeline status", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        needingReview: [makePrNeeding({ id: 1 })],
+      }) });
+      expect(md).not.toContain("| Pipelines |");
+    });
+
+    it("shows pipeline status in approved section", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        approved: [makePrApproved({
+          pipelineStatus: { total: 1, succeeded: 1, failed: 0, inProgress: 0, other: 0, runs: [] },
+        })],
+      }) });
+      expect(md).toContain("🟢 1/1 passed");
+    });
+
+    it("shows pipeline status in waiting on author section", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        waitingOnAuthor: [makePrWaiting({
+          pipelineStatus: { total: 3, succeeded: 1, failed: 2, inProgress: 0, other: 0, runs: [] },
+        })],
+      }) });
+      expect(md).toContain("🔴 2/3 failed");
+    });
+
+    it("shows Pipelines column in multi-repo mode", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        needingReview: [makePrNeeding({
+          id: 1,
+          repository: "Project/Repo",
+          pipelineStatus: { total: 2, succeeded: 2, failed: 0, inProgress: 0, other: 0, runs: [] },
+        })],
+      }), multiRepo: true });
+      expect(md).toContain("| Pipelines |");
+      expect(md).toContain("🟢 2/2 passed");
+    });
+  });
+
   describe("per-repo statistics", () => {
     it("renders repo stats table when multiple repos in stats", () => {
       const md = generateMarkdown({ analysis: makeAnalysis({

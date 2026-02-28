@@ -79,7 +79,8 @@
           <th onclick="sortTable(3)">Status ↕</th>
           <th onclick="sortTable(4)">Repo ↕</th>
           <th onclick="sortTable(5)">Size ↕</th>
-          <th onclick="sortTable(6)">Staleness ↕</th>
+          <th onclick="sortTable(6)">Pipelines ↕</th>
+          <th onclick="sortTable(7)">Staleness ↕</th>
         </tr>
       </thead>
       <tbody id="pr-table"></tbody>
@@ -196,6 +197,7 @@ function filterTable() {
       : '<span class="badge badge-red">Waiting</span>';
     const size = pr.size ? pr.size.label : '—';
     const staleness = getStaleness(pr);
+    const pipeline = getPipelineBadge(pr.pipelineStatus);
     return `<tr>
       <td><a href="${pr.url}" target="_blank">#${pr.id}</a></td>
       <td>${escapeHtml(pr.title)}</td>
@@ -203,6 +205,7 @@ function filterTable() {
       <td>${statusBadge}</td>
       <td>${escapeHtml(pr.repo)}</td>
       <td>${size}</td>
+      <td>${pipeline}</td>
       <td>${staleness}</td>
     </tr>`;
   }).join('');
@@ -216,7 +219,8 @@ function getCellValue(pr, col) {
     case 3: return pr.status;
     case 4: return pr.repo;
     case 5: return pr.size ? pr.size.totalChanges : 0;
-    case 6: return pr.date ? new Date(pr.date).getTime() : 0;
+    case 6: return pr.pipelineStatus ? (pr.pipelineStatus.failed > 0 ? 2 : pr.pipelineStatus.inProgress > 0 ? 1 : 0) : -1;
+    case 7: return pr.date ? new Date(pr.date).getTime() : 0;
     default: return '';
   }
 }
@@ -234,6 +238,14 @@ function getStaleness(pr) {
   if (days >= 14) return '<span class="badge badge-red">🔴 ' + days + 'd</span>';
   if (days >= 7) return '<span class="badge badge-yellow">⚠️ ' + days + 'd</span>';
   return days + 'd';
+}
+
+function getPipelineBadge(ps) {
+  if (!ps) return '—';
+  if (ps.failed > 0) return `<span class="badge badge-red">🔴 ${ps.failed}/${ps.total} failed</span>`;
+  if (ps.inProgress > 0) return `<span class="badge badge-yellow">🟡 ${ps.inProgress}/${ps.total} running</span>`;
+  if (ps.succeeded === ps.total) return `<span class="badge badge-green">🟢 ${ps.total}/${ps.total} passed</span>`;
+  return `${ps.total} pipeline(s)`;
 }
 
 function renderMetrics() {
@@ -254,10 +266,11 @@ function renderMetrics() {
 }
 
 function exportCsv() {
-  const rows = [['ID','Title','Author','Status','Repo','Size','Age (days)']];
+  const rows = [['ID','Title','Author','Status','Repo','Size','Pipelines','Age (days)']];
   for (const pr of allPrs) {
     const days = pr.date ? Math.floor((Date.now() - new Date(pr.date).getTime()) / 86400000) : '';
-    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, pr.author, pr.status, pr.repo, pr.size?.label || '', days]);
+    const pipeline = pr.pipelineStatus ? `${pr.pipelineStatus.succeeded}/${pr.pipelineStatus.total} passed` : '';
+    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, pr.author, pr.status, pr.repo, pr.size?.label || '', pipeline, days]);
   }
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
