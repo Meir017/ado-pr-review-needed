@@ -129,6 +129,16 @@ function renderSummaryCards() {
     { label: 'Waiting on Author', value: waitingOnAuthor, cls: 'red' },
   ];
 
+  let conflicts = 0;
+  for (const repo of DATA.repositories) {
+    for (const list of [repo.analysis.needingReview, repo.analysis.approved, repo.analysis.waitingOnAuthor]) {
+      for (const pr of list) { if (pr.hasMergeConflict) conflicts++; }
+    }
+  }
+  if (conflicts > 0) {
+    cards.push({ label: 'Conflicts', value: conflicts, cls: 'red' });
+  }
+
   if (agg.metrics) {
     cards.push({ label: 'Median Age', value: agg.metrics.medianAgeInDays.toFixed(1) + 'd', cls: '' });
   }
@@ -198,9 +208,10 @@ function filterTable() {
     const size = pr.size ? pr.size.label : '—';
     const staleness = getStaleness(pr);
     const pipeline = getPipelineBadge(pr.pipelineStatus);
+    const conflict = pr.hasMergeConflict ? ' <span class="badge badge-red">❌ conflict</span>' : '';
     return `<tr>
       <td><a href="${pr.url}" target="_blank">#${pr.id}</a></td>
-      <td>${escapeHtml(pr.title)}</td>
+      <td>${escapeHtml(pr.title)}${conflict}</td>
       <td>${escapeHtml(pr.author)}</td>
       <td>${statusBadge}</td>
       <td>${escapeHtml(pr.repo)}</td>
