@@ -1,8 +1,8 @@
-import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats, StalenessConfig, DependencyGraph } from "../types.js";
+import type { AnalysisResult, PrNeedingReview, PrWaitingOnAuthor, PrApproved, PrSizeInfo, PrAction, SummaryStats, StalenessConfig, DependencyGraph, PipelineStatus } from "../types.js";
 import { computeStalenessBadge } from "../analysis/staleness.js";
 import type { ReviewMetrics } from "../metrics.js";
 import type { ReviewerWorkload } from "../reviewer-workload.js";
-import { computeTimeAge, computeSizeUrgency, buildSummaryLine } from "./report-data.js";
+import { computeTimeAge, computeSizeUrgency, buildSummaryLine, formatPipelineBadge } from "./report-data.js";
 
 const RESET = "\x1b[0m";
 const DIM = "\x1b[2m";
@@ -81,6 +81,7 @@ function renderPrRow(
   size?: PrSizeInfo,
   detectedLabels?: string[],
   stalenessBadge?: string | null,
+  pipelineStatus?: PipelineStatus,
 ): string {
   const { color, label } = ageColor(date, now);
   const ageText = `${color}${BOLD}${label}${RESET}`;
@@ -95,15 +96,16 @@ function renderPrRow(
     ? " " + detectedLabels.map((l) => `${DIM}[${l}]${RESET}`).join(" ")
     : "";
   const stalenessText = stalenessBadge ? ` ${YELLOW}${stalenessBadge}${RESET}` : "";
+  const pipelineText = pipelineStatus ? ` ${formatPipelineBadge(pipelineStatus)}` : "";
 
-  return `  ${ageText}  ${pad(prLink, 80)} ${authorText}${sizeText} ${actionText}${conflict}${stalenessText}${labelsText}`;
+  return `  ${ageText}  ${pad(prLink, 80)} ${authorText}${sizeText} ${actionText}${conflict}${pipelineText}${stalenessText}${labelsText}`;
 }
 
 function renderSection<T>(
   title: string,
   bg: string,
   items: T[],
-  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo; detectedLabels?: string[]; stalenessBadge?: string | null },
+  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo; detectedLabels?: string[]; stalenessBadge?: string | null; pipelineStatus?: PipelineStatus },
   now: Date,
   getRepo?: (item: T) => string | undefined,
 ): string {
@@ -126,15 +128,15 @@ function renderSection<T>(
     for (const [repo, repoItems] of groups) {
       lines.push(`  ${BOLD}${CYAN}📂 ${repo}${RESET}`);
       for (const item of repoItems) {
-        const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge } = getRow(item);
-        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge));
+        const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge, pipelineStatus } = getRow(item);
+        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge, pipelineStatus));
       }
       lines.push("");
     }
   } else {
     for (const item of items) {
-      const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge } = getRow(item);
-      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge));
+      const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge, pipelineStatus } = getRow(item);
+      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge, pipelineStatus));
     }
     lines.push("");
   }
@@ -197,15 +199,15 @@ export function renderDashboard(options: RenderDashboardOptions): string {
     : undefined;
 
   lines.push(renderSection("✅ Approved", BG_GREEN, approved,
-    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.createdDate, stalenessThresholds, now) }),
+    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.createdDate, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus }),
     now, repoGetter));
 
   lines.push(renderSection("👀 Needing Review", BG_YELLOW, needingReview,
-    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.waitingSince, stalenessThresholds, now) }),
+    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.waitingSince, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus }),
     now, repoGetter));
 
   lines.push(renderSection("✍️  Waiting on Author", BG_RED, waitingOnAuthor,
-    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.lastReviewerActivityDate, stalenessThresholds, now) }),
+    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.lastReviewerActivityDate, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus }),
     now, repoGetter));
 
   if (metrics) {

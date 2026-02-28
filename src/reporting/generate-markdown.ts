@@ -2,7 +2,7 @@ import type { AnalysisResult, PrSizeInfo, PrAction, SummaryStats, RepoSummarySta
 import { computeStalenessBadge } from "../analysis/staleness.js";
 import type { ReviewMetrics } from "../metrics.js";
 import type { ReviewerWorkload } from "../reviewer-workload.js";
-import { computeTimeAge, computeSizeUrgency, buildSummaryLine } from "./report-data.js";
+import { computeTimeAge, computeSizeUrgency, buildSummaryLine, formatPipelineBadge } from "./report-data.js";
 import type { PrRowData } from "./report-data.js";
 
 function formatTimeSince(date: Date, now: Date = new Date()): string {
@@ -57,10 +57,12 @@ function generateTable(prs: PrRowData[], dateHeader: string, emptyMsg: string, n
 
   const hasSize = prs.some((pr) => pr.size != null);
   const hasStaleness = prs.some((pr) => pr.stalenessBadge);
+  const hasPipeline = prs.some((pr) => pr.pipelineStatus != null);
 
   if (multiRepo) {
     const headers = ["PR", "Repository", "Author", "Action"];
     if (hasSize) headers.push("Size");
+    if (hasPipeline) headers.push("Pipelines");
     if (hasStaleness) headers.push("Staleness");
     headers.push(dateHeader);
     let table = `| ${headers.join(" | ")} |\n|${headers.map(() => "---").join("|")}|\n`;
@@ -75,8 +77,9 @@ function generateTable(prs: PrRowData[], dateHeader: string, emptyMsg: string, n
       const timeSince = formatTimeSince(pr.dateColumn, now);
       const actionCol = formatAction(pr.action);
       const sizeCol = hasSize ? ` ${pr.size ? formatSizeLabel(pr.size) : ""} |` : "";
+      const pipelineCol = hasPipeline ? ` ${formatPipelineBadge(pr.pipelineStatus)} |` : "";
       const stalenessCol = hasStaleness ? ` ${pr.stalenessBadge ?? ""} |` : "";
-      table += `| ${prLink} | ${repo} | ${author} | ${actionCol} |${sizeCol}${stalenessCol} ${timeSince} |\n`;
+      table += `| ${prLink} | ${repo} | ${author} | ${actionCol} |${sizeCol}${pipelineCol}${stalenessCol} ${timeSince} |\n`;
     }
 
     return table + "\n";
@@ -84,6 +87,7 @@ function generateTable(prs: PrRowData[], dateHeader: string, emptyMsg: string, n
 
   const headers = ["PR", "Author", "Action"];
   if (hasSize) headers.push("Size");
+  if (hasPipeline) headers.push("Pipelines");
   if (hasStaleness) headers.push("Staleness");
   headers.push(dateHeader);
   let table = `| ${headers.join(" | ")} |\n|${headers.map(() => "---").join("|")}|\n`;
@@ -97,8 +101,9 @@ function generateTable(prs: PrRowData[], dateHeader: string, emptyMsg: string, n
     const timeSince = formatTimeSince(pr.dateColumn, now);
     const actionCol = formatAction(pr.action);
     const sizeCol = hasSize ? ` ${pr.size ? formatSizeLabel(pr.size) : ""} |` : "";
+    const pipelineCol = hasPipeline ? ` ${formatPipelineBadge(pr.pipelineStatus)} |` : "";
     const stalenessCol = hasStaleness ? ` ${pr.stalenessBadge ?? ""} |` : "";
-    table += `| ${prLink} | ${author} | ${actionCol} |${sizeCol}${stalenessCol} ${timeSince} |\n`;
+    table += `| ${prLink} | ${author} | ${actionCol} |${sizeCol}${pipelineCol}${stalenessCol} ${timeSince} |\n`;
   }
 
   return table + "\n";

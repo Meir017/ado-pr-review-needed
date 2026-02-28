@@ -8,6 +8,9 @@ import type { TestDir } from "./helpers/test-config.js";
 // Mock network modules before importing pipeline
 vi.mock("../ado-client.js", () => ({
   getGitApiForOrg: vi.fn(),
+  getBuildApiForOrg: vi.fn().mockResolvedValue({
+    getBuilds: vi.fn().mockResolvedValue([]),
+  }),
 }));
 
 vi.mock("../graph-client.js", () => createMockGraphModule());

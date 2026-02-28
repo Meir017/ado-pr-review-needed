@@ -1,4 +1,4 @@
-import type { PrSizeInfo, PrSizeLabel, PrAction, SummaryStats } from "../types.js";
+import type { PrSizeInfo, PrSizeLabel, PrAction, SummaryStats, PipelineStatus } from "../types.js";
 import type { AnalysisResult } from "../types.js";
 
 export type Urgency = "low" | "medium" | "high";
@@ -58,4 +58,13 @@ export interface PrRowData {
   size?: PrSizeInfo;
   detectedLabels?: string[];
   stalenessBadge?: string | null;
+  pipelineStatus?: PipelineStatus;
+}
+
+export function formatPipelineBadge(ps: PipelineStatus | undefined): string {
+  if (!ps) return "";
+  if (ps.failed > 0) return `🔴 ${ps.failed}/${ps.total} failed`;
+  if (ps.inProgress > 0) return `🟡 ${ps.inProgress}/${ps.total} running`;
+  if (ps.succeeded === ps.total) return `🟢 ${ps.total}/${ps.total} passed`;
+  return `⚪ ${ps.total} pipeline(s)`;
 }

@@ -1,9 +1,14 @@
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
+import type { IBuildApi } from "azure-devops-node-api/BuildApi.js";
 import {
   PullRequestStatus,
   type GitPullRequest,
 } from "azure-devops-node-api/interfaces/GitInterfaces.js";
-import type { PullRequestInfo, ThreadInfo, ThreadComment, QuantifierConfig } from "./types.js";
+import {
+  BuildResult,
+  BuildStatus,
+} from "azure-devops-node-api/interfaces/BuildInterfaces.js";
+import type { PullRequestInfo, ThreadInfo, ThreadComment, QuantifierConfig, PipelineStatus, PipelineRunInfo, PipelineOutcome } from "./types.js";
 import { identityUniqueName } from "./types.js";
 import * as log from "./log.js";
 import { withRetry } from "./retry.js";
@@ -77,6 +82,94 @@ async function fetchChangedFiles(
   return paths;
 }
 
+function mapBuildResult(status: BuildStatus | undefined, result: BuildResult | undefined): PipelineOutcome {
+  if (status === BuildStatus.InProgress) return "inProgress";
+  if (status === BuildStatus.NotStarted) return "notStarted";
+  switch (result) {
+    case BuildResult.Succeeded: return "succeeded";
+    case BuildResult.Failed: return "failed";
+    case BuildResult.PartiallySucceeded: return "partiallySucceeded";
+    case BuildResult.Canceled: return "canceled";
+    default: return "none";
+  }
+}
+
+async function fetchPipelineStatus(
+  buildApi: IBuildApi,
+  repositoryId: string,
+  project: string,
+  pullRequestId: number,
+): Promise<PipelineStatus | undefined> {
+  try {
+    const branchName = `refs/pull/${pullRequestId}/merge`;
+    const builds = await withRetry(
+      `Fetch builds for PR #${pullRequestId}`,
+      () => buildApi.getBuilds(
+        project,
+        undefined, // definitions
+        undefined, // queues
+        undefined, // buildNumber
+        undefined, // minTime
+        undefined, // maxTime
+        undefined, // requestedFor
+        undefined, // reasonFilter
+        undefined, // statusFilter
+        undefined, // resultFilter
+        undefined, // tagFilters
+        undefined, // properties
+        10,        // top - latest 10 builds
+        undefined, // continuationToken
+        undefined, // maxBuildsPerDefinition
+        undefined, // deletedFilter
+        undefined, // queryOrder
+        branchName,
+        undefined, // buildIds
+        repositoryId,
+        "TfsGit",
+      ),
+    );
+
+    if (!builds || builds.length === 0) return undefined;
+
+    // De-duplicate: keep only the latest build per pipeline definition
+    const latestByDef = new Map<number, typeof builds[0]>();
+    for (const b of builds) {
+      const defId = b.definition?.id ?? 0;
+      if (!latestByDef.has(defId)) {
+        latestByDef.set(defId, b);
+      }
+    }
+
+    const runs: PipelineRunInfo[] = [];
+    let succeeded = 0;
+    let failed = 0;
+    let inProgress = 0;
+    let other = 0;
+
+    for (const b of latestByDef.values()) {
+      const outcome = mapBuildResult(b.status, b.result);
+      runs.push({
+        id: b.id ?? 0,
+        name: b.definition?.name ?? "Unknown",
+        status: BuildStatus[b.status ?? BuildStatus.None] ?? "None",
+        result: outcome,
+      });
+      switch (outcome) {
+        case "succeeded": succeeded++; break;
+        case "failed": failed++; break;
+        case "inProgress": case "notStarted": inProgress++; break;
+        default: other++; break;
+      }
+    }
+
+    return { total: runs.length, succeeded, failed, inProgress, other, runs };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    log.debug(`  #${pullRequestId} — failed to fetch pipeline status: ${msg}`);
+    return undefined;
+  }
+}
+
 export async function fetchOpenPullRequests(
   gitApi: IGitApi,
   repositoryId: string,
@@ -84,6 +177,7 @@ export async function fetchOpenPullRequests(
   orgUrl: string,
   quantifierConfig?: QuantifierConfig,
   patterns: RepoPatternsConfig = { ignore: [], labels: {} },
+  buildApi?: IBuildApi,
 ): Promise<PullRequestInfo[]> {
   // Convert old visualstudio.com URLs to dev.azure.com
   // e.g. https://microsoft.visualstudio.com -> https://dev.azure.com/microsoft
@@ -150,6 +244,11 @@ export async function fetchOpenPullRequests(
       }
     }
 
+    // Fetch pipeline status
+    const pipelineStatus = buildApi
+      ? await fetchPipelineStatus(buildApi, repositoryId, project, prId)
+      : undefined;
+
     return {
       id: prId,
       title: pr.title ?? "(no title)",
@@ -171,6 +270,7 @@ export async function fetchOpenPullRequests(
       description: pr.description ?? undefined,
       sourceBranch: pr.sourceRefName ?? undefined,
       targetBranch: pr.targetRefName ?? undefined,
+      pipelineStatus,
     } satisfies PullRequestInfo;
   });
 
