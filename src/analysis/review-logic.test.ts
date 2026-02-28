@@ -551,3 +551,51 @@ describe("action field", () => {
     expect(needingReview[0].action).toBe("REVIEW");
   });
 });
+
+describe("pipelineStatus passthrough", () => {
+  const pipelineStatus = {
+    total: 2,
+    succeeded: 1,
+    failed: 1,
+    inProgress: 0,
+    other: 0,
+    runs: [
+      { id: 1, name: "CI", status: "Completed", result: "succeeded" as const },
+      { id: 2, name: "Deploy", status: "Completed", result: "failed" as const },
+    ],
+  };
+
+  it("passes pipelineStatus through to approved PRs", () => {
+    const pr = makePr({
+      pipelineStatus,
+      reviewers: [{ displayName: "Bob", uniqueName: "bob@example.com", vote: 10 }],
+    });
+    const { approved } = analyzePrs([pr]);
+    expect(approved[0].pipelineStatus).toEqual(pipelineStatus);
+  });
+
+  it("passes pipelineStatus through to needingReview PRs", () => {
+    const pr = makePr({ pipelineStatus });
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].pipelineStatus).toEqual(pipelineStatus);
+  });
+
+  it("passes pipelineStatus through to waitingOnAuthor PRs", () => {
+    const pr = makePr({
+      pipelineStatus,
+      threads: [{
+        id: 1,
+        publishedDate: new Date("2025-01-02"),
+        comments: [{ authorUniqueName: "bob@example.com", publishedDate: new Date("2025-01-03") }],
+      }],
+    });
+    const { waitingOnAuthor } = analyzePrs([pr]);
+    expect(waitingOnAuthor[0].pipelineStatus).toEqual(pipelineStatus);
+  });
+
+  it("passes undefined pipelineStatus when not set", () => {
+    const pr = makePr();
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].pipelineStatus).toBeUndefined();
+  });
+});
