@@ -103,6 +103,11 @@ export function createMockGitApi(options: MockGitApiOptions = {}): IGitApi {
       ? vi.fn().mockImplementation(options.getPullRequestByIdFn)
       : vi.fn().mockResolvedValue(prs[0] ?? {});
 
+  const getRepository = vi.fn().mockResolvedValue({
+    id: "00000000-0000-0000-0000-000000000001",
+    name: "mock-repo",
+  });
+
   return {
     getPullRequests,
     getThreads,
@@ -111,6 +116,7 @@ export function createMockGitApi(options: MockGitApiOptions = {}): IGitApi {
     updatePullRequest,
     createPullRequestLabel,
     getPullRequestById,
+    getRepository,
   } as unknown as IGitApi;
 }
 
