@@ -1,6 +1,6 @@
 import type { AnalysisResult, RepoSummaryStats } from "./analysis.js";
 
-export type OutputFormat = "markdown" | "dashboard" | "json" | "html";
+export type OutputFormat = "markdown" | "terminal" | "json" | "html";
 
 export interface JsonRepoReport {
   repoLabel: string;

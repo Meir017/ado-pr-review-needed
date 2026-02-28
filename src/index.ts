@@ -3,7 +3,7 @@ process.removeAllListeners("warning");
 process.on("warning", (w) => { if (w.name !== "DeprecationWarning" || (w as NodeJS.ErrnoException).code !== "DEP0169") console.warn(w); });
 
 import { Command } from "commander";
-import { getVersion, runSetup, runDashboard, runMarkdownExport } from "./pipeline.js";
+import { getVersion, runSetup, runMarkdownExport } from "./pipeline.js";
 import type { CliArgs } from "./pipeline.js";
 import * as log from "./log.js";
 
@@ -24,9 +24,8 @@ program
   .description("Analyze PRs and generate a markdown summary or dashboard")
   .option("--output <path>", "Output file path", "pr-review-summary.md")
   .option("--config <path>", "Path to a custom config file")
-  .option("--format <type>", "Output format: markdown, json, html", "markdown")
+  .option("--format <type>", "Output format: markdown, json, html, terminal", "markdown")
   .option("--webhook-url <url>", "Send JSON report to webhook URL")
-  .option("--dashboard", "Interactive terminal dashboard view", false)
   .option("--verbose", "Enable debug logging", false)
   .option("--notify", "Send notifications (default: true if webhooks configured)")
   .option("--no-notify", "Disable notifications")
@@ -34,11 +33,7 @@ program
   .option("--no-nudge", "Disable auto-nudge comments")
   .option("--dry-run", "Log actions without making changes", false)
   .action(async (opts: CliArgs) => {
-    if (opts.dashboard) {
-      await runDashboard(opts.verbose, opts.config);
-    } else {
-      await runMarkdownExport(opts);
-    }
+    await runMarkdownExport(opts);
   });
 
 program.parseAsync(process.argv).catch((err) => {

@@ -93,7 +93,7 @@ pr-review-needed run --output docs/review-status.md
 pr-review-needed run --config path/to/my-config.json
 
 # Interactive terminal dashboard
-pr-review-needed run --dashboard
+pr-review-needed run --format terminal
 
 # Enable verbose debug logging
 pr-review-needed run --verbose
@@ -105,7 +105,7 @@ pr-review-needed run --verbose
 |------|-------------|
 | `--output <path>` | Output file path (default: `pr-review-summary.md`) |
 | `--config <path>` | Path to a custom config file (default: `pr-review-config.json` in project root) |
-| `--dashboard` | Interactive terminal dashboard view |
+| `--format <type>` | Output format: `markdown`, `json`, `html`, `terminal` (default: `markdown`) |
 | `--verbose` | Enable debug logging |
 | `--notify` | Send notifications (default: true if webhooks configured) |
 | `--no-notify` | Disable notifications |
