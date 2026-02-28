@@ -126,6 +126,7 @@ export function analyzePrs(
         repository: repoLabel,
         size: pr.size,
         detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
+        pipelineStatus: pr.pipelineStatus,
       });
       continue;
     }
@@ -176,6 +177,7 @@ export function analyzePrs(
         repository: repoLabel,
         size: pr.size,
         detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
+        pipelineStatus: pr.pipelineStatus,
       });
       continue;
     }
@@ -213,6 +215,7 @@ export function analyzePrs(
       size: pr.size,
       detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
       reviewerNames: pr.reviewers.map((r) => r.displayName),
+      pipelineStatus: pr.pipelineStatus,
     });
   }
 

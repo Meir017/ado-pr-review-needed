@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getGitApiForOrg } from "./ado-client.js";
+import { getGitApiForOrg, getBuildApiForOrg } from "./ado-client.js";
 import { getMultiRepoConfig } from "./config.js";
 import { fetchOpenPullRequests, applyDetectedLabels } from "./fetch-prs.js";
 import { restartMergeForStalePrs } from "./automation/restart-merge.js";
@@ -166,9 +166,10 @@ async function processRepo(options: ProcessRepoOptions): Promise<RepoResult> {
   }
 
   const gitApi = await getGitApiForOrg(repo.orgUrl);
+  const buildApi = await getBuildApiForOrg(repo.orgUrl);
   const prs = await fetchOpenPullRequests(
     gitApi, repo.repository, repo.project, repo.orgUrl,
-    effectiveQuantifier, repo.patterns,
+    effectiveQuantifier, repo.patterns, buildApi,
   );
   log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
 

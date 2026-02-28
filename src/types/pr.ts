@@ -47,6 +47,24 @@ export interface ThreadInfo {
   publishedDate: Date;
 }
 
+export type PipelineOutcome = "succeeded" | "failed" | "partiallySucceeded" | "canceled" | "inProgress" | "notStarted" | "none";
+
+export interface PipelineRunInfo {
+  id: number;
+  name: string;
+  status: string;
+  result: PipelineOutcome;
+}
+
+export interface PipelineStatus {
+  total: number;
+  succeeded: number;
+  failed: number;
+  inProgress: number;
+  other: number;
+  runs: PipelineRunInfo[];
+}
+
 export interface PullRequestInfo {
   id: number;
   title: string;
@@ -65,6 +83,7 @@ export interface PullRequestInfo {
   sourceBranch?: string;
   targetBranch?: string;
   changedFiles?: string[];
+  pipelineStatus?: PipelineStatus;
 }
 
 export function identityUniqueName(identity: IdentityRef | undefined): string {
