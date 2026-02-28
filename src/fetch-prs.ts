@@ -202,6 +202,20 @@ export async function fetchOpenPullRequests(
 
   log.debug(`API returned ${prs.length} active pull requests`);
 
+  // Resolve repo name → GUID for the Build API (requires a GUID, not a name)
+  let repoGuid: string | undefined;
+  if (buildApi) {
+    try {
+      const repo = await withRetry("Resolve repository GUID", () =>
+        gitApi.getRepository(repositoryId, project),
+      );
+      repoGuid = repo.id;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.debug(`Failed to resolve repository GUID for ${repositoryId}: ${msg}`);
+    }
+  }
+
   const candidates = filterCandidates(prs);
   log.info(`Fetching threads for ${candidates.length} PRs in ${project}/${repositoryId} (concurrency: ${DEFAULT_CONCURRENCY})…`);
 
@@ -245,8 +259,8 @@ export async function fetchOpenPullRequests(
     }
 
     // Fetch pipeline status
-    const pipelineStatus = buildApi
-      ? await fetchPipelineStatus(buildApi, repositoryId, project, prId)
+    const pipelineStatus = buildApi && repoGuid
+      ? await fetchPipelineStatus(buildApi, repoGuid, project, prId)
       : undefined;
 
     return {
