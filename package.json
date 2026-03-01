@@ -1,5 +1,5 @@
 {
-  "name": "@meir017/pr-review-needed",
+  "name": "@meirblachman/pr-review-needed",
   "version": "0.1.22",
   "description": "Generates a markdown summary of Azure DevOps PRs needing review",
   "type": "module",
@@ -14,7 +14,8 @@
     "url": "https://github.com/meir017/ado-pr-review-needed.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "scripts": {
     "build": "tsc",
