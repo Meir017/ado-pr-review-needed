@@ -82,7 +82,7 @@ async function fetchChangedFiles(
   return paths;
 }
 
-function mapBuildResult(status: BuildStatus | undefined, result: BuildResult | undefined): PipelineOutcome {
+export function mapBuildResult(status: BuildStatus | undefined, result: BuildResult | undefined): PipelineOutcome {
   if (status === BuildStatus.InProgress) return "inProgress";
   if (status === BuildStatus.NotStarted) return "notStarted";
   switch (result) {
@@ -94,7 +94,7 @@ function mapBuildResult(status: BuildStatus | undefined, result: BuildResult | u
   }
 }
 
-async function fetchPipelineStatus(
+export async function fetchPipelineStatus(
   buildApi: IBuildApi,
   repositoryId: string,
   project: string,
