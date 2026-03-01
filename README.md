@@ -94,7 +94,7 @@ pr-review-needed run --output docs/review-status.md
 pr-review-needed run --config path/to/my-config.json
 
 # Interactive terminal dashboard
-pr-review-needed run --dashboard
+pr-review-needed run --format terminal
 
 # Generate JSON report
 pr-review-needed run --format json --output pr-review-summary.json
@@ -112,8 +112,7 @@ pr-review-needed run --verbose
 |------|-------------|
 | `--output <path>` | Output file path (default: `pr-review-summary.md`) |
 | `--config <path>` | Path to a custom config file (default: `pr-review-config.json` in project root) |
-| `--format <type>` | Output format: `markdown`, `json`, `html` (default: `markdown`) |
-| `--dashboard` | Interactive terminal dashboard view |
+| `--format <type>` | Output format: `markdown`, `json`, `html`, `terminal` (default: `markdown`) |
 | `--verbose` | Enable debug logging |
 | `--webhook-url <url>` | Send JSON report to a webhook URL |
 | `--notify` | Send notifications (default: true if webhooks configured) |

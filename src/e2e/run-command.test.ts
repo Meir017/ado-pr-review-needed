@@ -42,7 +42,6 @@ describe("e2e: run command — markdown output", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "markdown",
     });
@@ -65,7 +64,6 @@ describe("e2e: run command — markdown output", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "markdown",
     });
@@ -87,7 +85,6 @@ describe("e2e: run command — markdown output", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "markdown",
     });
@@ -108,7 +105,6 @@ describe("e2e: run command — markdown output", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "markdown",
     });
@@ -141,7 +137,6 @@ describe("e2e: run command — JSON output", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "json",
     });
@@ -182,7 +177,6 @@ describe("e2e: run command — HTML output", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "html",
     });
@@ -216,7 +210,6 @@ describe("e2e: run command — multi-repo", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "markdown",
     });
@@ -238,7 +231,6 @@ describe("e2e: run command — multi-repo", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "json",
     });
@@ -339,7 +331,6 @@ describe("e2e: run command — merge restart", () => {
     await runMarkdownExport({
       output: outputPath,
       verbose: false,
-      dashboard: false,
       config: testDir.configPath,
       format: "markdown",
     });

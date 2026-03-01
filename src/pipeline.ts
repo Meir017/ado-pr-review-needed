@@ -46,7 +46,6 @@ export function getVersion(): string {
 export interface CliArgs {
   output: string;
   verbose: boolean;
-  dashboard: boolean;
   config?: string;
   notify?: boolean;
   format?: string;
@@ -246,24 +245,26 @@ export async function runPipeline(configPath?: string): Promise<PipelineResult> 
   return { multiConfig, repos, isMultiRepo, results, merged, stats, allPrs, metrics, workload, totalPrs, totalRestarted, totalRestartFailed };
 }
 
-export async function runDashboard(verbose: boolean, configPath?: string): Promise<void> {
-  log.setVerbose(verbose);
-
-  const { multiConfig, repos, isMultiRepo, merged, stats, metrics, workload } = await runPipeline(configPath);
-
-  const repoLabel = isMultiRepo
-    ? `${repos.length} repositories`
-    : `${repos[0].project}/${repos[0].repository}`;
-  const output = renderDashboard({ analysis: merged, repoLabel, multiRepo: isMultiRepo, stats, staleness: multiConfig.staleness, metrics, workload });
-  console.log(output);
-
-  if (multiConfig.notifications) {
-    await sendNotifications(merged, stats, multiConfig.notifications, multiConfig.staleness);
-  }
-}
-
 export async function runMarkdownExport(args: CliArgs): Promise<void> {
   log.setVerbose(args.verbose);
+
+  const format = args.format ?? "markdown";
+
+  if (format === "terminal") {
+    const { multiConfig, repos, isMultiRepo, merged, stats, metrics, workload } = await runPipeline(args.config);
+
+    const repoLabel = isMultiRepo
+      ? `${repos.length} repositories`
+      : `${repos[0].project}/${repos[0].repository}`;
+    const output = renderDashboard({ analysis: merged, repoLabel, multiRepo: isMultiRepo, stats, staleness: multiConfig.staleness, metrics, workload });
+    console.log(output);
+
+    if (multiConfig.notifications) {
+      await sendNotifications(merged, stats, multiConfig.notifications, multiConfig.staleness);
+    }
+    return;
+  }
+
   log.heading("PR Review Needed");
 
   const { multiConfig, repos, isMultiRepo, results, merged, stats, metrics, workload, totalPrs } = await runPipeline(args.config);
@@ -271,8 +272,6 @@ export async function runMarkdownExport(args: CliArgs): Promise<void> {
   for (const r of results) {
     log.success(`${r.repoLabel}: ${r.analysis.approved.length} approved, ${r.analysis.needingReview.length} needing review, ${r.analysis.waitingOnAuthor.length} waiting on author`);
   }
-
-  const format = args.format ?? "markdown";
 
   if (format === "json" || format === "html") {
     const repoReports = results.map((r) => buildRepoReport(r, multiConfig));
