@@ -1,7 +1,7 @@
 # PR Review Needed
 
 [![CI](https://github.com/meir017/ado-pr-review-needed/actions/workflows/ci.yml/badge.svg)](https://github.com/meir017/ado-pr-review-needed/actions/workflows/ci.yml)
-[![GitHub npm package](https://img.shields.io/github/package-json/v/meir017/ado-pr-review-needed)](https://github.com/meir017/ado-pr-review-needed/pkgs/npm/pr-review-needed)
+[![npm](https://img.shields.io/npm/v/@meirblachman/pr-review-needed)](https://www.npmjs.com/package/@meirblachman/pr-review-needed)
 
 A TypeScript CLI tool that queries Azure DevOps for open pull requests and generates a markdown summary of PRs needing reviewer feedback — inspired by [dotnet/aspire#13834](https://github.com/dotnet/aspire/issues/13834).
 
@@ -27,38 +27,16 @@ A PR is considered **"needing review"** when:
 
 ## Installation
 
-### Quick One-Liner
-
 ```bash
-npm install -g @meir017/pr-review-needed --registry=https://npm.pkg.github.com
+npm install -g @meirblachman/pr-review-needed
 ```
 
-### From GitHub Packages
+Then run the CLI:
 
-1. Create or edit an `.npmrc` file in your project (or home directory) to point the `@meir017` scope at the GitHub registry:
-
-   ```
-   @meir017:registry=https://npm.pkg.github.com
-   ```
-
-2. Authenticate with the GitHub npm registry (you need a [personal access token](https://github.com/settings/tokens) with `read:packages` scope):
-
-   ```bash
-   npm login --registry=https://npm.pkg.github.com
-   ```
-
-3. Install the package:
-
-   ```bash
-   npm install -g @meir017/pr-review-needed
-   ```
-
-4. Run the CLI:
-
-   ```bash
-   pr-review-needed setup
-   pr-review-needed run
-   ```
+```bash
+pr-review-needed setup
+pr-review-needed run
+```
 
 ### From Source
 
