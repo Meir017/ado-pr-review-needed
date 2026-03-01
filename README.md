@@ -10,7 +10,8 @@ A TypeScript CLI tool that queries Azure DevOps for open pull requests and gener
 1. Authenticates to Azure DevOps using `AzureCliCredential` (no PAT required)
 2. Fetches all active, non-draft PRs (excluding those tagged `NO-MERGE`)
 3. Analyzes comment threads, reviewer votes, and push activity to determine which PRs are waiting on reviewers
-4. Generates a markdown file (or terminal dashboard) with PRs sorted by wait time
+4. Fetches pipeline/build status for each PR from the Azure DevOps Build API
+5. Generates a markdown file, HTML report, JSON report, or terminal dashboard with PRs sorted by wait time
 
 A PR is considered **"needing review"** when:
 - It has **no approving vote** (vote ≥ 5)
@@ -95,6 +96,12 @@ pr-review-needed run --config path/to/my-config.json
 # Interactive terminal dashboard
 pr-review-needed run --format terminal
 
+# Generate JSON report
+pr-review-needed run --format json --output pr-review-summary.json
+
+# Generate self-contained HTML report
+pr-review-needed run --format html --output pr-review-summary.html
+
 # Enable verbose debug logging
 pr-review-needed run --verbose
 ```
@@ -107,8 +114,12 @@ pr-review-needed run --verbose
 | `--config <path>` | Path to a custom config file (default: `pr-review-config.json` in project root) |
 | `--format <type>` | Output format: `markdown`, `json`, `html`, `terminal` (default: `markdown`) |
 | `--verbose` | Enable debug logging |
+| `--webhook-url <url>` | Send JSON report to a webhook URL |
 | `--notify` | Send notifications (default: true if webhooks configured) |
 | `--no-notify` | Disable notifications |
+| `--nudge` | Send nudge comments on stale PRs (default: true if configured) |
+| `--no-nudge` | Disable auto-nudge comments |
+| `--dry-run` | Log actions without making changes |
 
 ## Configuration
 
@@ -166,11 +177,11 @@ Each entry in the `repositories` array is an object with the following fields:
 
 _Last updated: 2025-02-09T10:00:00.000Z_
 
-| PR | Author | Size | Waiting for feedback |
-|---|---|---|---|
-| [#1234 - Fix config parsing](https://dev.azure.com/...) ❌ | Alice | 🔴 XL | 🔴 5 days ago |
-| [#1250 - Add new template](https://dev.azure.com/...) | Bob | 🟡 M | 🟡 2 days ago |
-| [#1260 - Update docs](https://dev.azure.com/...) | Carol | 🟢 S | 🟢 3 hours ago |
+| PR | Author | Size | Pipelines | Waiting for feedback |
+|---|---|---|---|---|
+| [#1234 - Fix config parsing](https://dev.azure.com/...) ❌ | Alice | 🔴 XL | 🔴 2/3 failed | 🔴 5 days ago |
+| [#1250 - Add new template](https://dev.azure.com/...) | Bob | 🟡 M | 🟢 2/2 passed | 🟡 2 days ago |
+| [#1260 - Update docs](https://dev.azure.com/...) | Carol | 🟢 S | 🟡 1/1 running | 🟢 3 hours ago |
 
 _Total: 3 PRs needing review._
 ```
@@ -179,10 +190,19 @@ _Total: 3 PRs needing review._
 
 | Icon | Meaning |
 |------|---------|
-| 🟢 | Waiting ≤ 1 day / Size XS or S |
-| 🟡 | Waiting 2–3 days / Size M |
-| 🔴 | Waiting > 3 days / Size L or XL |
+| 🟢 | Waiting ≤ 1 day / Size XS or S / All pipelines passed |
+| 🟡 | Waiting 2–3 days / Size M / Pipelines running |
+| 🔴 | Waiting > 3 days / Size L or XL / Pipeline failures |
 | ❌ | Has merge conflicts |
+
+### Output Formats
+
+| Format | Command | Description |
+|--------|---------|-------------|
+| Markdown | `--format markdown` (default) | PR tables with emoji badges |
+| JSON | `--format json` | Machine-readable report with all data |
+| HTML | `--format html` | Self-contained HTML dashboard with sorting, filtering, search, and CSV export |
+| Dashboard | `--dashboard` | Interactive terminal view with ANSI colors and clickable links |
 
 ## PR Quantifier
 
@@ -265,6 +285,21 @@ Staleness badges appear as a column in the markdown tables and inline in the ter
 
 Set `"enabled": false` to disable staleness badges entirely. Defaults are applied when the `staleness` section is omitted.
 
+## Pipeline Status
+
+Each PR's CI/CD pipeline status is automatically fetched from the Azure DevOps Build API and displayed across all output formats. The tool queries builds on the `refs/pull/{id}/merge` branch and de-duplicates to show only the latest run per pipeline definition.
+
+### Display
+
+| Badge | Meaning |
+|-------|---------|
+| 🟢 3/3 passed | All pipelines succeeded |
+| 🔴 2/3 failed | One or more pipelines failed |
+| 🟡 1/2 running | Pipelines still in progress |
+| ⚪ 2 pipeline(s) | Other/unknown status |
+
+The Pipelines column only appears when at least one PR has pipeline data. No additional configuration is required — pipeline status is fetched automatically whenever build data is available for a PR.
+
 ## Review Metrics
 
 The tool computes review cycle time metrics from existing PR thread and push data and adds a **📈 Review Metrics** section to the output:
@@ -331,27 +366,50 @@ npx vitest run --coverage
 
 ```
 src/
-├── index.ts                    # CLI entry point & argument parsing
-├── ado-client.ts               # Azure DevOps authentication (multi-org)
-├── config.ts                   # Configuration loading (multi-repo support)
-├── fetch-prs.ts                # Fetch & filter open PRs
-├── review-logic.ts             # Determine which PRs need review
-├── pr-quantifier.ts            # PR size classification (XS/S/M/L/XL)
-├── staleness.ts                # PR staleness badge computation
-├── metrics.ts                  # Review cycle time metrics
-├── reviewer-workload.ts        # Reviewer workload analysis
-├── generate-markdown.ts        # Markdown table generation (grouped by repo)
-├── dashboard.ts                # Interactive terminal dashboard
-├── git-detect.ts               # Auto-detect ADO repo from git remote
-├── graph-client.ts             # Microsoft Graph API for org/team resolution
-├── restart-merge.ts            # Restart merge for stale PRs
-├── file-patterns.ts            # Glob pattern matching for file labels
-├── concurrency.ts              # Batched concurrent operations
-├── retry.ts                    # Retry with exponential backoff
-├── log.ts                      # Structured colored logging
-├── types.ts                    # Shared type definitions
-├── notifications/
-│   ├── index.ts                # Notification orchestrator
-│   └── teams.ts                # Teams Adaptive Card formatter
-└── *.test.ts                   # Test files (vitest)
+├── index.ts                        # CLI entry point & argument parsing
+├── pipeline.ts                     # Main orchestrator (fetch → analyze → report)
+├── ado-client.ts                   # Azure DevOps authentication (Git + Build API, multi-org)
+├── config.ts                       # Configuration loading (multi-repo support)
+├── fetch-prs.ts                    # Fetch & filter open PRs + pipeline status
+├── graph-client.ts                 # Microsoft Graph API for org/team resolution
+├── git-detect.ts                   # Auto-detect ADO repo from git remote
+├── metrics.ts                      # Review cycle time metrics
+├── reviewer-workload.ts            # Reviewer workload analysis
+├── concurrency.ts                  # Batched concurrent operations
+├── retry.ts                        # Retry with exponential backoff
+├── log.ts                          # Structured colored logging
+├── types.ts                        # Barrel re-export of all types
+├── types/
+│   ├── pr.ts                       # PR, pipeline status, reviewer, quantifier types
+│   ├── analysis.ts                 # Analysis result types + summary stats
+│   ├── staleness.ts                # Staleness config & threshold types
+│   ├── reporting.ts                # JSON report, webhook config types
+│   ├── notifications.ts            # Notification config types
+│   ├── nudge.ts                    # Auto-nudge config types
+│   ├── dependency.ts               # PR dependency graph types
+│   └── dora.ts                     # DORA metrics types
+├── analysis/
+│   ├── review-logic.ts             # Determine which PRs need review
+│   ├── pr-quantifier.ts            # PR size classification (XS/S/M/L/XL)
+│   ├── staleness.ts                # PR staleness badge computation
+│   ├── file-patterns.ts            # Glob pattern matching for file labels
+│   └── pr-dependencies.ts          # PR dependency chain detection
+├── reporting/
+│   ├── generate-markdown.ts        # Markdown table generation
+│   ├── dashboard.ts                # Interactive terminal dashboard
+│   ├── report-data.ts              # Shared report data helpers
+│   ├── api-output.ts               # JSON report builder + webhook sender
+│   └── html-report/
+│       ├── generate-html.ts        # HTML report generator
+│       └── template.html           # Self-contained HTML dashboard template
+├── automation/
+│   ├── restart-merge.ts            # Restart merge for stale PRs
+│   ├── auto-nudge.ts               # Auto-nudge stale PRs with comments
+│   └── notifications/
+│       ├── index.ts                # Notification orchestrator
+│       └── teams.ts                # Teams Adaptive Card formatter
+├── dora/
+│   ├── compute-dora.ts             # DORA metrics computation
+│   └── history-store.ts            # DORA history persistence
+└── e2e/                            # End-to-end tests with mock ADO API
 ```
