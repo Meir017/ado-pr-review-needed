@@ -83,6 +83,7 @@ describe("generateHtmlReport", () => {
                 waitingSince: "2025-01-01",
                 hasMergeConflict: false,
                 isTeamMember: true,
+                isStarred: false,
                 action: "REVIEW",
               },
             ],
@@ -149,6 +150,7 @@ describe("generateHtmlReport", () => {
                   waitingSince: "2025-01-01",
                   hasMergeConflict: true,
                   isTeamMember: true,
+                  isStarred: false,
                   action: "REVIEW",
                 },
               ],
@@ -178,6 +180,7 @@ describe("generateHtmlReport", () => {
                   createdDate: "2025-01-01",
                   hasMergeConflict: false,
                   isTeamMember: true,
+                  isStarred: false,
                   action: "APPROVE",
                 },
               ],
@@ -204,13 +207,13 @@ describe("generateHtmlReport", () => {
           makeRepoReport({
             analysis: {
               needingReview: [
-                { id: 1, title: "NR conflict", author: "a", url: "u", waitingSince: "2025-01-01", hasMergeConflict: true, isTeamMember: true, action: "REVIEW" },
+                { id: 1, title: "NR conflict", author: "a", url: "u", waitingSince: "2025-01-01", hasMergeConflict: true, isTeamMember: true, isStarred: false, action: "REVIEW" },
               ],
               approved: [
-                { id: 2, title: "Approved conflict", author: "b", url: "u", createdDate: "2025-01-01", hasMergeConflict: true, isTeamMember: true, action: "APPROVE" },
+                { id: 2, title: "Approved conflict", author: "b", url: "u", createdDate: "2025-01-01", hasMergeConflict: true, isTeamMember: true, isStarred: false, action: "APPROVE" },
               ],
               waitingOnAuthor: [
-                { id: 3, title: "WOA conflict", author: "c", url: "u", lastReviewerActivityDate: "2025-01-01", hasMergeConflict: true, isTeamMember: true, action: "PENDING" },
+                { id: 3, title: "WOA conflict", author: "c", url: "u", lastReviewerActivityDate: "2025-01-01", hasMergeConflict: true, isTeamMember: true, isStarred: false, action: "PENDING" },
               ],
             },
           }),
@@ -245,6 +248,7 @@ describe("generateHtmlReport", () => {
                   waitingSince: "2025-01-01",
                   hasMergeConflict: false,
                   isTeamMember: true,
+                  isStarred: false,
                   action: "REVIEW",
                   pipelineStatus: { total: 2, succeeded: 1, failed: 1, inProgress: 0, other: 0, runs: [] },
                 },

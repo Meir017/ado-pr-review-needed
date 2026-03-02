@@ -599,3 +599,49 @@ describe("pipelineStatus passthrough", () => {
     expect(needingReview[0].pipelineStatus).toBeUndefined();
   });
 });
+
+describe("starred users", () => {
+  it("marks author as starred when in starredUsers set", () => {
+    const pr = makePr({ authorUniqueName: "alice@example.com" });
+    const starredUsers = new Set(["alice@example.com"]);
+    const { needingReview } = analyzePrs([pr], new Set(), undefined, new Set(), new Set(), new Set(), starredUsers);
+    expect(needingReview[0].isStarred).toBe(true);
+  });
+
+  it("marks author as not starred when not in starredUsers set", () => {
+    const pr = makePr({ authorUniqueName: "alice@example.com" });
+    const starredUsers = new Set(["bob@example.com"]);
+    const { needingReview } = analyzePrs([pr], new Set(), undefined, new Set(), new Set(), new Set(), starredUsers);
+    expect(needingReview[0].isStarred).toBe(false);
+  });
+
+  it("marks approved PR author as starred", () => {
+    const pr = makePr({
+      authorUniqueName: "alice@example.com",
+      reviewers: [{ displayName: "Bob", uniqueName: "bob@example.com", vote: 10 }],
+    });
+    const starredUsers = new Set(["alice@example.com"]);
+    const { approved } = analyzePrs([pr], new Set(), undefined, new Set(), new Set(), new Set(), starredUsers);
+    expect(approved[0].isStarred).toBe(true);
+  });
+
+  it("marks waiting-on-author PR author as starred", () => {
+    const pr = makePr({
+      authorUniqueName: "alice@example.com",
+      threads: [{
+        id: 1,
+        publishedDate: new Date("2025-01-02"),
+        comments: [{ authorUniqueName: "bob@example.com", publishedDate: new Date("2025-01-03") }],
+      }],
+    });
+    const starredUsers = new Set(["alice@example.com"]);
+    const { waitingOnAuthor } = analyzePrs([pr], new Set(), undefined, new Set(), new Set(), new Set(), starredUsers);
+    expect(waitingOnAuthor[0].isStarred).toBe(true);
+  });
+
+  it("defaults isStarred to false when starredUsers is empty", () => {
+    const pr = makePr();
+    const { needingReview } = analyzePrs([pr]);
+    expect(needingReview[0].isStarred).toBe(false);
+  });
+});

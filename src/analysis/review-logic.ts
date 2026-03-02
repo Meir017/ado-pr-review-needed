@@ -92,6 +92,7 @@ export function analyzePrs(
   ignoredUsers: Set<string> = new Set(),
   botUsers: Set<string> = new Set(),
   aiBotUsers: Set<string> = new Set(),
+  starredUsers: Set<string> = new Set(),
 ): AnalysisResult {
   const approved: PrApproved[] = [];
   const needingReview: PrNeedingReview[] = [];
@@ -105,6 +106,7 @@ export function analyzePrs(
     }
 
     const isTeamMember = teamMembers.size === 0 || teamMembers.has(pr.authorUniqueName);
+    const isStarred = starredUsers.has(pr.authorUniqueName);
 
     // Skip if any reviewer approved (vote >= 5)
     const isApproved = pr.reviewers.some(
@@ -122,6 +124,7 @@ export function analyzePrs(
         createdDate: pr.createdDate,
         hasMergeConflict,
         isTeamMember,
+        isStarred,
         action: determineAction("approved", pr.authorUniqueName, botUsers, pr.author, aiBotUsers),
         repository: repoLabel,
         size: pr.size,
@@ -173,6 +176,7 @@ export function analyzePrs(
         lastReviewerActivityDate: lastReviewerActivity!.date,
         hasMergeConflict,
         isTeamMember,
+        isStarred,
         action: determineAction("waitingOnAuthor", pr.authorUniqueName, botUsers, pr.author, aiBotUsers),
         repository: repoLabel,
         size: pr.size,
@@ -210,6 +214,7 @@ export function analyzePrs(
       waitingSince,
       hasMergeConflict,
       isTeamMember,
+      isStarred,
       action: determineAction("needingReview", pr.authorUniqueName, botUsers, pr.author, aiBotUsers),
       repository: repoLabel,
       size: pr.size,

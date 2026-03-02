@@ -342,6 +342,16 @@
         }
       }
     },
+    "starredUsers": {
+      "type": "array",
+      "description": "List of user email addresses or ADO unique names to highlight with a ⭐ badge across all reports. Use this to draw attention to key contributors, direct reports, or users of interest.",
+      "items": {
+        "type": "string",
+        "description": "An email address or ADO unique name identifying a starred user.",
+        "examples": ["alice@example.com", "bob@example.com"]
+      },
+      "default": []
+    },
     "dora": {
       "type": "object",
       "description": "Configuration for DORA metrics (Change Lead Time, Deployment Frequency, Change Failure Rate, Mean Time to Restore).",

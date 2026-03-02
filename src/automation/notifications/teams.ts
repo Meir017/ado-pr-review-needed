@@ -38,9 +38,10 @@ interface TeamsPayload {
   }>;
 }
 
-function formatPrLine(pr: { id: number; title: string; author: string; url: string }, badge?: string | null): string {
+function formatPrLine(pr: { id: number; title: string; author: string; url: string; isStarred?: boolean }, badge?: string | null): string {
   const stale = badge ? ` ${badge}` : "";
-  return `[#${pr.id} - ${pr.title}](${pr.url}) — ${pr.author}${stale}`;
+  const starBadge = pr.isStarred ? "⭐ " : "";
+  return `[#${pr.id} - ${pr.title}](${pr.url}) — ${starBadge}${pr.author}${stale}`;
 }
 
 export function buildTeamsPayload(

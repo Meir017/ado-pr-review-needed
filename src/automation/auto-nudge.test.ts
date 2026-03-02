@@ -50,6 +50,7 @@ function makePr(overrides: Partial<PrNeedingReview> = {}): PrNeedingReview {
     waitingSince: new Date("2025-01-01"),
     hasMergeConflict: false,
     isTeamMember: true,
+    isStarred: false,
     action: "REVIEW",
     reviewerNames: ["Bob", "Charlie"],
     ...overrides,

@@ -13,6 +13,7 @@ function makePrNeeding(
     waitingSince: new Date(),
     hasMergeConflict: false,
     isTeamMember: true,
+    isStarred: false,
     action: "REVIEW",
     ...overrides,
   };
@@ -29,6 +30,7 @@ function makePrWaiting(
     lastReviewerActivityDate: new Date(),
     hasMergeConflict: false,
     isTeamMember: true,
+    isStarred: false,
     action: "PENDING",
     ...overrides,
   };
@@ -45,6 +47,7 @@ function makePrApproved(
     createdDate: new Date(),
     hasMergeConflict: false,
     isTeamMember: true,
+    isStarred: false,
     action: "APPROVE",
     ...overrides,
   };
@@ -470,6 +473,43 @@ describe("generateMarkdown", () => {
         mergeRestartFailed: 0,
       } });
       expect(md).not.toContain("## 📊 Statistics per Repository");
+    });
+  });
+
+  describe("starred users", () => {
+    it("shows ⭐ next to starred author in needing review section", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        needingReview: [makePrNeeding({ id: 1, author: "StarAlice", isStarred: true })],
+      }) });
+      expect(md).toContain("⭐ StarAlice");
+    });
+
+    it("shows ⭐ next to starred author in approved section", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        approved: [makePrApproved({ id: 1, author: "StarEve", isStarred: true })],
+      }) });
+      expect(md).toContain("⭐ StarEve");
+    });
+
+    it("shows ⭐ next to starred author in waiting on author section", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        waitingOnAuthor: [makePrWaiting({ id: 1, author: "StarCarol", isStarred: true })],
+      }) });
+      expect(md).toContain("⭐ StarCarol");
+    });
+
+    it("does not show ⭐ for non-starred authors", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        needingReview: [makePrNeeding({ id: 1, author: "RegularBob", isStarred: false })],
+      }) });
+      expect(md).not.toContain("⭐");
+    });
+
+    it("shows ⭐ in multi-repo mode", () => {
+      const md = generateMarkdown({ analysis: makeAnalysis({
+        needingReview: [makePrNeeding({ id: 1, author: "StarAlice", isStarred: true, repository: "Project/Repo" })],
+      }), multiRepo: true });
+      expect(md).toContain("⭐ StarAlice");
     });
   });
 });

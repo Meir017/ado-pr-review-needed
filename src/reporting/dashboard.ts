@@ -82,13 +82,15 @@ function renderPrRow(
   detectedLabels?: string[],
   stalenessBadge?: string | null,
   pipelineStatus?: PipelineStatus,
+  isStarred?: boolean,
 ): string {
   const { color, label } = ageColor(date, now);
   const ageText = `${color}${BOLD}${label}${RESET}`;
   const prId = `${DIM}#${id}${RESET}`;
   const prTitle = truncate(title.replace(/[\r\n]+/g, " ").trim(), 60);
   const prLink = link(`${prId} ${WHITE}${prTitle}${RESET}`, url);
-  const authorText = `${DIM}${truncate(author, 20)}${RESET}`;
+  const starBadge = isStarred ? "⭐ " : "";
+  const authorText = `${DIM}${starBadge}${truncate(author, 20)}${RESET}`;
   const conflict = conflictIndicator(hasMergeConflict);
   const sizeText = formatSize(size);
   const actionText = formatAction(action);
@@ -105,7 +107,7 @@ function renderSection<T>(
   title: string,
   bg: string,
   items: T[],
-  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo; detectedLabels?: string[]; stalenessBadge?: string | null; pipelineStatus?: PipelineStatus },
+  getRow: (item: T) => { id: number; title: string; author: string; url: string; date: Date; hasMergeConflict: boolean; action: PrAction; size?: PrSizeInfo; detectedLabels?: string[]; stalenessBadge?: string | null; pipelineStatus?: PipelineStatus; isStarred?: boolean },
   now: Date,
   getRepo?: (item: T) => string | undefined,
 ): string {
@@ -128,15 +130,15 @@ function renderSection<T>(
     for (const [repo, repoItems] of groups) {
       lines.push(`  ${BOLD}${CYAN}📂 ${repo}${RESET}`);
       for (const item of repoItems) {
-        const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge, pipelineStatus } = getRow(item);
-        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge, pipelineStatus));
+        const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge, pipelineStatus, isStarred } = getRow(item);
+        lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge, pipelineStatus, isStarred));
       }
       lines.push("");
     }
   } else {
     for (const item of items) {
-      const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge, pipelineStatus } = getRow(item);
-      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge, pipelineStatus));
+      const { id, title, author, url, date, hasMergeConflict, action, size, detectedLabels, stalenessBadge, pipelineStatus, isStarred } = getRow(item);
+      lines.push(renderPrRow(id, title, author, url, date, hasMergeConflict, now, action, size, detectedLabels, stalenessBadge, pipelineStatus, isStarred));
     }
     lines.push("");
   }
@@ -162,7 +164,8 @@ function renderWorkloadSummary(workload: ReviewerWorkload[]): string {
   const top5 = workload.slice(0, 5);
   for (const r of top5) {
     const responseText = r.avgResponseTimeInDays !== null ? `${r.avgResponseTimeInDays}d avg` : "no response";
-    lines.push(`  ${r.loadIndicator} ${BOLD}${r.displayName}${RESET} — ${r.pendingReviewCount} pending / ${r.assignedPrCount} assigned (${responseText})`);
+    const starBadge = r.isStarred ? "⭐ " : "";
+    lines.push(`  ${r.loadIndicator} ${BOLD}${starBadge}${r.displayName}${RESET} — ${r.pendingReviewCount} pending / ${r.assignedPrCount} assigned (${responseText})`);
   }
   lines.push("");
   return lines.join("\n");
@@ -199,15 +202,15 @@ export function renderDashboard(options: RenderDashboardOptions): string {
     : undefined;
 
   lines.push(renderSection("✅ Approved", BG_GREEN, approved,
-    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.createdDate, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus }),
+    (pr: PrApproved) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.createdDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.createdDate, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus, isStarred: pr.isStarred }),
     now, repoGetter));
 
   lines.push(renderSection("👀 Needing Review", BG_YELLOW, needingReview,
-    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.waitingSince, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus }),
+    (pr: PrNeedingReview) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.waitingSince, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.waitingSince, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus, isStarred: pr.isStarred }),
     now, repoGetter));
 
   lines.push(renderSection("✍️  Waiting on Author", BG_RED, waitingOnAuthor,
-    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.lastReviewerActivityDate, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus }),
+    (pr: PrWaitingOnAuthor) => ({ id: pr.id, title: pr.title, author: pr.author, url: pr.url, date: pr.lastReviewerActivityDate, hasMergeConflict: pr.hasMergeConflict, action: pr.action, size: pr.size, detectedLabels: pr.detectedLabels, stalenessBadge: computeStalenessBadge(pr.lastReviewerActivityDate, stalenessThresholds, now), pipelineStatus: pr.pipelineStatus, isStarred: pr.isStarred }),
     now, repoGetter));
 
   if (metrics) {
