@@ -48,6 +48,14 @@ describe("package integration: bundle integrity", () => {
     const bundle = readFileSync(BUNDLE_PATH, "utf-8");
     expect(bundle).not.toContain("__HTML_TEMPLATE__");
   });
+
+  it("does not bundle CJS require() calls (prevents 'Dynamic require' errors)", () => {
+    const bundle = readFileSync(BUNDLE_PATH, "utf-8");
+    expect(bundle).not.toContain("Dynamic require of");
+    // No raw require() calls should exist — all deps must be ESM imports
+    const requireCalls = bundle.match(/\brequire\s*\(/g) ?? [];
+    expect(requireCalls).toHaveLength(0);
+  });
 });
 
 // ---------- CLI subprocess tests ----------
