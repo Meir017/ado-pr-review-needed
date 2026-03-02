@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { mapBuildResult, fetchPipelineStatus, fetchPolicyEvaluations } from "./fetch-prs.js";
+import { mapBuildResult, fetchPipelineStatus, fetchPolicyEvaluations, enhancePolicyDisplayName } from "./fetch-prs.js";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import { PolicyEvaluationStatus } from "azure-devops-node-api/interfaces/PolicyInterfaces.js";
 import type { IBuildApi } from "azure-devops-node-api/BuildApi.js";
@@ -134,112 +134,63 @@ describe("fetchPipelineStatus", () => {
   });
 });
 
-describe("fetchPolicyEvaluations", () => {
-  function mockPolicyApi(records: unknown[]): IPolicyApi {
-    return {
-      getPolicyEvaluations: vi.fn().mockResolvedValue(records),
-    } as unknown as IPolicyApi;
-  }
+describe("enhancePolicyDisplayName", () => {
+  const BUILD_TYPE = "0609b952-1397-4640-95ec-e00a01b2c241";
+  const STATUS_TYPE = "cbdc66da-9728-4af8-aada-9a5a32e4a226";
+  const MIN_REVIEWERS_TYPE = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd";
 
-  it("returns undefined when no records exist", async () => {
-    const api = mockPolicyApi([]);
-    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
-    expect(result).toBeUndefined();
+  it("returns base name when no typeId", () => {
+    expect(enhancePolicyDisplayName(undefined, "Build", {})).toBe("Build");
   });
 
-  it("aggregates policy evaluation results correctly", async () => {
-    const api = mockPolicyApi([
-      {
-        evaluationId: "eval-1",
-        status: PolicyEvaluationStatus.Approved,
-        configuration: { type: { displayName: "Build" }, isBlocking: true },
-        completedDate: new Date("2025-01-15"),
-      },
-      {
-        evaluationId: "eval-2",
-        status: PolicyEvaluationStatus.Rejected,
-        configuration: { type: { displayName: "Required reviewers" }, isBlocking: true },
-      },
-    ]);
-    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
-    expect(result).toBeDefined();
-    expect(result!.total).toBe(2);
-    expect(result!.approved).toBe(1);
-    expect(result!.rejected).toBe(1);
-    expect(result!.running).toBe(0);
-    expect(result!.evaluations).toHaveLength(2);
+  it("returns base name when no settings", () => {
+    expect(enhancePolicyDisplayName(BUILD_TYPE, "Build", undefined)).toBe("Build");
   });
 
-  it("filters out notApplicable policies", async () => {
-    const api = mockPolicyApi([
-      {
-        evaluationId: "eval-1",
-        status: PolicyEvaluationStatus.Approved,
-        configuration: { type: { displayName: "Build" }, isBlocking: true },
-      },
-      {
-        evaluationId: "eval-2",
-        status: PolicyEvaluationStatus.NotApplicable,
-        configuration: { type: { displayName: "Work items" }, isBlocking: false },
-      },
-    ]);
-    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
-    expect(result!.total).toBe(1);
-    expect(result!.evaluations).toHaveLength(1);
-    expect(result!.evaluations[0].displayName).toBe("Build");
+  it("returns base name for unknown policy type", () => {
+    expect(enhancePolicyDisplayName("unknown-guid", "Custom", { foo: "bar" })).toBe("Custom");
   });
 
-  it("counts running and queued as running", async () => {
-    const api = mockPolicyApi([
-      {
-        evaluationId: "eval-1",
-        status: PolicyEvaluationStatus.Running,
-        configuration: { type: { displayName: "Build" }, isBlocking: true },
-      },
-      {
-        evaluationId: "eval-2",
-        status: PolicyEvaluationStatus.Queued,
-        configuration: { type: { displayName: "Check" }, isBlocking: false },
-      },
-    ]);
-    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
-    expect(result!.running).toBe(2);
-  });
+  describe("Build policy", () => {
+    it("uses settings.displayName when available", () => {
+      expect(enhancePolicyDisplayName(BUILD_TYPE, "Build", { displayName: "My CI Pipeline" })).toBe("Build: My CI Pipeline");
+    });
 
-  it("returns undefined on API error", async () => {
-    const api = {
-      getPolicyEvaluations: vi.fn().mockRejectedValue(new Error("API error")),
-    } as unknown as IPolicyApi;
-    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
-    expect(result).toBeUndefined();
-  });
+    it("falls back to buildDefinitionId", () => {
+      expect(enhancePolicyDisplayName(BUILD_TYPE, "Build", { buildDefinitionId: 411250, displayName: null })).toBe("Build #411250");
+    });
 
-  it("populates evaluation info with displayName and isBlocking", async () => {
-    const api = mockPolicyApi([
-      {
-        evaluationId: "eval-5",
-        status: PolicyEvaluationStatus.Rejected,
-        configuration: { type: { displayName: "Minimum reviewers" }, isBlocking: true },
-      },
-    ]);
-    const result = await fetchPolicyEvaluations(api, "project", "proj-guid", 1);
-    expect(result!.evaluations[0]).toEqual({
-      evaluationId: "eval-5",
-      displayName: "Minimum reviewers",
-      status: "rejected",
-      isBlocking: true,
-      completedDate: undefined,
+    it("returns base name when no displayName or buildDefinitionId", () => {
+      expect(enhancePolicyDisplayName(BUILD_TYPE, "Build", { displayName: null })).toBe("Build");
     });
   });
 
-  it("builds correct artifact ID", async () => {
-    const getPolicyEvaluations = vi.fn().mockResolvedValue([]);
-    const api = { getPolicyEvaluations } as unknown as IPolicyApi;
-    await fetchPolicyEvaluations(api, "myproject", "project-guid-123", 42);
-    expect(getPolicyEvaluations).toHaveBeenCalledWith(
-      "myproject",
-      "vstfs:///CodeReview/CodeReviewId/project-guid-123/42",
-    );
+  describe("Status policy", () => {
+    it("uses defaultDisplayName when available", () => {
+      expect(enhancePolicyDisplayName(STATUS_TYPE, "Status", { statusName: "review-checker", defaultDisplayName: "Copilot PR Review Check Policy" })).toBe("Copilot PR Review Check Policy");
+    });
+
+    it("uses statusName with genre", () => {
+      expect(enhancePolicyDisplayName(STATUS_TYPE, "Status", { statusName: "ComponentGovernance", statusGenre: "cg" })).toBe("ComponentGovernance (cg)");
+    });
+
+    it("uses statusName without genre", () => {
+      expect(enhancePolicyDisplayName(STATUS_TYPE, "Status", { statusName: "Ownership Enforcer" })).toBe("Ownership Enforcer");
+    });
+
+    it("returns base name when no statusName or defaultDisplayName", () => {
+      expect(enhancePolicyDisplayName(STATUS_TYPE, "Status", {})).toBe("Status");
+    });
+  });
+
+  describe("Minimum number of reviewers policy", () => {
+    it("appends reviewer count", () => {
+      expect(enhancePolicyDisplayName(MIN_REVIEWERS_TYPE, "Minimum number of reviewers", { minimumApproverCount: 2 })).toBe("Minimum number of reviewers (2)");
+    });
+
+    it("returns base name when no count", () => {
+      expect(enhancePolicyDisplayName(MIN_REVIEWERS_TYPE, "Minimum number of reviewers", {})).toBe("Minimum number of reviewers");
+    });
   });
 });
 

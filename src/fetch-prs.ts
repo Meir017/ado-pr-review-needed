@@ -186,6 +186,48 @@ function mapPolicyEvaluationStatus(status: PolicyEvaluationStatus | undefined): 
   }
 }
 
+// Well-known policy type GUIDs
+const POLICY_TYPE_BUILD = "0609b952-1397-4640-95ec-e00a01b2c241";
+const POLICY_TYPE_STATUS = "cbdc66da-9728-4af8-aada-9a5a32e4a226";
+const POLICY_TYPE_MIN_REVIEWERS = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd";
+
+/**
+ * Enhance generic policy display names using policy-type-specific settings.
+ * For example, "Build" becomes "Build: My Pipeline Name" when settings.displayName is set.
+ */
+export function enhancePolicyDisplayName(typeId: string | undefined, baseDisplayName: string, settings: Record<string, unknown> | undefined): string {
+  if (!typeId || !settings) return baseDisplayName;
+
+  switch (typeId) {
+    case POLICY_TYPE_BUILD: {
+      // Build policies may have a displayName or buildDefinitionId in settings
+      const name = settings.displayName as string | null | undefined;
+      if (name) return `Build: ${name}`;
+      const defId = settings.buildDefinitionId as number | undefined;
+      if (defId != null) return `Build #${defId}`;
+      return baseDisplayName;
+    }
+    case POLICY_TYPE_STATUS: {
+      // Status policies have statusName and optionally statusGenre
+      const statusName = settings.statusName as string | undefined;
+      const defaultName = settings.defaultDisplayName as string | undefined;
+      if (defaultName) return defaultName;
+      if (statusName) {
+        const genre = settings.statusGenre as string | undefined;
+        return genre ? `${statusName} (${genre})` : statusName;
+      }
+      return baseDisplayName;
+    }
+    case POLICY_TYPE_MIN_REVIEWERS: {
+      const count = settings.minimumApproverCount as number | undefined;
+      if (count != null) return `${baseDisplayName} (${count})`;
+      return baseDisplayName;
+    }
+    default:
+      return baseDisplayName;
+  }
+}
+
 export async function fetchPolicyEvaluations(
   policyApi: IPolicyApi,
   project: string,
@@ -212,9 +254,13 @@ export async function fetchPolicyEvaluations(
       // Skip non-applicable policies
       if (status === "notApplicable") continue;
 
+      const baseDisplayName = rec.configuration?.type?.displayName ?? "Unknown Policy";
+      const typeId = rec.configuration?.type?.id;
+      const displayName = enhancePolicyDisplayName(typeId, baseDisplayName, rec.configuration?.settings);
+
       evaluations.push({
         evaluationId: rec.evaluationId ?? "",
-        displayName: rec.configuration?.type?.displayName ?? "Unknown Policy",
+        displayName,
         status,
         isBlocking: rec.configuration?.isBlocking ?? false,
         completedDate: rec.completedDate ? rec.completedDate.toISOString() : undefined,
