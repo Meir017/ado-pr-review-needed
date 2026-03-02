@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
-import { mapBuildResult, fetchPipelineStatus } from "./fetch-prs.js";
+import { mapBuildResult, fetchPipelineStatus, fetchPolicyEvaluations } from "./fetch-prs.js";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
+import { PolicyEvaluationStatus } from "azure-devops-node-api/interfaces/PolicyInterfaces.js";
 import type { IBuildApi } from "azure-devops-node-api/BuildApi.js";
+import type { IPolicyApi } from "azure-devops-node-api/PolicyApi.js";
 
 // Speed up retry delays for tests
 vi.mock("./retry.js", async (importOriginal) => {
@@ -129,5 +131,223 @@ describe("fetchPipelineStatus", () => {
       status: "Completed",
       result: "failed",
     });
+  });
+});
+
+describe("fetchPolicyEvaluations", () => {
+  function mockPolicyApi(records: unknown[]): IPolicyApi {
+    return {
+      getPolicyEvaluations: vi.fn().mockResolvedValue(records),
+    } as unknown as IPolicyApi;
+  }
+
+  it("returns undefined when no records exist", async () => {
+    const api = mockPolicyApi([]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result).toBeUndefined();
+  });
+
+  it("aggregates policy evaluation results correctly", async () => {
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-1",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { displayName: "Build" }, isBlocking: true },
+        completedDate: new Date("2025-01-15"),
+      },
+      {
+        evaluationId: "eval-2",
+        status: PolicyEvaluationStatus.Rejected,
+        configuration: { type: { displayName: "Required reviewers" }, isBlocking: true },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result).toBeDefined();
+    expect(result!.total).toBe(2);
+    expect(result!.approved).toBe(1);
+    expect(result!.rejected).toBe(1);
+    expect(result!.running).toBe(0);
+    expect(result!.evaluations).toHaveLength(2);
+  });
+
+  it("filters out notApplicable policies", async () => {
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-1",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { displayName: "Build" }, isBlocking: true },
+      },
+      {
+        evaluationId: "eval-2",
+        status: PolicyEvaluationStatus.NotApplicable,
+        configuration: { type: { displayName: "Work items" }, isBlocking: false },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result!.total).toBe(1);
+    expect(result!.evaluations).toHaveLength(1);
+    expect(result!.evaluations[0].displayName).toBe("Build");
+  });
+
+  it("counts running and queued as running", async () => {
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-1",
+        status: PolicyEvaluationStatus.Running,
+        configuration: { type: { displayName: "Build" }, isBlocking: true },
+      },
+      {
+        evaluationId: "eval-2",
+        status: PolicyEvaluationStatus.Queued,
+        configuration: { type: { displayName: "Check" }, isBlocking: false },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result!.running).toBe(2);
+  });
+
+  it("returns undefined on API error", async () => {
+    const api = {
+      getPolicyEvaluations: vi.fn().mockRejectedValue(new Error("API error")),
+    } as unknown as IPolicyApi;
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result).toBeUndefined();
+  });
+
+  it("populates evaluation info with displayName and isBlocking", async () => {
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-5",
+        status: PolicyEvaluationStatus.Rejected,
+        configuration: { type: { displayName: "Minimum reviewers" }, isBlocking: true },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "proj-guid", 1);
+    expect(result!.evaluations[0]).toEqual({
+      evaluationId: "eval-5",
+      displayName: "Minimum reviewers",
+      status: "rejected",
+      isBlocking: true,
+      completedDate: undefined,
+    });
+  });
+
+  it("builds correct artifact ID", async () => {
+    const getPolicyEvaluations = vi.fn().mockResolvedValue([]);
+    const api = { getPolicyEvaluations } as unknown as IPolicyApi;
+    await fetchPolicyEvaluations(api, "myproject", "project-guid-123", 42);
+    expect(getPolicyEvaluations).toHaveBeenCalledWith(
+      "myproject",
+      "vstfs:///CodeReview/CodeReviewId/project-guid-123/42",
+    );
+  });
+});
+
+describe("fetchPolicyEvaluations", () => {
+  function mockPolicyApi(records: unknown[]): IPolicyApi {
+    return {
+      getPolicyEvaluations: vi.fn().mockResolvedValue(records),
+    } as unknown as IPolicyApi;
+  }
+
+  it("returns undefined when no records exist", async () => {
+    const api = mockPolicyApi([]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result).toBeUndefined();
+  });
+
+  it("aggregates policy evaluation results correctly", async () => {
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-1",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { displayName: "Build" }, isBlocking: true },
+        completedDate: new Date("2025-01-15"),
+      },
+      {
+        evaluationId: "eval-2",
+        status: PolicyEvaluationStatus.Rejected,
+        configuration: { type: { displayName: "Required reviewers" }, isBlocking: true },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result).toBeDefined();
+    expect(result!.total).toBe(2);
+    expect(result!.approved).toBe(1);
+    expect(result!.rejected).toBe(1);
+    expect(result!.running).toBe(0);
+    expect(result!.evaluations).toHaveLength(2);
+  });
+
+  it("filters out notApplicable policies", async () => {
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-1",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { displayName: "Build" }, isBlocking: true },
+      },
+      {
+        evaluationId: "eval-2",
+        status: PolicyEvaluationStatus.NotApplicable,
+        configuration: { type: { displayName: "Work items" }, isBlocking: false },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result!.total).toBe(1);
+    expect(result!.evaluations).toHaveLength(1);
+    expect(result!.evaluations[0].displayName).toBe("Build");
+  });
+
+  it("counts running and queued as running", async () => {
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-1",
+        status: PolicyEvaluationStatus.Running,
+        configuration: { type: { displayName: "Build" }, isBlocking: true },
+      },
+      {
+        evaluationId: "eval-2",
+        status: PolicyEvaluationStatus.Queued,
+        configuration: { type: { displayName: "Check" }, isBlocking: false },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result!.running).toBe(2);
+  });
+
+  it("returns undefined on API error", async () => {
+    const api = {
+      getPolicyEvaluations: vi.fn().mockRejectedValue(new Error("API error")),
+    } as unknown as IPolicyApi;
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result).toBeUndefined();
+  });
+
+  it("populates evaluation info with displayName and isBlocking", async () => {
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-5",
+        status: PolicyEvaluationStatus.Rejected,
+        configuration: { type: { displayName: "Minimum reviewers" }, isBlocking: true },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "proj-guid", 1);
+    expect(result!.evaluations[0]).toEqual({
+      evaluationId: "eval-5",
+      displayName: "Minimum reviewers",
+      status: "rejected",
+      isBlocking: true,
+      completedDate: undefined,
+    });
+  });
+
+  it("builds correct artifact ID", async () => {
+    const getPolicyEvaluations = vi.fn().mockResolvedValue([]);
+    const api = { getPolicyEvaluations } as unknown as IPolicyApi;
+    await fetchPolicyEvaluations(api, "myproject", "project-guid-123", 42);
+    expect(getPolicyEvaluations).toHaveBeenCalledWith(
+      "myproject",
+      "vstfs:///CodeReview/CodeReviewId/project-guid-123/42",
+    );
   });
 });

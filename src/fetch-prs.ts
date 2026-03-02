@@ -1,5 +1,6 @@
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 import type { IBuildApi } from "azure-devops-node-api/BuildApi.js";
+import type { IPolicyApi } from "azure-devops-node-api/PolicyApi.js";
 import {
   PullRequestStatus,
   type GitPullRequest,
@@ -8,7 +9,10 @@ import {
   BuildResult,
   BuildStatus,
 } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
-import type { PullRequestInfo, ThreadInfo, ThreadComment, QuantifierConfig, PipelineStatus, PipelineRunInfo, PipelineOutcome } from "./types.js";
+import {
+  PolicyEvaluationStatus,
+} from "azure-devops-node-api/interfaces/PolicyInterfaces.js";
+import type { PullRequestInfo, ThreadInfo, ThreadComment, QuantifierConfig, PipelineStatus, PipelineRunInfo, PipelineOutcome, PolicyStatus, PolicyEvaluationInfo, PolicyEvaluationStatusType } from "./types.js";
 import { identityUniqueName } from "./types.js";
 import * as log from "./log.js";
 import { withRetry } from "./retry.js";
@@ -170,6 +174,70 @@ export async function fetchPipelineStatus(
   }
 }
 
+function mapPolicyEvaluationStatus(status: PolicyEvaluationStatus | undefined): PolicyEvaluationStatusType {
+  switch (status) {
+    case PolicyEvaluationStatus.Queued: return "queued";
+    case PolicyEvaluationStatus.Running: return "running";
+    case PolicyEvaluationStatus.Approved: return "approved";
+    case PolicyEvaluationStatus.Rejected: return "rejected";
+    case PolicyEvaluationStatus.NotApplicable: return "notApplicable";
+    case PolicyEvaluationStatus.Broken: return "broken";
+    default: return "queued";
+  }
+}
+
+export async function fetchPolicyEvaluations(
+  policyApi: IPolicyApi,
+  project: string,
+  projectId: string,
+  pullRequestId: number,
+): Promise<PolicyStatus | undefined> {
+  try {
+    const artifactId = `vstfs:///CodeReview/CodeReviewId/${projectId}/${pullRequestId}`;
+    const records = await withRetry(
+      `Fetch policy evaluations for PR #${pullRequestId}`,
+      () => policyApi.getPolicyEvaluations(project, artifactId),
+    );
+
+    if (!records || records.length === 0) return undefined;
+
+    const evaluations: PolicyEvaluationInfo[] = [];
+    let approved = 0;
+    let rejected = 0;
+    let running = 0;
+    let other = 0;
+
+    for (const rec of records) {
+      const status = mapPolicyEvaluationStatus(rec.status);
+      // Skip non-applicable policies
+      if (status === "notApplicable") continue;
+
+      evaluations.push({
+        evaluationId: rec.evaluationId ?? "",
+        displayName: rec.configuration?.type?.displayName ?? "Unknown Policy",
+        status,
+        isBlocking: rec.configuration?.isBlocking ?? false,
+        completedDate: rec.completedDate ? rec.completedDate.toISOString() : undefined,
+      });
+
+      switch (status) {
+        case "approved": approved++; break;
+        case "rejected": case "broken": rejected++; break;
+        case "running": case "queued": running++; break;
+        default: other++; break;
+      }
+    }
+
+    if (evaluations.length === 0) return undefined;
+
+    return { total: evaluations.length, approved, rejected, running, other, evaluations };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    log.debug(`  #${pullRequestId} — failed to fetch policy evaluations: ${msg}`);
+    return undefined;
+  }
+}
+
 export async function fetchOpenPullRequests(
   gitApi: IGitApi,
   repositoryId: string,
@@ -178,6 +246,8 @@ export async function fetchOpenPullRequests(
   quantifierConfig?: QuantifierConfig,
   patterns: RepoPatternsConfig = { ignore: [], labels: {} },
   buildApi?: IBuildApi,
+  policyApi?: IPolicyApi,
+  projectId?: string,
 ): Promise<PullRequestInfo[]> {
   // Convert old visualstudio.com URLs to dev.azure.com
   // e.g. https://microsoft.visualstudio.com -> https://dev.azure.com/microsoft
@@ -263,6 +333,11 @@ export async function fetchOpenPullRequests(
       ? await fetchPipelineStatus(buildApi, repoGuid, project, prId)
       : undefined;
 
+    // Fetch policy evaluations
+    const policyStatus = policyApi && projectId
+      ? await fetchPolicyEvaluations(policyApi, project, projectId, prId)
+      : undefined;
+
     return {
       id: prId,
       title: pr.title ?? "(no title)",
@@ -285,6 +360,7 @@ export async function fetchOpenPullRequests(
       sourceBranch: pr.sourceRefName ?? undefined,
       targetBranch: pr.targetRefName ?? undefined,
       pipelineStatus,
+      policyStatus,
     } satisfies PullRequestInfo;
   });
 

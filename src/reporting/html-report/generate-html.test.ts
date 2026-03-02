@@ -230,7 +230,7 @@ describe("generateHtmlReport", () => {
   describe("pipeline status", () => {
     it("contains Pipelines column header and badge rendering function", () => {
       const html = generateHtmlReport(makeReport());
-      expect(html).toContain("Pipelines ↕");
+      expect(html).toContain("Policies ↕");
       expect(html).toContain("getPipelineBadge");
     });
 
@@ -271,6 +271,51 @@ describe("generateHtmlReport", () => {
       expect(html).toContain("running</span>");
       expect(html).toContain("passed</span>");
     });
+
+    it("contains policy badge and popup rendering functions", () => {
+      const html = generateHtmlReport(makeReport());
+      expect(html).toContain("getPolicyBadge");
+      expect(html).toContain("getPolicyPopup");
+      expect(html).toContain("getPolicyCell");
+      expect(html).toContain("policy-popup");
+    });
+
+    it("embeds policy status data in the report", () => {
+      const report = makeReport({
+        repositories: [
+          makeRepoReport({
+            analysis: {
+              needingReview: [
+                {
+                  id: 1,
+                  title: "Test PR",
+                  author: "user",
+                  url: "https://example.com",
+                  waitingSince: "2025-01-01",
+                  hasMergeConflict: false,
+                  isTeamMember: true,
+                  isStarred: false,
+                  action: "REVIEW",
+                  policyStatus: {
+                    total: 2, approved: 1, rejected: 1, running: 0, other: 0,
+                    evaluations: [
+                      { evaluationId: "e1", displayName: "Build", status: "approved", isBlocking: true },
+                      { evaluationId: "e2", displayName: "Reviewers", status: "rejected", isBlocking: true },
+                    ],
+                  },
+                },
+              ],
+              approved: [],
+              waitingOnAuthor: [],
+            },
+          }),
+        ],
+        aggregate: { totalPrs: 1 },
+      });
+      const html = generateHtmlReport(report);
+      expect(html).toContain('"policyStatus"');
+      expect(html).toContain('"rejected":1');
+    });
   });
 
   describe("CSV export", () => {
@@ -283,7 +328,7 @@ describe("generateHtmlReport", () => {
       expect(html).toContain("'Status'");
       expect(html).toContain("'Repo'");
       expect(html).toContain("'Size'");
-      expect(html).toContain("'Pipelines'");
+      expect(html).toContain("'Policies'");
       expect(html).toContain("'Age (days)'");
     });
   });
@@ -297,7 +342,7 @@ describe("generateHtmlReport", () => {
       expect(html).toContain("Status ↕");
       expect(html).toContain("Repo ↕");
       expect(html).toContain("Size ↕");
-      expect(html).toContain("Pipelines ↕");
+      expect(html).toContain("Policies ↕");
       expect(html).toContain("Staleness ↕");
     });
 

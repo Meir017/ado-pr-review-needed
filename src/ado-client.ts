@@ -3,6 +3,7 @@ import * as azdev from "azure-devops-node-api";
 import { IGitApi } from "azure-devops-node-api/GitApi.js";
 import { IBuildApi } from "azure-devops-node-api/BuildApi.js";
 import { ICoreApi } from "azure-devops-node-api/CoreApi.js";
+import { IPolicyApi } from "azure-devops-node-api/PolicyApi.js";
 import { BearerCredentialHandler } from "azure-devops-node-api/handlers/bearertoken.js";
 import * as log from "./log.js";
 
@@ -35,18 +36,19 @@ async function getAdoToken(): Promise<string> {
   }
 }
 
-async function createConnection(orgUrl: string, token: string): Promise<{ gitApi: IGitApi; buildApi: IBuildApi; coreApi: ICoreApi }> {
+async function createConnection(orgUrl: string, token: string): Promise<{ gitApi: IGitApi; buildApi: IBuildApi; coreApi: ICoreApi; policyApi: IPolicyApi }> {
   log.debug(`Connecting to ${orgUrl}…`);
   const handler = new BearerCredentialHandler(token);
   const connection = new azdev.WebApi(orgUrl, handler);
   const gitApi = await connection.getGitApi();
   const buildApi = await connection.getBuildApi();
   const coreApi = await connection.getCoreApi();
-  return { gitApi, buildApi, coreApi };
+  const policyApi = await connection.getPolicyApi();
+  return { gitApi, buildApi, coreApi, policyApi };
 }
 
 // Cache of org URL -> connection
-const connectionCache = new Map<string, { gitApi: IGitApi; buildApi: IBuildApi; coreApi: ICoreApi }>();
+const connectionCache = new Map<string, { gitApi: IGitApi; buildApi: IBuildApi; coreApi: ICoreApi; policyApi: IPolicyApi }>();
 
 export async function getGitApiForOrg(orgUrl: string): Promise<IGitApi> {
   if (!connectionCache.has(orgUrl)) {
@@ -66,4 +68,20 @@ export async function getBuildApiForOrg(orgUrl: string): Promise<IBuildApi> {
   return connectionCache.get(orgUrl)!.buildApi;
 }
 
+export async function getPolicyApiForOrg(orgUrl: string): Promise<IPolicyApi> {
+  if (!connectionCache.has(orgUrl)) {
+    const token = await getAdoToken();
+    const conn = await createConnection(orgUrl, token);
+    connectionCache.set(orgUrl, conn);
+  }
+  return connectionCache.get(orgUrl)!.policyApi;
+}
 
+export async function getCoreApiForOrg(orgUrl: string): Promise<ICoreApi> {
+  if (!connectionCache.has(orgUrl)) {
+    const token = await getAdoToken();
+    const conn = await createConnection(orgUrl, token);
+    connectionCache.set(orgUrl, conn);
+  }
+  return connectionCache.get(orgUrl)!.coreApi;
+}

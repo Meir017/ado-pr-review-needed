@@ -65,6 +65,25 @@ export interface PipelineStatus {
   runs: PipelineRunInfo[];
 }
 
+export type PolicyEvaluationStatusType = "queued" | "running" | "approved" | "rejected" | "notApplicable" | "broken";
+
+export interface PolicyEvaluationInfo {
+  evaluationId: string;
+  displayName: string;
+  status: PolicyEvaluationStatusType;
+  isBlocking: boolean;
+  completedDate?: string;
+}
+
+export interface PolicyStatus {
+  total: number;
+  approved: number;
+  rejected: number;
+  running: number;
+  other: number;
+  evaluations: PolicyEvaluationInfo[];
+}
+
 export interface PullRequestInfo {
   id: number;
   title: string;
@@ -84,6 +103,7 @@ export interface PullRequestInfo {
   targetBranch?: string;
   changedFiles?: string[];
   pipelineStatus?: PipelineStatus;
+  policyStatus?: PolicyStatus;
 }
 
 export function identityUniqueName(identity: IdentityRef | undefined): string {
