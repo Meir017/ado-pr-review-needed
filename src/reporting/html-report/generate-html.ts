@@ -1,16 +1,21 @@
 import type { JsonReport } from "../../types.js";
-
-// The template is embedded as a string so it works in the esbuild single-file bundle.
-// Maintained in src/reporting/html-report/template.html — keep in sync.
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Inlined by esbuild at bundle time via --define (see scripts/bundle.mjs).
+// In development this global is not defined and the filesystem fallback is used.
+declare const __HTML_TEMPLATE__: string | undefined;
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 function loadTemplate(): string {
-  // In development (tsx) the template is next to this file.
-  // In the esbuild bundle, fallback to the src path relative to cwd.
+  // In the esbuild bundle, the template is inlined at build time.
+  if (typeof __HTML_TEMPLATE__ !== "undefined") {
+    return __HTML_TEMPLATE__;
+  }
+
+  // Development fallback: read from the filesystem.
   const candidates = [
     resolve(__dirname, "template.html"),
     resolve(process.cwd(), "src", "reporting", "html-report", "template.html"),
