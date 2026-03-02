@@ -266,6 +266,52 @@ describe("fetchPolicyEvaluations", () => {
     expect(result!.running).toBe(2);
   });
 
+  it("deduplicates Minimum number of reviewers, keeping only the first", async () => {
+    const MIN_REVIEWERS_TYPE = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-min-1",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: MIN_REVIEWERS_TYPE, displayName: "Minimum number of reviewers" }, isBlocking: true, settings: { minimumApproverCount: 2 } },
+      },
+      {
+        evaluationId: "eval-min-2",
+        status: PolicyEvaluationStatus.Rejected,
+        configuration: { type: { id: MIN_REVIEWERS_TYPE, displayName: "Minimum number of reviewers" }, isBlocking: true, settings: { minimumApproverCount: 4 } },
+      },
+      {
+        evaluationId: "eval-build",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { displayName: "Build" }, isBlocking: true },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result!.total).toBe(2);
+    expect(result!.evaluations).toHaveLength(2);
+    expect(result!.evaluations[0].displayName).toBe("Minimum number of reviewers (2)");
+    expect(result!.evaluations[1].displayName).toBe("Build");
+  });
+
+  it("deduplicates Proof Of Presence, keeping only the first", async () => {
+    const PROOF_OF_PRESENCE_TYPE = "67ed70bd-2a6b-4006-af44-be590463f46d";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-pop-1",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: PROOF_OF_PRESENCE_TYPE, displayName: "Proof Of Presence" }, isBlocking: true },
+      },
+      {
+        evaluationId: "eval-pop-2",
+        status: PolicyEvaluationStatus.Rejected,
+        configuration: { type: { id: PROOF_OF_PRESENCE_TYPE, displayName: "Proof Of Presence" }, isBlocking: true },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result!.total).toBe(1);
+    expect(result!.evaluations).toHaveLength(1);
+    expect(result!.evaluations[0].evaluationId).toBe("eval-pop-1");
+  });
+
   it("returns undefined on API error", async () => {
     const api = {
       getPolicyEvaluations: vi.fn().mockRejectedValue(new Error("API error")),
@@ -289,6 +335,7 @@ describe("fetchPolicyEvaluations", () => {
       status: "rejected",
       isBlocking: true,
       completedDate: undefined,
+      buildUrl: undefined,
     });
   });
 
@@ -300,5 +347,47 @@ describe("fetchPolicyEvaluations", () => {
       "myproject",
       "vstfs:///CodeReview/CodeReviewId/project-guid-123/42",
     );
+  });
+
+  it("populates buildUrl for build policies when baseUrl and context.buildId are provided", async () => {
+    const BUILD_TYPE = "0609b952-1397-4640-95ec-e00a01b2c241";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-build",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: BUILD_TYPE, displayName: "Build" }, isBlocking: true, settings: { displayName: "My Pipeline" } },
+        context: { buildId: 12345 },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "myproject", "proj-guid", 1, "https://dev.azure.com/myorg");
+    expect(result!.evaluations[0].displayName).toBe("Build: My Pipeline");
+    expect(result!.evaluations[0].buildUrl).toBe("https://dev.azure.com/myorg/myproject/_build/results?buildId=12345");
+  });
+
+  it("does not set buildUrl when baseUrl is not provided", async () => {
+    const BUILD_TYPE = "0609b952-1397-4640-95ec-e00a01b2c241";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-build",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: BUILD_TYPE, displayName: "Build" }, isBlocking: true, settings: { displayName: "My Pipeline" } },
+        context: { buildId: 12345 },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "myproject", "proj-guid", 1);
+    expect(result!.evaluations[0].buildUrl).toBeUndefined();
+  });
+
+  it("does not set buildUrl for non-build policies", async () => {
+    const STATUS_TYPE = "cbdc66da-9728-4af8-aada-9a5a32e4a226";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-status",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: STATUS_TYPE, displayName: "Status" }, isBlocking: false, settings: { statusName: "MyCheck" } },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "myproject", "proj-guid", 1, "https://dev.azure.com/myorg");
+    expect(result!.evaluations[0].buildUrl).toBeUndefined();
   });
 });

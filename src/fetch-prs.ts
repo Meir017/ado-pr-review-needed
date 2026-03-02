@@ -190,6 +190,10 @@ function mapPolicyEvaluationStatus(status: PolicyEvaluationStatus | undefined): 
 const POLICY_TYPE_BUILD = "0609b952-1397-4640-95ec-e00a01b2c241";
 const POLICY_TYPE_STATUS = "cbdc66da-9728-4af8-aada-9a5a32e4a226";
 const POLICY_TYPE_MIN_REVIEWERS = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd";
+const POLICY_TYPE_PROOF_OF_PRESENCE = "67ed70bd-2a6b-4006-af44-be590463f46d";
+
+// Policy types where only the first evaluation should be kept (duplicates are skipped)
+const DEDUP_POLICY_TYPES = new Set([POLICY_TYPE_MIN_REVIEWERS, POLICY_TYPE_PROOF_OF_PRESENCE]);
 
 /**
  * Enhance generic policy display names using policy-type-specific settings.
@@ -233,6 +237,7 @@ export async function fetchPolicyEvaluations(
   project: string,
   projectId: string,
   pullRequestId: number,
+  baseUrl?: string,
 ): Promise<PolicyStatus | undefined> {
   try {
     const artifactId = `vstfs:///CodeReview/CodeReviewId/${projectId}/${pullRequestId}`;
@@ -248,6 +253,7 @@ export async function fetchPolicyEvaluations(
     let rejected = 0;
     let running = 0;
     let other = 0;
+    const seenDedupTypes = new Set<string>();
 
     for (const rec of records) {
       const status = mapPolicyEvaluationStatus(rec.status);
@@ -256,7 +262,23 @@ export async function fetchPolicyEvaluations(
 
       const baseDisplayName = rec.configuration?.type?.displayName ?? "Unknown Policy";
       const typeId = rec.configuration?.type?.id;
+
+      // Deduplicate certain policy types — keep only the first occurrence
+      if (typeId && DEDUP_POLICY_TYPES.has(typeId)) {
+        if (seenDedupTypes.has(typeId)) continue;
+        seenDedupTypes.add(typeId);
+      }
+
       const displayName = enhancePolicyDisplayName(typeId, baseDisplayName, rec.configuration?.settings);
+
+      // Extract build URL for build policies
+      let buildUrl: string | undefined;
+      if (typeId === POLICY_TYPE_BUILD && baseUrl) {
+        const buildId = (rec.context as Record<string, unknown> | undefined)?.buildId as number | undefined;
+        if (buildId != null) {
+          buildUrl = `${baseUrl}/${project}/_build/results?buildId=${buildId}`;
+        }
+      }
 
       evaluations.push({
         evaluationId: rec.evaluationId ?? "",
@@ -264,6 +286,7 @@ export async function fetchPolicyEvaluations(
         status,
         isBlocking: rec.configuration?.isBlocking ?? false,
         completedDate: rec.completedDate ? rec.completedDate.toISOString() : undefined,
+        buildUrl,
       });
 
       switch (status) {
@@ -381,7 +404,7 @@ export async function fetchOpenPullRequests(
 
     // Fetch policy evaluations
     const policyStatus = policyApi && projectId
-      ? await fetchPolicyEvaluations(policyApi, project, projectId, prId)
+      ? await fetchPolicyEvaluations(policyApi, project, projectId, prId, baseUrl)
       : undefined;
 
     return {
