@@ -289,6 +289,7 @@ describe("fetchPolicyEvaluations", () => {
       status: "rejected",
       isBlocking: true,
       completedDate: undefined,
+      buildUrl: undefined,
     });
   });
 
@@ -300,5 +301,47 @@ describe("fetchPolicyEvaluations", () => {
       "myproject",
       "vstfs:///CodeReview/CodeReviewId/project-guid-123/42",
     );
+  });
+
+  it("populates buildUrl for build policies when baseUrl and context.buildId are provided", async () => {
+    const BUILD_TYPE = "0609b952-1397-4640-95ec-e00a01b2c241";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-build",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: BUILD_TYPE, displayName: "Build" }, isBlocking: true, settings: { displayName: "My Pipeline" } },
+        context: { buildId: 12345 },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "myproject", "proj-guid", 1, "https://dev.azure.com/myorg");
+    expect(result!.evaluations[0].displayName).toBe("Build: My Pipeline");
+    expect(result!.evaluations[0].buildUrl).toBe("https://dev.azure.com/myorg/myproject/_build/results?buildId=12345");
+  });
+
+  it("does not set buildUrl when baseUrl is not provided", async () => {
+    const BUILD_TYPE = "0609b952-1397-4640-95ec-e00a01b2c241";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-build",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: BUILD_TYPE, displayName: "Build" }, isBlocking: true, settings: { displayName: "My Pipeline" } },
+        context: { buildId: 12345 },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "myproject", "proj-guid", 1);
+    expect(result!.evaluations[0].buildUrl).toBeUndefined();
+  });
+
+  it("does not set buildUrl for non-build policies", async () => {
+    const STATUS_TYPE = "cbdc66da-9728-4af8-aada-9a5a32e4a226";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-status",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: STATUS_TYPE, displayName: "Status" }, isBlocking: false, settings: { statusName: "MyCheck" } },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "myproject", "proj-guid", 1, "https://dev.azure.com/myorg");
+    expect(result!.evaluations[0].buildUrl).toBeUndefined();
   });
 });

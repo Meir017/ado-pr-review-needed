@@ -233,6 +233,7 @@ export async function fetchPolicyEvaluations(
   project: string,
   projectId: string,
   pullRequestId: number,
+  baseUrl?: string,
 ): Promise<PolicyStatus | undefined> {
   try {
     const artifactId = `vstfs:///CodeReview/CodeReviewId/${projectId}/${pullRequestId}`;
@@ -258,12 +259,22 @@ export async function fetchPolicyEvaluations(
       const typeId = rec.configuration?.type?.id;
       const displayName = enhancePolicyDisplayName(typeId, baseDisplayName, rec.configuration?.settings);
 
+      // Extract build URL for build policies
+      let buildUrl: string | undefined;
+      if (typeId === POLICY_TYPE_BUILD && baseUrl) {
+        const buildId = (rec.context as Record<string, unknown> | undefined)?.buildId as number | undefined;
+        if (buildId != null) {
+          buildUrl = `${baseUrl}/${project}/_build/results?buildId=${buildId}`;
+        }
+      }
+
       evaluations.push({
         evaluationId: rec.evaluationId ?? "",
         displayName,
         status,
         isBlocking: rec.configuration?.isBlocking ?? false,
         completedDate: rec.completedDate ? rec.completedDate.toISOString() : undefined,
+        buildUrl,
       });
 
       switch (status) {
@@ -381,7 +392,7 @@ export async function fetchOpenPullRequests(
 
     // Fetch policy evaluations
     const policyStatus = policyApi && projectId
-      ? await fetchPolicyEvaluations(policyApi, project, projectId, prId)
+      ? await fetchPolicyEvaluations(policyApi, project, projectId, prId, baseUrl)
       : undefined;
 
     return {

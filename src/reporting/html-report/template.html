@@ -308,7 +308,10 @@ function getPolicyPopup(ps) {
     const blockLabel = e.isBlocking
       ? '<span class="policy-blocking">required</span>'
       : '<span class="policy-optional">optional</span>';
-    return `<div class="policy-row"><span class="policy-icon">${icon}</span><span class="policy-name">${escapeHtml(e.displayName)}</span>${blockLabel}</div>`;
+    const nameHtml = e.buildUrl
+      ? `<a href="${escapeHtml(e.buildUrl)}" target="_blank" class="policy-name">${escapeHtml(e.displayName)}</a>`
+      : `<span class="policy-name">${escapeHtml(e.displayName)}</span>`;
+    return `<div class="policy-row"><span class="policy-icon">${icon}</span>${nameHtml}${blockLabel}</div>`;
   }).join('');
   return `<div class="policy-popup"><h4>Policy Evaluations</h4>${rows}</div>`;
 }

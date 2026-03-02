@@ -73,6 +73,7 @@ export interface PolicyEvaluationInfo {
   status: PolicyEvaluationStatusType;
   isBlocking: boolean;
   completedDate?: string;
+  buildUrl?: string;
 }
 
 export interface PolicyStatus {
