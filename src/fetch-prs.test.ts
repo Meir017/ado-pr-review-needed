@@ -292,6 +292,26 @@ describe("fetchPolicyEvaluations", () => {
     expect(result!.evaluations[1].displayName).toBe("Build");
   });
 
+  it("deduplicates Proof Of Presence, keeping only the first", async () => {
+    const PROOF_OF_PRESENCE_TYPE = "67ed70bd-2a6b-4006-af44-be590463f46d";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-pop-1",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: PROOF_OF_PRESENCE_TYPE, displayName: "Proof Of Presence" }, isBlocking: true },
+      },
+      {
+        evaluationId: "eval-pop-2",
+        status: PolicyEvaluationStatus.Rejected,
+        configuration: { type: { id: PROOF_OF_PRESENCE_TYPE, displayName: "Proof Of Presence" }, isBlocking: true },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result!.total).toBe(1);
+    expect(result!.evaluations).toHaveLength(1);
+    expect(result!.evaluations[0].evaluationId).toBe("eval-pop-1");
+  });
+
   it("returns undefined on API error", async () => {
     const api = {
       getPolicyEvaluations: vi.fn().mockRejectedValue(new Error("API error")),
