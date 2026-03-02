@@ -317,4 +317,18 @@ describe("generateHtmlReport", () => {
       expect(html).toContain("Approved");
     });
   });
+
+  describe("conflict filter", () => {
+    it("contains hide-conflicts checkbox", () => {
+      const html = generateHtmlReport(makeReport());
+      expect(html).toContain('id="hide-conflicts"');
+      expect(html).toContain("Hide conflicts");
+    });
+
+    it("contains filter logic that checks hasMergeConflict", () => {
+      const html = generateHtmlReport(makeReport());
+      expect(html).toContain("hide-conflicts");
+      expect(html).toContain("hc && pr.hasMergeConflict");
+    });
+  });
 });
