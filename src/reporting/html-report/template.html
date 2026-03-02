@@ -39,7 +39,7 @@
   .policy-cell { position: relative; }
   .policy-popup-wrap { cursor: pointer; }
   .policy-popup { display: none; position: absolute; z-index: 100; top: 100%; left: 0; min-width: 320px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); padding: 0.75rem; font-size: 0.82rem; }
-  .policy-popup-wrap:hover .policy-popup { display: block; }
+  .policy-popup.visible { display: block; }
   .policy-popup h4 { margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
   .policy-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px solid rgba(48,54,61,0.5); }
   .policy-row:last-child { border-bottom: none; }
@@ -365,6 +365,46 @@ function exportCsv() {
 function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+// Policy popup: show on hover/click, keep visible while mouse is over badge or popup
+(function() {
+  let hideTimer = null;
+  function showPopup(wrap) {
+    const popup = wrap.querySelector('.policy-popup');
+    if (!popup) return;
+    // Close any other open popups
+    document.querySelectorAll('.policy-popup.visible').forEach(p => { if (p !== popup) p.classList.remove('visible'); });
+    clearTimeout(hideTimer);
+    popup.classList.add('visible');
+  }
+  function scheduleHide(wrap) {
+    hideTimer = setTimeout(() => {
+      const popup = wrap.querySelector('.policy-popup');
+      if (popup) popup.classList.remove('visible');
+    }, 300);
+  }
+  function cancelHide() { clearTimeout(hideTimer); }
+
+  document.addEventListener('mouseenter', e => {
+    const wrap = e.target.closest('.policy-popup-wrap');
+    if (wrap) showPopup(wrap);
+    if (e.target.closest('.policy-popup')) cancelHide();
+  }, true);
+  document.addEventListener('mouseleave', e => {
+    const wrap = e.target.closest('.policy-popup-wrap');
+    if (wrap) scheduleHide(wrap);
+    if (e.target.closest('.policy-popup')) {
+      const parentWrap = e.target.closest('.policy-popup-wrap');
+      if (parentWrap) scheduleHide(parentWrap);
+    }
+  }, true);
+  // Close on click outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.policy-popup-wrap')) {
+      document.querySelectorAll('.policy-popup.visible').forEach(p => p.classList.remove('visible'));
+    }
+  });
+})();
 
 init();
 </script>
