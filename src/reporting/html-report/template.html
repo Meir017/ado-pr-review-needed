@@ -64,6 +64,9 @@
       <option value="approved">Approved</option>
     </select>
     <select id="repo-filter" onchange="filterTable()"></select>
+    <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.9rem;color:var(--text-dim);cursor:pointer;white-space:nowrap;">
+      <input type="checkbox" id="hide-conflicts" onchange="filterTable()"> Hide conflicts
+    </label>
   </div>
 
   <div class="tabs" id="repo-tabs"></div>
@@ -177,11 +180,13 @@ function filterTable() {
   const q = document.getElementById('search').value.toLowerCase();
   const sf = document.getElementById('status-filter').value;
   const rf = document.getElementById('repo-filter').value;
+  const hc = document.getElementById('hide-conflicts').checked;
 
   let filtered = allPrs.filter(pr => {
     if (q && !`${pr.id} ${pr.title} ${pr.author}`.toLowerCase().includes(q)) return false;
     if (sf !== 'all' && pr.status !== sf) return false;
     if (rf !== 'all' && pr.repo !== rf) return false;
+    if (hc && pr.hasMergeConflict) return false;
     return true;
   });
 
