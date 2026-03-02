@@ -11,6 +11,12 @@ vi.mock("../ado-client.js", () => ({
   getBuildApiForOrg: vi.fn().mockResolvedValue({
     getBuilds: vi.fn().mockResolvedValue([]),
   }),
+  getPolicyApiForOrg: vi.fn().mockResolvedValue({
+    getPolicyEvaluations: vi.fn().mockResolvedValue([]),
+  }),
+  getCoreApiForOrg: vi.fn().mockResolvedValue({
+    getProject: vi.fn().mockResolvedValue({ id: "mock-project-guid" }),
+  }),
 }));
 
 vi.mock("../graph-client.js", () => createMockGraphModule());

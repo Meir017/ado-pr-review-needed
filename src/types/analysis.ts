@@ -1,4 +1,4 @@
-import type { PrAction, PrSizeInfo, PipelineStatus } from "./pr.js";
+import type { PrAction, PrSizeInfo, PipelineStatus, PolicyStatus } from "./pr.js";
 
 export interface PrNeedingReview {
   id: number;
@@ -15,6 +15,7 @@ export interface PrNeedingReview {
   detectedLabels?: string[];
   reviewerNames?: string[];
   pipelineStatus?: PipelineStatus;
+  policyStatus?: PolicyStatus;
 }
 
 export interface PrWaitingOnAuthor {
@@ -31,6 +32,7 @@ export interface PrWaitingOnAuthor {
   size?: PrSizeInfo;
   detectedLabels?: string[];
   pipelineStatus?: PipelineStatus;
+  policyStatus?: PolicyStatus;
 }
 
 export interface PrApproved {
@@ -47,6 +49,7 @@ export interface PrApproved {
   size?: PrSizeInfo;
   detectedLabels?: string[];
   pipelineStatus?: PipelineStatus;
+  policyStatus?: PolicyStatus;
 }
 
 export interface AnalysisResult {

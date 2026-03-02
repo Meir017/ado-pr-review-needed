@@ -1,4 +1,4 @@
-import type { PrSizeInfo, PrSizeLabel, PrAction, SummaryStats, PipelineStatus } from "../types.js";
+import type { PrSizeInfo, PrSizeLabel, PrAction, SummaryStats, PipelineStatus, PolicyStatus } from "../types.js";
 import type { AnalysisResult } from "../types.js";
 
 export type Urgency = "low" | "medium" | "high";
@@ -60,6 +60,7 @@ export interface PrRowData {
   detectedLabels?: string[];
   stalenessBadge?: string | null;
   pipelineStatus?: PipelineStatus;
+  policyStatus?: PolicyStatus;
 }
 
 export function formatPipelineBadge(ps: PipelineStatus | undefined): string {
@@ -68,4 +69,12 @@ export function formatPipelineBadge(ps: PipelineStatus | undefined): string {
   if (ps.inProgress > 0) return `🟡 ${ps.inProgress}/${ps.total} running`;
   if (ps.succeeded === ps.total) return `🟢 ${ps.total}/${ps.total} passed`;
   return `⚪ ${ps.total} pipeline(s)`;
+}
+
+export function formatPolicyBadge(ps: PolicyStatus | undefined): string {
+  if (!ps) return "";
+  if (ps.rejected > 0) return `🔴 ${ps.rejected}/${ps.total} rejected`;
+  if (ps.running > 0) return `🟡 ${ps.running}/${ps.total} running`;
+  if (ps.approved === ps.total) return `🟢 ${ps.total}/${ps.total} approved`;
+  return `⚪ ${ps.total} policy(ies)`;
 }

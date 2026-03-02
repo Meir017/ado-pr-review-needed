@@ -130,6 +130,7 @@ export function analyzePrs(
         size: pr.size,
         detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
         pipelineStatus: pr.pipelineStatus,
+        policyStatus: pr.policyStatus,
       });
       continue;
     }
@@ -182,6 +183,7 @@ export function analyzePrs(
         size: pr.size,
         detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
         pipelineStatus: pr.pipelineStatus,
+        policyStatus: pr.policyStatus,
       });
       continue;
     }
@@ -221,6 +223,7 @@ export function analyzePrs(
       detectedLabels: pr.detectedLabels.length > 0 ? pr.detectedLabels : undefined,
       reviewerNames: pr.reviewers.map((r) => r.displayName),
       pipelineStatus: pr.pipelineStatus,
+      policyStatus: pr.policyStatus,
     });
   }
 

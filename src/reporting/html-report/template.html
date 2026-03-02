@@ -36,6 +36,18 @@
   .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
   .badge-yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
   .badge-red { background: rgba(248,81,73,0.15); color: var(--red); }
+  .policy-cell { position: relative; }
+  .policy-popup-wrap { cursor: pointer; }
+  .policy-popup { display: none; position: absolute; z-index: 100; top: 100%; left: 0; min-width: 320px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); padding: 0.75rem; font-size: 0.82rem; }
+  .policy-popup-wrap:hover .policy-popup { display: block; }
+  .policy-popup h4 { margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  .policy-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px solid rgba(48,54,61,0.5); }
+  .policy-row:last-child { border-bottom: none; }
+  .policy-icon { flex-shrink: 0; width: 1.2em; text-align: center; }
+  .policy-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .policy-blocking { font-size: 0.7rem; padding: 0.1rem 0.35rem; border-radius: 4px; background: rgba(248,81,73,0.15); color: var(--red); white-space: nowrap; }
+  .policy-optional { font-size: 0.7rem; padding: 0.1rem 0.35rem; border-radius: 4px; background: rgba(139,148,158,0.15); color: var(--text-dim); white-space: nowrap; }
+  @media print { .policy-popup { display: none !important; } }
   .section { margin-bottom: 2rem; }
   .section h2 { font-size: 1.1rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
   .export-bar { display: flex; gap: 0.5rem; margin-top: 1rem; }
@@ -82,7 +94,7 @@
           <th onclick="sortTable(3)">Status ↕</th>
           <th onclick="sortTable(4)">Repo ↕</th>
           <th onclick="sortTable(5)">Size ↕</th>
-          <th onclick="sortTable(6)">Pipelines ↕</th>
+          <th onclick="sortTable(6)">Policies ↕</th>
           <th onclick="sortTable(7)">Staleness ↕</th>
         </tr>
       </thead>
@@ -212,7 +224,7 @@ function filterTable() {
       : '<span class="badge badge-red">Waiting</span>';
     const size = pr.size ? pr.size.label : '—';
     const staleness = getStaleness(pr);
-    const pipeline = getPipelineBadge(pr.pipelineStatus);
+    const policyCell = getPolicyCell(pr.policyStatus, pr.pipelineStatus);
     const conflict = pr.hasMergeConflict ? ' <span class="badge badge-red">❌ conflict</span>' : '';
     return `<tr>
       <td><a href="${pr.url}" target="_blank">#${pr.id}</a></td>
@@ -221,7 +233,7 @@ function filterTable() {
       <td>${statusBadge}</td>
       <td>${escapeHtml(pr.repo)}</td>
       <td>${size}</td>
-      <td>${pipeline}</td>
+      <td class="policy-cell">${policyCell}</td>
       <td>${staleness}</td>
     </tr>`;
   }).join('');
@@ -235,7 +247,13 @@ function getCellValue(pr, col) {
     case 3: return pr.status;
     case 4: return pr.repo;
     case 5: return pr.size ? pr.size.totalChanges : 0;
-    case 6: return pr.pipelineStatus ? (pr.pipelineStatus.failed > 0 ? 2 : pr.pipelineStatus.inProgress > 0 ? 1 : 0) : -1;
+    case 6: {
+      const ps = pr.policyStatus;
+      if (ps) return ps.rejected > 0 ? 2 : ps.running > 0 ? 1 : 0;
+      const pp = pr.pipelineStatus;
+      if (pp) return pp.failed > 0 ? 2 : pp.inProgress > 0 ? 1 : 0;
+      return -1;
+    }
     case 7: return pr.date ? new Date(pr.date).getTime() : 0;
     default: return '';
   }
@@ -264,6 +282,46 @@ function getPipelineBadge(ps) {
   return `${ps.total} pipeline(s)`;
 }
 
+function policyStatusIcon(status) {
+  switch(status) {
+    case 'approved': return '✅';
+    case 'rejected': return '❌';
+    case 'running': return '🔄';
+    case 'queued': return '⏳';
+    case 'broken': return '💥';
+    default: return '❔';
+  }
+}
+
+function getPolicyBadge(ps) {
+  if (!ps) return '—';
+  if (ps.rejected > 0) return `<span class="badge badge-red">🔴 ${ps.rejected}/${ps.total} rejected</span>`;
+  if (ps.running > 0) return `<span class="badge badge-yellow">🟡 ${ps.running}/${ps.total} running</span>`;
+  if (ps.approved === ps.total) return `<span class="badge badge-green">🟢 ${ps.total}/${ps.total} approved</span>`;
+  return `${ps.total} policy(ies)`;
+}
+
+function getPolicyPopup(ps) {
+  if (!ps || !ps.evaluations || ps.evaluations.length === 0) return '';
+  const rows = ps.evaluations.map(e => {
+    const icon = policyStatusIcon(e.status);
+    const blockLabel = e.isBlocking
+      ? '<span class="policy-blocking">required</span>'
+      : '<span class="policy-optional">optional</span>';
+    return `<div class="policy-row"><span class="policy-icon">${icon}</span><span class="policy-name">${escapeHtml(e.displayName)}</span>${blockLabel}</div>`;
+  }).join('');
+  return `<div class="policy-popup"><h4>Policy Evaluations</h4>${rows}</div>`;
+}
+
+function getPolicyCell(policyStatus, pipelineStatus) {
+  if (policyStatus) {
+    const badge = getPolicyBadge(policyStatus);
+    const popup = getPolicyPopup(policyStatus);
+    return `<div class="policy-popup-wrap">${badge}${popup}</div>`;
+  }
+  return getPipelineBadge(pipelineStatus);
+}
+
 function renderMetrics() {
   const agg = DATA.aggregate;
   if (!agg.metrics) return;
@@ -282,11 +340,16 @@ function renderMetrics() {
 }
 
 function exportCsv() {
-  const rows = [['ID','Title','Author','Status','Repo','Size','Pipelines','Age (days)']];
+  const rows = [['ID','Title','Author','Status','Repo','Size','Policies','Age (days)']];
   for (const pr of allPrs) {
     const days = pr.date ? Math.floor((Date.now() - new Date(pr.date).getTime()) / 86400000) : '';
-    const pipeline = pr.pipelineStatus ? `${pr.pipelineStatus.succeeded}/${pr.pipelineStatus.total} passed` : '';
-    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, (pr.isStarred ? '⭐ ' : '') + pr.author, pr.status, pr.repo, pr.size?.label || '', pipeline, days]);
+    let policyCol = '';
+    if (pr.policyStatus) {
+      policyCol = `${pr.policyStatus.approved}/${pr.policyStatus.total} approved`;
+    } else if (pr.pipelineStatus) {
+      policyCol = `${pr.pipelineStatus.succeeded}/${pr.pipelineStatus.total} passed`;
+    }
+    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, (pr.isStarred ? '⭐ ' : '') + pr.author, pr.status, pr.repo, pr.size?.label || '', policyCol, days]);
   }
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
