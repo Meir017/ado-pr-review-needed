@@ -20,7 +20,7 @@ A PR is considered **"needing review"** when:
 
 ## Prerequisites
 
-- **Node.js 18+**
+- **Node.js 24+**
 - **Azure CLI** — logged in via `az login`
 - Access to the target Azure DevOps organization
 - (Optional) **Microsoft Graph** access — for resolving team members from org hierarchy

@@ -19,7 +19,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "bundle": "esbuild dist/index.js --bundle --minify --platform=node --format=esm --target=node22 --outfile=dist/index.min.js --banner:js=\"#!/usr/bin/env node\" --external:@azure/identity --external:azure-devops-node-api --external:picomatch",
+    "bundle": "esbuild dist/index.js --bundle --minify --platform=node --format=esm --target=node24 --outfile=dist/index.min.js --banner:js=\"#!/usr/bin/env node\" --external:@azure/identity --external:azure-devops-node-api --external:picomatch",
     "prepublishOnly": "npm run build && npm run bundle",
     "start": "tsx src/index.ts run",
     "lint": "eslint src/",
@@ -32,7 +32,7 @@
     "picomatch": "^4.0.3"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
