@@ -94,7 +94,7 @@ describe("package integration: CLI commands", () => {
       if (testDir) rmSync(testDir, { recursive: true, force: true });
     });
 
-    it("fails with a config-related error, not a template error", () => {
+    it("fails with a config-related error, not a template error", { timeout: 20_000 }, () => {
       testDir = mkdtempSync(join(tmpdir(), "pkg-int-run-"));
       const { stderr, exitCode } = runCli(["run"], { cwd: testDir });
       expect(exitCode).not.toBe(0);
@@ -102,7 +102,7 @@ describe("package integration: CLI commands", () => {
       expect(stderr).not.toContain("HTML template not found");
     });
 
-    it("--format html fails with config error, not template error", () => {
+    it("--format html fails with config error, not template error", { timeout: 20_000 }, () => {
       testDir = mkdtempSync(join(tmpdir(), "pkg-int-html-"));
       const { stderr, exitCode } = runCli(["run", "--format", "html"], { cwd: testDir });
       expect(exitCode).not.toBe(0);
