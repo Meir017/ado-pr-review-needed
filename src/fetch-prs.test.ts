@@ -266,6 +266,32 @@ describe("fetchPolicyEvaluations", () => {
     expect(result!.running).toBe(2);
   });
 
+  it("deduplicates Minimum number of reviewers, keeping only the first", async () => {
+    const MIN_REVIEWERS_TYPE = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd";
+    const api = mockPolicyApi([
+      {
+        evaluationId: "eval-min-1",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { id: MIN_REVIEWERS_TYPE, displayName: "Minimum number of reviewers" }, isBlocking: true, settings: { minimumApproverCount: 2 } },
+      },
+      {
+        evaluationId: "eval-min-2",
+        status: PolicyEvaluationStatus.Rejected,
+        configuration: { type: { id: MIN_REVIEWERS_TYPE, displayName: "Minimum number of reviewers" }, isBlocking: true, settings: { minimumApproverCount: 4 } },
+      },
+      {
+        evaluationId: "eval-build",
+        status: PolicyEvaluationStatus.Approved,
+        configuration: { type: { displayName: "Build" }, isBlocking: true },
+      },
+    ]);
+    const result = await fetchPolicyEvaluations(api, "project", "project-guid", 100);
+    expect(result!.total).toBe(2);
+    expect(result!.evaluations).toHaveLength(2);
+    expect(result!.evaluations[0].displayName).toBe("Minimum number of reviewers (2)");
+    expect(result!.evaluations[1].displayName).toBe("Build");
+  });
+
   it("returns undefined on API error", async () => {
     const api = {
       getPolicyEvaluations: vi.fn().mockRejectedValue(new Error("API error")),

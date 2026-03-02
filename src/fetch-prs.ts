@@ -249,6 +249,7 @@ export async function fetchPolicyEvaluations(
     let rejected = 0;
     let running = 0;
     let other = 0;
+    let seenMinReviewers = false;
 
     for (const rec of records) {
       const status = mapPolicyEvaluationStatus(rec.status);
@@ -257,6 +258,13 @@ export async function fetchPolicyEvaluations(
 
       const baseDisplayName = rec.configuration?.type?.displayName ?? "Unknown Policy";
       const typeId = rec.configuration?.type?.id;
+
+      // Deduplicate "Minimum number of reviewers" — keep only the first
+      if (typeId === POLICY_TYPE_MIN_REVIEWERS) {
+        if (seenMinReviewers) continue;
+        seenMinReviewers = true;
+      }
+
       const displayName = enhancePolicyDisplayName(typeId, baseDisplayName, rec.configuration?.settings);
 
       // Extract build URL for build policies
