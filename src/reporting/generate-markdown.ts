@@ -50,6 +50,10 @@ function escapeMarkdown(text: string): string {
     .replace(/\|/g, "\\|");
 }
 
+function formatAuthor(author: string, isStarred?: boolean): string {
+  return isStarred ? `⭐ ${author}` : author;
+}
+
 function generateTable(prs: PrRowData[], dateHeader: string, emptyMsg: string, now: Date, multiRepo: boolean = false): string {
   if (prs.length === 0) {
     return `_${emptyMsg}_\n\n`;
@@ -70,7 +74,7 @@ function generateTable(prs: PrRowData[], dateHeader: string, emptyMsg: string, n
     for (const pr of prs) {
       const conflictEmoji = pr.hasMergeConflict ? " ❌" : "";
       const title = escapeMarkdown(pr.title);
-      const author = escapeMarkdown(pr.author);
+      const author = escapeMarkdown(formatAuthor(pr.author, pr.isStarred));
       const repo = escapeMarkdown(pr.repository ?? "Unknown");
       const labelsBadge = formatLabels(pr.detectedLabels);
       const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}${labelsBadge}`;
@@ -95,7 +99,7 @@ function generateTable(prs: PrRowData[], dateHeader: string, emptyMsg: string, n
   for (const pr of prs) {
     const conflictEmoji = pr.hasMergeConflict ? " ❌" : "";
     const title = escapeMarkdown(pr.title);
-    const author = escapeMarkdown(pr.author);
+    const author = escapeMarkdown(formatAuthor(pr.author, pr.isStarred));
     const labelsBadge = formatLabels(pr.detectedLabels);
     const prLink = `[#${pr.id} - ${title}](${pr.url})${conflictEmoji}${labelsBadge}`;
     const timeSince = formatTimeSince(pr.dateColumn, now);
@@ -191,7 +195,8 @@ function generateMetricsSection(metrics: ReviewMetrics): string {
     md += `| Author | Open PRs | Avg Age | Avg Rounds | Fastest Review |\n|---|---|---|---|---|\n`;
     for (const author of metrics.perAuthor) {
       const fastest = author.fastestReviewInDays !== null ? formatDays(author.fastestReviewInDays) : "N/A";
-      md += `| ${escapeMarkdown(author.author)} | ${author.openPrCount} | ${formatDays(author.avgAgeInDays)} | ${author.avgReviewRounds} | ${fastest} |\n`;
+      const name = author.isStarred ? `⭐ ${escapeMarkdown(author.author)}` : escapeMarkdown(author.author);
+      md += `| ${name} | ${author.openPrCount} | ${formatDays(author.avgAgeInDays)} | ${author.avgReviewRounds} | ${fastest} |\n`;
     }
     md += "\n";
   }
@@ -207,7 +212,8 @@ function generateWorkloadSection(workload: ReviewerWorkload[]): string {
 
   for (const r of workload) {
     const responseTime = r.avgResponseTimeInDays !== null ? formatDays(r.avgResponseTimeInDays) : "N/A";
-    md += `| ${escapeMarkdown(r.displayName)} | ${r.assignedPrCount} | ${r.pendingReviewCount} | ${r.completedReviewCount} | ${responseTime} | ${r.loadIndicator} |\n`;
+    const name = r.isStarred ? `⭐ ${escapeMarkdown(r.displayName)}` : escapeMarkdown(r.displayName);
+    md += `| ${name} | ${r.assignedPrCount} | ${r.pendingReviewCount} | ${r.completedReviewCount} | ${responseTime} | ${r.loadIndicator} |\n`;
   }
 
   return md + "\n";

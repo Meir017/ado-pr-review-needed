@@ -78,8 +78,8 @@ export function buildRepoReport(
   r: RepoResult,
   multiConfig: import("./config.js").MultiRepoConfig,
 ): JsonRepoReport {
-  const metrics = computeReviewMetrics(r.prs, multiConfig.botUsers);
-  const workload = computeReviewerWorkload(r.prs, r.analysis, multiConfig.botUsers);
+  const metrics = computeReviewMetrics(r.prs, multiConfig.botUsers, undefined, multiConfig.starredUsers);
+  const workload = computeReviewerWorkload(r.prs, r.analysis, multiConfig.botUsers, undefined, multiConfig.aiBotUsers, multiConfig.starredUsers);
 
   let staleness: Record<string, number> | undefined;
   if (multiConfig.staleness.enabled) {
@@ -148,6 +148,7 @@ interface ProcessRepoOptions {
   ignoredUsers: Set<string>;
   botUsers: Set<string>;
   aiBotUsers: Set<string>;
+  starredUsers: Set<string>;
 }
 
 async function processRepo(options: ProcessRepoOptions): Promise<RepoResult> {
@@ -181,7 +182,7 @@ async function processRepo(options: ProcessRepoOptions): Promise<RepoResult> {
   const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, effectiveDays);
   await refreshMergeStatus(gitApi, repo.repository, repo.project, prs, restartResult.restartedPrIds);
 
-  const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers);
+  const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers, options.starredUsers);
   return {
     repoLabel,
     prs,
@@ -226,7 +227,7 @@ export async function runPipeline(configPath?: string): Promise<PipelineResult> 
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
   const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
-    processRepo({ repo, isMultiRepo, restartMergeAfterDays: multiConfig.restartMergeAfterDays, quantifierConfig: multiConfig.quantifier, teamMembers: multiConfig.teamMembers, ignoredUsers: multiConfig.ignoredUsers, botUsers: multiConfig.botUsers, aiBotUsers: multiConfig.aiBotUsers }),
+    processRepo({ repo, isMultiRepo, restartMergeAfterDays: multiConfig.restartMergeAfterDays, quantifierConfig: multiConfig.quantifier, teamMembers: multiConfig.teamMembers, ignoredUsers: multiConfig.ignoredUsers, botUsers: multiConfig.botUsers, aiBotUsers: multiConfig.aiBotUsers, starredUsers: multiConfig.starredUsers }),
   );
 
   for (const r of results) {
@@ -239,8 +240,8 @@ export async function runPipeline(configPath?: string): Promise<PipelineResult> 
   const repoStats = results.map((r) => computeRepoSummaryStats(r.repoLabel, r.analysis, r.restarted, r.restartFailed));
   const stats = computeSummaryStats(merged, totalRestarted, totalRestartFailed, repoStats);
   const allPrs = results.flatMap((r) => r.prs);
-  const metrics = computeReviewMetrics(allPrs, multiConfig.botUsers);
-  const workload = computeReviewerWorkload(allPrs, merged, multiConfig.botUsers);
+  const metrics = computeReviewMetrics(allPrs, multiConfig.botUsers, undefined, multiConfig.starredUsers);
+  const workload = computeReviewerWorkload(allPrs, merged, multiConfig.botUsers, undefined, multiConfig.aiBotUsers, multiConfig.starredUsers);
 
   return { multiConfig, repos, isMultiRepo, results, merged, stats, allPrs, metrics, workload, totalPrs, totalRestarted, totalRestartFailed };
 }

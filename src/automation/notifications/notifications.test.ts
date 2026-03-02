@@ -20,14 +20,14 @@ const STATS: SummaryStats = {
 function makeAnalysis(): AnalysisResult {
   return {
     approved: [
-      { id: 1, title: "Approved PR", author: "Alice", url: "https://example.com/pr/1", createdDate: new Date("2026-01-01"), hasMergeConflict: false, isTeamMember: true, action: "APPROVE" },
+      { id: 1, title: "Approved PR", author: "Alice", url: "https://example.com/pr/1", createdDate: new Date("2026-01-01"), hasMergeConflict: false, isTeamMember: true, isStarred: false, action: "APPROVE" },
     ],
     needingReview: [
-      { id: 2, title: "Review PR", author: "Bob", url: "https://example.com/pr/2", waitingSince: new Date("2026-01-01"), hasMergeConflict: false, isTeamMember: true, action: "REVIEW" },
-      { id: 3, title: "Another Review PR", author: "Charlie", url: "https://example.com/pr/3", waitingSince: new Date("2026-02-10"), hasMergeConflict: true, isTeamMember: true, action: "REVIEW" },
+      { id: 2, title: "Review PR", author: "Bob", url: "https://example.com/pr/2", waitingSince: new Date("2026-01-01"), hasMergeConflict: false, isTeamMember: true, isStarred: false, action: "REVIEW" },
+      { id: 3, title: "Another Review PR", author: "Charlie", url: "https://example.com/pr/3", waitingSince: new Date("2026-02-10"), hasMergeConflict: true, isTeamMember: true, isStarred: false, action: "REVIEW" },
     ],
     waitingOnAuthor: [
-      { id: 4, title: "Author PR", author: "Dave", url: "https://example.com/pr/4", lastReviewerActivityDate: new Date("2026-02-15"), hasMergeConflict: false, isTeamMember: true, action: "PENDING" },
+      { id: 4, title: "Author PR", author: "Dave", url: "https://example.com/pr/4", lastReviewerActivityDate: new Date("2026-02-15"), hasMergeConflict: false, isTeamMember: true, isStarred: false, action: "PENDING" },
     ],
   };
 }

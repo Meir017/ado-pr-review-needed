@@ -4,6 +4,7 @@ import { isBotAuthor } from "./analysis/review-logic.js";
 export interface ReviewerWorkload {
   reviewer: string;
   displayName: string;
+  isStarred: boolean;
   assignedPrCount: number;
   pendingReviewCount: number;
   completedReviewCount: number;
@@ -44,6 +45,7 @@ export function computeReviewerWorkload(
   botUsers: Set<string> = new Set(),
   thresholds: WorkloadThresholds = DEFAULT_WORKLOAD_THRESHOLDS,
   aiBotUsers: Set<string> = new Set(),
+  starredUsers: Set<string> = new Set(),
 ): ReviewerWorkload[] {
   const needingReviewIds = new Set(analysis.needingReview.map((pr) => pr.id));
 
@@ -106,6 +108,7 @@ export function computeReviewerWorkload(
     results.push({
       reviewer: _key,
       displayName: data.displayName,
+      isStarred: starredUsers.has(_key),
       assignedPrCount: data.assignedPrCount,
       pendingReviewCount: data.pendingReviewCount,
       completedReviewCount: data.completedReviewCount,

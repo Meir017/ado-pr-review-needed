@@ -42,7 +42,7 @@ describe("computeReviewerWorkload", () => {
     });
     const analysis: AnalysisResult = {
       ...EMPTY_ANALYSIS,
-      needingReview: [{ id: 1, title: "Test PR", author: "Alice", url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, action: "REVIEW" }],
+      needingReview: [{ id: 1, title: "Test PR", author: "Alice", url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, isStarred: false, action: "REVIEW" }],
     };
 
     const result = computeReviewerWorkload([pr], analysis, new Set(), DEFAULT_WORKLOAD_THRESHOLDS);
@@ -123,7 +123,7 @@ describe("computeReviewerWorkload", () => {
         authorUniqueName: `author${i}@example.com`,
         reviewers: [{ displayName: "Overloaded", uniqueName: "overloaded@example.com", vote: 0 }],
       }));
-      needingReview.push({ id: i, title: `PR ${i}`, author: `author${i}`, url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, action: "REVIEW" });
+      needingReview.push({ id: i, title: `PR ${i}`, author: `author${i}`, url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, isStarred: false, action: "REVIEW" });
     }
 
     const analysis: AnalysisResult = { ...EMPTY_ANALYSIS, needingReview };
@@ -154,8 +154,8 @@ describe("computeReviewerWorkload", () => {
     const analysis: AnalysisResult = {
       ...EMPTY_ANALYSIS,
       needingReview: [
-        { id: 1, title: "PR 1", author: "Alice", url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, action: "REVIEW" },
-        { id: 2, title: "PR 2", author: "Charlie", url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, action: "REVIEW" },
+        { id: 1, title: "PR 1", author: "Alice", url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, isStarred: false, action: "REVIEW" },
+        { id: 2, title: "PR 2", author: "Charlie", url: "", waitingSince: new Date(), hasMergeConflict: false, isTeamMember: true, isStarred: false, action: "REVIEW" },
       ],
     };
 

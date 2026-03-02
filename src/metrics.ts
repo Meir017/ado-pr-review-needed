@@ -22,6 +22,7 @@ export interface AggregateMetrics {
 
 export interface AuthorMetrics {
   author: string;
+  isStarred: boolean;
   openPrCount: number;
   avgAgeInDays: number;
   avgReviewRounds: number;
@@ -93,6 +94,7 @@ export function computeReviewMetrics(
   prs: PullRequestInfo[],
   botUsers: Set<string> = new Set(),
   now: Date = new Date(),
+  starredUsers: Set<string> = new Set(),
 ): ReviewMetrics {
   const perPr = prs.map((pr) => computePrCycleMetrics(pr, botUsers, now));
 
@@ -118,6 +120,10 @@ export function computeReviewMetrics(
 
   // Per-author aggregation
   const authorMap = new Map<string, PrCycleMetrics[]>();
+  const authorUniqueNames = new Map<string, string>();
+  for (const pr of prs) {
+    authorUniqueNames.set(pr.author, pr.authorUniqueName);
+  }
   for (const m of perPr) {
     if (!authorMap.has(m.author)) authorMap.set(m.author, []);
     authorMap.get(m.author)!.push(m);
@@ -133,6 +139,7 @@ export function computeReviewMetrics(
 
     perAuthor.push({
       author,
+      isStarred: starredUsers.has(authorUniqueNames.get(author) ?? ""),
       openPrCount: metrics.length,
       avgAgeInDays: Math.round((authorAges.reduce((s, v) => s + v, 0) / authorAges.length) * 10) / 10,
       avgReviewRounds: Math.round((authorRounds.reduce((s, v) => s + v, 0) / authorRounds.length) * 10) / 10,

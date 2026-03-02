@@ -54,6 +54,7 @@ export interface PrRowData {
   hasMergeConflict: boolean;
   dateColumn: Date;
   action: PrAction;
+  isStarred?: boolean;
   repository?: string;
   size?: PrSizeInfo;
   detectedLabels?: string[];
