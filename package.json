@@ -1,6 +1,6 @@
 {
   "name": "@meirblachman/pr-review-needed",
-  "version": "0.1.30",
+  "version": "0.1.31",
   "description": "Generates a markdown summary of Azure DevOps PRs needing review",
   "type": "module",
   "bin": {
