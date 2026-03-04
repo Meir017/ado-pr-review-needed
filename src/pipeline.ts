@@ -66,6 +66,11 @@ export function runSetup(): void {
   log.info("Edit the file to add your Azure DevOps repository URLs and team members.");
 }
 
+export interface RepoError {
+  repoLabel: string;
+  error: string;
+}
+
 export interface RepoResult {
   repoLabel: string;
   prs: PullRequestInfo[];
@@ -151,60 +156,66 @@ interface ProcessRepoOptions {
   starredUsers: Set<string>;
 }
 
-async function processRepo(options: ProcessRepoOptions): Promise<RepoResult> {
+async function processRepo(options: ProcessRepoOptions): Promise<RepoResult | RepoError> {
   const { repo, isMultiRepo, restartMergeAfterDays, quantifierConfig, teamMembers, ignoredUsers, botUsers, aiBotUsers } = options;
   const repoLabel = `${repo.project}/${repo.repository}`;
-  log.info(`Fetching open PRs from ${repoLabel}…`);
-  const startFetch = Date.now();
-  // Merge repo-level ignore patterns with quantifier excludedPatterns
-  let effectiveQuantifier = quantifierConfig;
-  if (quantifierConfig && repo.patterns.ignore.length > 0) {
-    effectiveQuantifier = {
-      ...quantifierConfig,
-      excludedPatterns: [...quantifierConfig.excludedPatterns, ...repo.patterns.ignore],
-    };
-  }
-
-  const gitApi = await getGitApiForOrg(repo.orgUrl);
-  const buildApi = await getBuildApiForOrg(repo.orgUrl);
-  const policyApi = await getPolicyApiForOrg(repo.orgUrl);
-  const coreApi = await getCoreApiForOrg(repo.orgUrl);
-
-  // Resolve project GUID for policy evaluations artifact ID
-  let projectId: string | undefined;
   try {
-    const projectInfo = await withRetry("Resolve project GUID", () =>
-      coreApi.getProject(repo.project),
+    log.info(`Fetching open PRs from ${repoLabel}…`);
+    const startFetch = Date.now();
+    // Merge repo-level ignore patterns with quantifier excludedPatterns
+    let effectiveQuantifier = quantifierConfig;
+    if (quantifierConfig && repo.patterns.ignore.length > 0) {
+      effectiveQuantifier = {
+        ...quantifierConfig,
+        excludedPatterns: [...quantifierConfig.excludedPatterns, ...repo.patterns.ignore],
+      };
+    }
+
+    const gitApi = await getGitApiForOrg(repo.orgUrl);
+    const buildApi = await getBuildApiForOrg(repo.orgUrl);
+    const policyApi = await getPolicyApiForOrg(repo.orgUrl);
+    const coreApi = await getCoreApiForOrg(repo.orgUrl);
+
+    // Resolve project GUID for policy evaluations artifact ID
+    let projectId: string | undefined;
+    try {
+      const projectInfo = await withRetry("Resolve project GUID", () =>
+        coreApi.getProject(repo.project),
+      );
+      projectId = projectInfo.id;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.debug(`Failed to resolve project GUID for ${repo.project}: ${msg}`);
+    }
+
+    const prs = await fetchOpenPullRequests(
+      gitApi, repo.repository, repo.project, repo.orgUrl,
+      effectiveQuantifier, repo.patterns, buildApi, policyApi, projectId,
     );
-    projectId = projectInfo.id;
+    log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
+
+    await applyDetectedLabels(gitApi, repo.repository, repo.project, prs);
+
+    const effectiveDays = repo.skipRestartMerge ? -1 : restartMergeAfterDays;
+    if (repo.skipRestartMerge) {
+      log.debug(`Skipping restart-merge for ${repoLabel} (configured per repository)`);
+    }
+    const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, effectiveDays);
+    await refreshMergeStatus(gitApi, repo.repository, repo.project, prs, restartResult.restartedPrIds);
+
+    const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers, options.starredUsers);
+    return {
+      repoLabel,
+      prs,
+      analysis,
+      restarted: restartResult.restarted,
+      restartFailed: restartResult.failed,
+    };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    log.debug(`Failed to resolve project GUID for ${repo.project}: ${msg}`);
+    log.debug(`Failed to process ${repoLabel}: ${msg}`);
+    return { repoLabel, error: msg };
   }
-
-  const prs = await fetchOpenPullRequests(
-    gitApi, repo.repository, repo.project, repo.orgUrl,
-    effectiveQuantifier, repo.patterns, buildApi, policyApi, projectId,
-  );
-  log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
-
-  await applyDetectedLabels(gitApi, repo.repository, repo.project, prs);
-
-  const effectiveDays = repo.skipRestartMerge ? -1 : restartMergeAfterDays;
-  if (repo.skipRestartMerge) {
-    log.debug(`Skipping restart-merge for ${repoLabel} (configured per repository)`);
-  }
-  const restartResult = await restartMergeForStalePrs(gitApi, repo.repository, repo.project, prs, effectiveDays);
-  await refreshMergeStatus(gitApi, repo.repository, repo.project, prs, restartResult.restartedPrIds);
-
-  const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers, options.starredUsers);
-  return {
-    repoLabel,
-    prs,
-    analysis,
-    restarted: restartResult.restarted,
-    restartFailed: restartResult.failed,
-  };
 }
 
 export interface PipelineResult {
@@ -212,6 +223,7 @@ export interface PipelineResult {
   repos: RepoTarget[];
   isMultiRepo: boolean;
   results: RepoResult[];
+  repoErrors: RepoError[];
   merged: AnalysisResult;
   stats: import("./types.js").SummaryStats;
   allPrs: PullRequestInfo[];
@@ -241,9 +253,19 @@ export async function runPipeline(configPath?: string): Promise<PipelineResult> 
   let totalRestartFailed = 0;
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
-  const results = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
+  const rawResults = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
     processRepo({ repo, isMultiRepo, restartMergeAfterDays: multiConfig.restartMergeAfterDays, quantifierConfig: multiConfig.quantifier, teamMembers: multiConfig.teamMembers, ignoredUsers: multiConfig.ignoredUsers, botUsers: multiConfig.botUsers, aiBotUsers: multiConfig.aiBotUsers, starredUsers: multiConfig.starredUsers }),
   );
+
+  const results: RepoResult[] = [];
+  const repoErrors: RepoError[] = [];
+  for (const r of rawResults) {
+    if ("error" in r) {
+      repoErrors.push(r);
+    } else {
+      results.push(r);
+    }
+  }
 
   for (const r of results) {
     totalPrs += r.prs.length;
@@ -258,7 +280,7 @@ export async function runPipeline(configPath?: string): Promise<PipelineResult> 
   const metrics = computeReviewMetrics(allPrs, multiConfig.botUsers, undefined, multiConfig.starredUsers);
   const workload = computeReviewerWorkload(allPrs, merged, multiConfig.botUsers, undefined, multiConfig.aiBotUsers, multiConfig.starredUsers);
 
-  return { multiConfig, repos, isMultiRepo, results, merged, stats, allPrs, metrics, workload, totalPrs, totalRestarted, totalRestartFailed };
+  return { multiConfig, repos, isMultiRepo, results, repoErrors, merged, stats, allPrs, metrics, workload, totalPrs, totalRestarted, totalRestartFailed };
 }
 
 export async function runMarkdownExport(args: CliArgs): Promise<void> {
@@ -267,13 +289,20 @@ export async function runMarkdownExport(args: CliArgs): Promise<void> {
   const format = args.format ?? "markdown";
 
   if (format === "terminal") {
-    const { multiConfig, repos, isMultiRepo, merged, stats, metrics, workload } = await runPipeline(args.config);
+    const { multiConfig, repos, isMultiRepo, repoErrors, merged, stats, metrics, workload } = await runPipeline(args.config);
 
     const repoLabel = isMultiRepo
       ? `${repos.length} repositories`
-      : `${repos[0].project}/${repos[0].repository}`;
+      : `${repos[0]?.project}/${repos[0]?.repository}`;
     const output = renderDashboard({ analysis: merged, repoLabel, multiRepo: isMultiRepo, stats, staleness: multiConfig.staleness, metrics, workload });
     console.log(output);
+
+    if (repoErrors.length > 0) {
+      log.heading("Repository Errors");
+      for (const e of repoErrors) {
+        log.error(`${e.repoLabel}: ${e.error}`);
+      }
+    }
 
     if (multiConfig.notifications) {
       await sendNotifications(merged, stats, multiConfig.notifications, multiConfig.staleness);
@@ -283,7 +312,7 @@ export async function runMarkdownExport(args: CliArgs): Promise<void> {
 
   log.heading("PR Review Needed");
 
-  const { multiConfig, repos, isMultiRepo, results, merged, stats, metrics, workload, totalPrs } = await runPipeline(args.config);
+  const { multiConfig, repos, isMultiRepo, results, repoErrors, merged, stats, metrics, workload, totalPrs } = await runPipeline(args.config);
 
   for (const r of results) {
     log.success(`${r.repoLabel}: ${r.analysis.approved.length} approved, ${r.analysis.needingReview.length} needing review, ${r.analysis.waitingOnAuthor.length} waiting on author`);
@@ -328,6 +357,14 @@ export async function runMarkdownExport(args: CliArgs): Promise<void> {
   log.summary("Waiting on author", merged.waitingOnAuthor.length);
   log.summary("Output file", resolve(args.output));
   console.log();
+
+  if (repoErrors.length > 0) {
+    log.heading("Repository Errors");
+    for (const e of repoErrors) {
+      log.error(`${e.repoLabel}: ${e.error}`);
+    }
+    console.log();
+  }
 
   if (args.notify !== false && multiConfig.notifications) {
     await sendNotifications(merged, stats, multiConfig.notifications, multiConfig.staleness);
