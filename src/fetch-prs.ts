@@ -382,6 +382,7 @@ export async function fetchOpenPullRequests(
       displayName: r.displayName ?? "",
       uniqueName: identityUniqueName(r),
       vote: r.vote ?? 0,
+      isRequired: r.isRequired ?? false,
     }));
 
     const url = `${baseUrl}/${project}/_git/${repositoryId}/pullrequest/${prId}`;

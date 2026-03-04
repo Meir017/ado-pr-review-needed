@@ -47,6 +47,16 @@
   .policy-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .policy-blocking { font-size: 0.7rem; padding: 0.1rem 0.35rem; border-radius: 4px; background: rgba(248,81,73,0.15); color: var(--red); white-space: nowrap; }
   .policy-optional { font-size: 0.7rem; padding: 0.1rem 0.35rem; border-radius: 4px; background: rgba(139,148,158,0.15); color: var(--text-dim); white-space: nowrap; }
+  .reviewer-cell { position: relative; }
+  .reviewer-popup-wrap { cursor: pointer; }
+  .reviewer-popup { display: none; position: absolute; z-index: 100; top: 100%; left: 0; min-width: 300px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); padding: 0.75rem; font-size: 0.82rem; }
+  .reviewer-popup.visible { display: block; }
+  .reviewer-popup h4 { margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  .reviewer-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; border-bottom: 1px solid rgba(48,54,61,0.5); }
+  .reviewer-row:last-child { border-bottom: none; }
+  .reviewer-icon { flex-shrink: 0; width: 1.2em; text-align: center; }
+  .reviewer-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media print { .reviewer-popup { display: none !important; } }
   @media print { .policy-popup { display: none !important; } }
   .section { margin-bottom: 2rem; }
   .section h2 { font-size: 1.1rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
@@ -76,6 +86,7 @@
       <option value="approved">Approved</option>
     </select>
     <select id="repo-filter" onchange="filterTable()"></select>
+    <select id="reviewer-filter" onchange="filterTable()"></select>
     <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.9rem;color:var(--text-dim);cursor:pointer;white-space:nowrap;">
       <input type="checkbox" id="hide-conflicts" onchange="filterTable()"> Hide conflicts
     </label>
@@ -94,8 +105,9 @@
           <th onclick="sortTable(3)">Status ↕</th>
           <th onclick="sortTable(4)">Repo ↕</th>
           <th onclick="sortTable(5)">Size ↕</th>
-          <th onclick="sortTable(6)">Policies ↕</th>
-          <th onclick="sortTable(7)">Staleness ↕</th>
+          <th onclick="sortTable(6)">Reviewers ↕</th>
+          <th onclick="sortTable(7)">Policies ↕</th>
+          <th onclick="sortTable(8)">Staleness ↕</th>
         </tr>
       </thead>
       <tbody id="pr-table"></tbody>
@@ -168,6 +180,23 @@ function renderRepoFilter() {
   for (const repo of DATA.repositories) {
     sel.innerHTML += `<option value="${repo.repoLabel}">${repo.repoLabel}</option>`;
   }
+
+  // Populate required reviewer filter
+  const revSel = document.getElementById('reviewer-filter');
+  const requiredReviewers = new Set();
+  for (const repo of DATA.repositories) {
+    for (const list of [repo.analysis.needingReview, repo.analysis.approved, repo.analysis.waitingOnAuthor]) {
+      for (const pr of list) {
+        for (const r of (pr.reviewers || [])) {
+          if (r.isRequired) requiredReviewers.add(r.displayName);
+        }
+      }
+    }
+  }
+  revSel.innerHTML = '<option value="all">All Reviewers</option>';
+  for (const name of [...requiredReviewers].sort()) {
+    revSel.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+  }
 }
 
 function getAllPrs() {
@@ -192,6 +221,7 @@ function filterTable() {
   const q = document.getElementById('search').value.toLowerCase();
   const sf = document.getElementById('status-filter').value;
   const rf = document.getElementById('repo-filter').value;
+  const rvf = document.getElementById('reviewer-filter').value;
   const hc = document.getElementById('hide-conflicts').checked;
 
   let filtered = allPrs.filter(pr => {
@@ -199,6 +229,10 @@ function filterTable() {
     if (sf !== 'all' && pr.status !== sf) return false;
     if (rf !== 'all' && pr.repo !== rf) return false;
     if (hc && pr.hasMergeConflict) return false;
+    if (rvf !== 'all') {
+      const hasRequiredReviewer = (pr.reviewers || []).some(r => r.isRequired && r.displayName === rvf);
+      if (!hasRequiredReviewer) return false;
+    }
     return true;
   });
 
@@ -225,6 +259,7 @@ function filterTable() {
     const size = pr.size ? pr.size.label : '—';
     const staleness = getStaleness(pr);
     const policyCell = getPolicyCell(pr.policyStatus, pr.pipelineStatus);
+    const reviewerCell = getReviewerCell(pr.reviewers);
     const conflict = pr.hasMergeConflict ? ' <span class="badge badge-red">❌ conflict</span>' : '';
     return `<tr>
       <td><a href="${pr.url}" target="_blank">#${pr.id}</a></td>
@@ -233,6 +268,7 @@ function filterTable() {
       <td>${statusBadge}</td>
       <td>${escapeHtml(pr.repo)}</td>
       <td>${size}</td>
+      <td class="reviewer-cell">${reviewerCell}</td>
       <td class="policy-cell">${policyCell}</td>
       <td>${staleness}</td>
     </tr>`;
@@ -248,13 +284,17 @@ function getCellValue(pr, col) {
     case 4: return pr.repo;
     case 5: return pr.size ? pr.size.totalChanges : 0;
     case 6: {
+      const reviewers = pr.reviewers || [];
+      return reviewers.filter(r => r.isRequired).length * 1000 + reviewers.length;
+    }
+    case 7: {
       const ps = pr.policyStatus;
       if (ps) return ps.rejected > 0 ? 2 : ps.running > 0 ? 1 : 0;
       const pp = pr.pipelineStatus;
       if (pp) return pp.failed > 0 ? 2 : pp.inProgress > 0 ? 1 : 0;
       return -1;
     }
-    case 7: return pr.date ? new Date(pr.date).getTime() : 0;
+    case 8: return pr.date ? new Date(pr.date).getTime() : 0;
     default: return '';
   }
 }
@@ -272,6 +312,42 @@ function getStaleness(pr) {
   if (days >= 14) return '<span class="badge badge-red">🔴 ' + days + 'd</span>';
   if (days >= 7) return '<span class="badge badge-yellow">⚠️ ' + days + 'd</span>';
   return days + 'd';
+}
+
+function reviewerVoteIcon(vote) {
+  if (vote >= 10) return '✅';
+  if (vote >= 5) return '👍';
+  if (vote <= -10) return '❌';
+  if (vote <= -5) return '⏳';
+  return '👀';
+}
+
+function getReviewerBadge(reviewers) {
+  if (!reviewers || reviewers.length === 0) return '—';
+  const required = reviewers.filter(r => r.isRequired).length;
+  const allApproved = reviewers.every(r => r.vote >= 5);
+  const anyRejected = reviewers.some(r => r.vote <= -10);
+  const cls = anyRejected ? 'badge-red' : allApproved ? 'badge-green' : 'badge-yellow';
+  const reqText = required > 0 ? ` (${required} required)` : '';
+  return `<span class="badge ${cls}">👥 ${reviewers.length}${reqText}</span>`;
+}
+
+function getReviewerPopup(reviewers) {
+  if (!reviewers || reviewers.length === 0) return '';
+  const rows = reviewers.map(r => {
+    const icon = reviewerVoteIcon(r.vote);
+    const reqLabel = r.isRequired
+      ? '<span class="policy-blocking">required</span>'
+      : '<span class="policy-optional">optional</span>';
+    return `<div class="reviewer-row"><span class="reviewer-icon">${icon}</span><span class="reviewer-name">${escapeHtml(r.displayName)}</span>${reqLabel}</div>`;
+  }).join('');
+  return `<div class="reviewer-popup"><h4>Reviewers</h4>${rows}</div>`;
+}
+
+function getReviewerCell(reviewers) {
+  const badge = getReviewerBadge(reviewers);
+  const popup = getReviewerPopup(reviewers);
+  return `<div class="reviewer-popup-wrap">${badge}${popup}</div>`;
 }
 
 function getPipelineBadge(ps) {
@@ -343,7 +419,7 @@ function renderMetrics() {
 }
 
 function exportCsv() {
-  const rows = [['ID','Title','Author','Status','Repo','Size','Policies','Age (days)']];
+  const rows = [['ID','Title','Author','Status','Repo','Size','Reviewers','Policies','Age (days)']];
   for (const pr of allPrs) {
     const days = pr.date ? Math.floor((Date.now() - new Date(pr.date).getTime()) / 86400000) : '';
     let policyCol = '';
@@ -352,7 +428,8 @@ function exportCsv() {
     } else if (pr.pipelineStatus) {
       policyCol = `${pr.pipelineStatus.succeeded}/${pr.pipelineStatus.total} passed`;
     }
-    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, (pr.isStarred ? '⭐ ' : '') + pr.author, pr.status, pr.repo, pr.size?.label || '', policyCol, days]);
+    const reviewerCol = (pr.reviewers || []).map(r => `${r.displayName} (${r.isRequired ? 'required' : 'optional'})`).join('; ');
+    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, (pr.isStarred ? '⭐ ' : '') + pr.author, pr.status, pr.repo, pr.size?.label || '', `"${reviewerCol}"`, policyCol, days]);
   }
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -366,42 +443,42 @@ function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Policy popup: show on hover/click, keep visible while mouse is over badge or popup
+// Policy & reviewer popup: show on hover/click, keep visible while mouse is over badge or popup
 (function() {
   let hideTimer = null;
   function showPopup(wrap) {
-    const popup = wrap.querySelector('.policy-popup');
+    const popup = wrap.querySelector('.policy-popup') || wrap.querySelector('.reviewer-popup');
     if (!popup) return;
     // Close any other open popups
-    document.querySelectorAll('.policy-popup.visible').forEach(p => { if (p !== popup) p.classList.remove('visible'); });
+    document.querySelectorAll('.policy-popup.visible, .reviewer-popup.visible').forEach(p => { if (p !== popup) p.classList.remove('visible'); });
     clearTimeout(hideTimer);
     popup.classList.add('visible');
   }
   function scheduleHide(wrap) {
     hideTimer = setTimeout(() => {
-      const popup = wrap.querySelector('.policy-popup');
+      const popup = wrap.querySelector('.policy-popup') || wrap.querySelector('.reviewer-popup');
       if (popup) popup.classList.remove('visible');
     }, 300);
   }
   function cancelHide() { clearTimeout(hideTimer); }
 
   document.addEventListener('mouseenter', e => {
-    const wrap = e.target.closest('.policy-popup-wrap');
+    const wrap = e.target.closest('.policy-popup-wrap') || e.target.closest('.reviewer-popup-wrap');
     if (wrap) showPopup(wrap);
-    if (e.target.closest('.policy-popup')) cancelHide();
+    if (e.target.closest('.policy-popup') || e.target.closest('.reviewer-popup')) cancelHide();
   }, true);
   document.addEventListener('mouseleave', e => {
-    const wrap = e.target.closest('.policy-popup-wrap');
+    const wrap = e.target.closest('.policy-popup-wrap') || e.target.closest('.reviewer-popup-wrap');
     if (wrap) scheduleHide(wrap);
-    if (e.target.closest('.policy-popup')) {
-      const parentWrap = e.target.closest('.policy-popup-wrap');
+    if (e.target.closest('.policy-popup') || e.target.closest('.reviewer-popup')) {
+      const parentWrap = e.target.closest('.policy-popup-wrap') || e.target.closest('.reviewer-popup-wrap');
       if (parentWrap) scheduleHide(parentWrap);
     }
   }, true);
   // Close on click outside
   document.addEventListener('click', e => {
-    if (!e.target.closest('.policy-popup-wrap')) {
-      document.querySelectorAll('.policy-popup.visible').forEach(p => p.classList.remove('visible'));
+    if (!e.target.closest('.policy-popup-wrap') && !e.target.closest('.reviewer-popup-wrap')) {
+      document.querySelectorAll('.policy-popup.visible, .reviewer-popup.visible').forEach(p => p.classList.remove('visible'));
     }
   });
 })();

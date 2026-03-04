@@ -1,4 +1,4 @@
-import type { PrAction, PrSizeInfo, PipelineStatus, PolicyStatus } from "./pr.js";
+import type { PrAction, PrSizeInfo, PipelineStatus, PolicyStatus, ReviewerInfo } from "./pr.js";
 
 export interface PrNeedingReview {
   id: number;
@@ -14,6 +14,7 @@ export interface PrNeedingReview {
   size?: PrSizeInfo;
   detectedLabels?: string[];
   reviewerNames?: string[];
+  reviewers?: ReviewerInfo[];
   pipelineStatus?: PipelineStatus;
   policyStatus?: PolicyStatus;
 }
@@ -31,6 +32,7 @@ export interface PrWaitingOnAuthor {
   repository?: string;
   size?: PrSizeInfo;
   detectedLabels?: string[];
+  reviewers?: ReviewerInfo[];
   pipelineStatus?: PipelineStatus;
   policyStatus?: PolicyStatus;
 }
@@ -48,6 +50,7 @@ export interface PrApproved {
   repository?: string;
   size?: PrSizeInfo;
   detectedLabels?: string[];
+  reviewers?: ReviewerInfo[];
   pipelineStatus?: PipelineStatus;
   policyStatus?: PolicyStatus;
 }

@@ -1,4 +1,4 @@
-import type { PrSizeInfo, PrSizeLabel, PrAction, SummaryStats, PipelineStatus, PolicyStatus } from "../types.js";
+import type { PrSizeInfo, PrSizeLabel, PrAction, SummaryStats, PipelineStatus, PolicyStatus, ReviewerInfo } from "../types.js";
 import type { AnalysisResult } from "../types.js";
 
 export type Urgency = "low" | "medium" | "high";
@@ -61,6 +61,7 @@ export interface PrRowData {
   stalenessBadge?: string | null;
   pipelineStatus?: PipelineStatus;
   policyStatus?: PolicyStatus;
+  reviewers?: ReviewerInfo[];
 }
 
 export function formatPipelineBadge(ps: PipelineStatus | undefined): string {
