@@ -34,6 +34,7 @@ export interface ReviewerInfo {
   displayName: string;
   uniqueName: string;
   vote: number;
+  isRequired: boolean;
 }
 
 export interface ThreadComment {
