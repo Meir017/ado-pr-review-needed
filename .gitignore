@@ -3,3 +3,4 @@ dist/
 coverage/
 pr-review-summary.md
 pr-review-summary.html
+demo/*.webm
