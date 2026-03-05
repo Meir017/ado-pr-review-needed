@@ -23,7 +23,7 @@
     "prepublishOnly": "npm run build && npm run bundle",
     "start": "tsx src/index.ts run",
     "lint": "eslint src/",
-    "test": "vitest run --exclude '**/*.spec.ts'",
+    "test": "vitest run",
     "test:html": "playwright test"
   },
   "dependencies": {
