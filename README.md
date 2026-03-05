@@ -5,6 +5,10 @@
 
 A TypeScript CLI tool that queries Azure DevOps for open pull requests and generates a markdown summary of PRs needing reviewer feedback — inspired by [dotnet/aspire#13834](https://github.com/dotnet/aspire/issues/13834).
 
+<p align="center">
+  <img src="demo/pr-dashboard-demo.gif" alt="PR Review Dashboard demo" width="800">
+</p>
+
 ## How It Works
 
 1. Authenticates to Azure DevOps using `AzureCliCredential` (no PAT required)
