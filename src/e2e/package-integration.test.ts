@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, beforeAll } from "vitest";
 import { execFileSync } from "node:child_process";
 import { readFileSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -102,17 +102,19 @@ describe("package integration: CLI commands", () => {
       if (testDir) rmSync(testDir, { recursive: true, force: true });
     });
 
-    it("fails with a config-related error, not a template error", { timeout: 20_000 }, () => {
+    it("fails with a config-related error, not a template error", () => {
       testDir = mkdtempSync(join(tmpdir(), "pkg-int-run-"));
-      const { stderr, exitCode } = runCli(["run"], { cwd: testDir });
+      const configPath = join(testDir, "pr-review-config.json");
+      const { stderr, exitCode } = runCli(["run", "--config", configPath], { cwd: testDir });
       expect(exitCode).not.toBe(0);
       // Must NOT fail because the HTML template is missing
       expect(stderr).not.toContain("HTML template not found");
     });
 
-    it("--format html fails with config error, not template error", { timeout: 20_000 }, () => {
+    it("--format html fails with config error, not template error", () => {
       testDir = mkdtempSync(join(tmpdir(), "pkg-int-html-"));
-      const { stderr, exitCode } = runCli(["run", "--format", "html"], { cwd: testDir });
+      const configPath = join(testDir, "pr-review-config.json");
+      const { stderr, exitCode } = runCli(["run", "--format", "html", "--config", configPath], { cwd: testDir });
       expect(exitCode).not.toBe(0);
       expect(stderr).not.toContain("HTML template not found");
     });
@@ -122,7 +124,9 @@ describe("package integration: CLI commands", () => {
 // ---------- npm pack verification ----------
 
 describe("package integration: npm pack", () => {
-  it("includes dist/index.min.js in the package", () => {
+  let packFiles: string[];
+
+  beforeAll(() => {
     const stdout = execFileSync("npm", ["pack", "--dry-run", "--json"], {
       cwd: resolve("."),
       encoding: "utf-8",
@@ -130,21 +134,16 @@ describe("package integration: npm pack", () => {
       shell: true,
     });
     const packInfo = JSON.parse(stdout);
-    const files: string[] = packInfo[0].files.map((f: { path: string }) => f.path);
-    expect(files).toContain("dist/index.min.js");
+    packFiles = packInfo[0].files.map((f: { path: string }) => f.path);
+  });
+
+  it("includes dist/index.min.js in the package", () => {
+    expect(packFiles).toContain("dist/index.min.js");
   });
 
   it("does not ship source files or node_modules", () => {
-    const stdout = execFileSync("npm", ["pack", "--dry-run", "--json"], {
-      cwd: resolve("."),
-      encoding: "utf-8",
-      timeout: 30_000,
-      shell: true,
-    });
-    const packInfo = JSON.parse(stdout);
-    const files: string[] = packInfo[0].files.map((f: { path: string }) => f.path);
-    const hasSrc = files.some((f) => f.startsWith("src/"));
-    const hasNodeModules = files.some((f) => f.startsWith("node_modules/"));
+    const hasSrc = packFiles.some((f) => f.startsWith("src/"));
+    const hasNodeModules = packFiles.some((f) => f.startsWith("node_modules/"));
     expect(hasSrc).toBe(false);
     expect(hasNodeModules).toBe(false);
   });
