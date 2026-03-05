@@ -2,6 +2,7 @@ import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 import type { IBuildApi } from "azure-devops-node-api/BuildApi.js";
 import type { IPolicyApi } from "azure-devops-node-api/PolicyApi.js";
 import {
+  PullRequestAsyncStatus,
   PullRequestStatus,
   type GitPullRequest,
 } from "azure-devops-node-api/interfaces/GitInterfaces.js";
@@ -20,6 +21,30 @@ import { computePrSize } from "./analysis/pr-quantifier.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 import { detectLabels } from "./analysis/file-patterns.js";
 import type { RepoPatternsConfig } from "./config.js";
+
+/** Controls which expensive API calls to make for each PR. */
+export interface FetchPlan {
+  threads: boolean;
+  pipeline: boolean;
+  policy: boolean;
+  size: boolean;
+  filePatterns: boolean;
+  /** Human-readable reason when some fetches are skipped. */
+  skipReason?: string;
+}
+
+const FULL_FETCH_PLAN: FetchPlan = { threads: true, pipeline: true, policy: true, size: true, filePatterns: true };
+
+/** Determine which API calls to make based on PR state. Extensible for future conditions. */
+export function determineFetchPlan(pr: GitPullRequest): FetchPlan {
+  // PRs with merge conflicts: author must resolve conflicts first,
+  // so threads, pipeline, policy, size, and file-pattern data are not actionable.
+  if (pr.mergeStatus === PullRequestAsyncStatus.Conflicts) {
+    return { threads: false, pipeline: false, policy: false, size: true, filePatterns: false, skipReason: "merge conflict" };
+  }
+
+  return FULL_FETCH_PLAN;
+}
 
 function filterCandidates(prs: GitPullRequest[]): GitPullRequest[] {
   const candidates: GitPullRequest[] = [];
@@ -356,27 +381,36 @@ export async function fetchOpenPullRequests(
   }
 
   const candidates = filterCandidates(prs);
-  log.info(`Fetching threads for ${candidates.length} PRs in ${project}/${repositoryId} (concurrency: ${DEFAULT_CONCURRENCY})…`);
+  log.info(`Fetching details for ${candidates.length} PRs in ${project}/${repositoryId} (concurrency: ${DEFAULT_CONCURRENCY})…`);
 
   const results = await runConcurrent(candidates, DEFAULT_CONCURRENCY, async (pr) => {
     const prId = pr.pullRequestId!;
-    log.debug(`  #${prId} — fetching threads…`);
+    const plan = determineFetchPlan(pr);
 
-    const rawThreads = await withRetry(`Fetch threads for PR #${prId}`, () =>
-      gitApi.getThreads(repositoryId, prId, project),
-    );
-    const threads: ThreadInfo[] = rawThreads.map((t) => ({
-      id: t.id ?? 0,
-      publishedDate: new Date(t.publishedDate ?? 0),
-      comments: (t.comments ?? [])
-        .filter((c) => !c.isDeleted)
-        .map(
-          (c): ThreadComment => ({
-            authorUniqueName: identityUniqueName(c.author),
-            publishedDate: new Date(c.publishedDate ?? 0),
-          }),
-        ),
-    }));
+    if (plan.skipReason) {
+      log.debug(`  #${prId} — skipping extra API calls (${plan.skipReason})`);
+    }
+
+    // Threads: only fetch when the plan says so
+    let threads: ThreadInfo[] = [];
+    if (plan.threads) {
+      log.debug(`  #${prId} — fetching threads…`);
+      const rawThreads = await withRetry(`Fetch threads for PR #${prId}`, () =>
+        gitApi.getThreads(repositoryId, prId, project),
+      );
+      threads = rawThreads.map((t) => ({
+        id: t.id ?? 0,
+        publishedDate: new Date(t.publishedDate ?? 0),
+        comments: (t.comments ?? [])
+          .filter((c) => !c.isDeleted)
+          .map(
+            (c): ThreadComment => ({
+              authorUniqueName: identityUniqueName(c.author),
+              publishedDate: new Date(c.publishedDate ?? 0),
+            }),
+          ),
+      }));
+    }
 
     const reviewers = (pr.reviewers ?? []).map((r) => ({
       displayName: r.displayName ?? "",
@@ -390,7 +424,7 @@ export async function fetchOpenPullRequests(
 
     // Detect labels from file patterns
     let detectedLabels: string[] = [];
-    if (Object.keys(patterns.labels).length > 0) {
+    if (plan.filePatterns && Object.keys(patterns.labels).length > 0) {
       const changedFiles = await fetchChangedFiles(gitApi, repositoryId, project, prId);
       detectedLabels = detectLabels(changedFiles, patterns.ignore, patterns.labels);
       if (detectedLabels.length > 0) {
@@ -399,12 +433,12 @@ export async function fetchOpenPullRequests(
     }
 
     // Fetch pipeline status
-    const pipelineStatus = buildApi && repoGuid
+    const pipelineStatus = plan.pipeline && buildApi && repoGuid
       ? await fetchPipelineStatus(buildApi, repoGuid, project, prId)
       : undefined;
 
     // Fetch policy evaluations
-    const policyStatus = policyApi && projectId
+    const policyStatus = plan.policy && policyApi && projectId
       ? await fetchPolicyEvaluations(policyApi, project, projectId, prId, baseUrl)
       : undefined;
 
@@ -423,7 +457,7 @@ export async function fetchOpenPullRequests(
       lastSourcePushDate: pr.lastMergeSourceCommit?.committer?.date
         ? new Date(pr.lastMergeSourceCommit.committer.date)
         : undefined,
-      size: quantifierConfig
+      size: plan.size && quantifierConfig
         ? await computePrSize(gitApi, repositoryId, project, prId, quantifierConfig)
         : undefined,
       description: pr.description ?? undefined,

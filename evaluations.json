@@ -1,0 +1,2094 @@
+{
+    "value": [
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Arik Sapojnik",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/af46228f-ba84-6223-adfb-ab384f6fbe5e",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YWY0NjIyOGYtYmE4NC03MjIzLWFkZmItYWIzODRmNmZiZTVl"
+                        }
+                    },
+                    "id": "af46228f-ba84-6223-adfb-ab384f6fbe5e",
+                    "uniqueName": "ariksapojnik@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=af46228f-ba84-6223-adfb-ab384f6fbe5e",
+                    "descriptor": "aad.YWY0NjIyOGYtYmE4NC03MjIzLWFkZmItYWIzODRmNmZiZTVl"
+                },
+                "createdDate": "2024-09-30T08:47:07.5102936Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "tenants": [
+                        {
+                            "id": "cdc5aeea-15c5-4db6-b079-fcadd2505dc2"
+                        },
+                        {
+                            "id": "13073fbc-eb57-49dc-9224-dced586389de"
+                        },
+                        {
+                            "id": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+                        }
+                    ],
+                    "exemptIdentities": null,
+                    "scope": [
+                        {
+                            "refName": null,
+                            "matchKind": "DefaultBranch",
+                            "repositoryId": null
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/513573"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/67ed70bd-2a6b-4006-af44-be590463f46d"
+                    }
+                },
+                "revision": 5,
+                "id": 513573,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/513573",
+                "type": {
+                    "id": "67ed70bd-2a6b-4006-af44-be590463f46d",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/67ed70bd-2a6b-4006-af44-be590463f46d",
+                    "displayName": "Proof Of Presence"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "a2904bc8-452a-4a70-a1a7-306414e99e96",
+            "startedDate": "2025-11-23T08:18:43.756651Z",
+            "status": "queued"
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Ownership Enforcer",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/cb4830fe-a19a-4a83-b547-62931ce5a29f",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.NmJjZWViMTMtMjMyZi03YzNjLTkzMTMtMzQ1ODNlMWY4Zjgw"
+                        }
+                    },
+                    "id": "cb4830fe-a19a-4a83-b547-62931ce5a29f",
+                    "uniqueName": "esownenf@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=cb4830fe-a19a-4a83-b547-62931ce5a29f",
+                    "descriptor": "aad.NmJjZWViMTMtMjMyZi03YzNjLTkzMTMtMzQ1ODNlMWY4Zjgw"
+                },
+                "createdDate": "2025-08-05T18:55:43.4940969Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "statusName": "Ownership Enforcer",
+                    "statusGenre": null,
+                    "authorId": "1099782f-f4b6-6be3-b365-bbdd85bf3202",
+                    "invalidateOnSourceUpdate": true,
+                    "defaultDisplayName": null,
+                    "policyApplicability": null,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636049"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226"
+                    }
+                },
+                "revision": 2,
+                "id": 636049,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636049",
+                "type": {
+                    "id": "cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "displayName": "Status"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "b621d878-5b07-4cce-82d5-fb46e821414a",
+            "startedDate": "2025-11-23T08:19:00.6210802Z",
+            "status": "queued",
+            "context": {
+                "latestStatusId": 54
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Amit Cohen",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/08e37c34-a7ad-6c50-875a-764703bff1eb",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.MDhlMzdjMzQtYTdhZC03YzUwLTg3NWEtNzY0NzAzYmZmMWVi"
+                        }
+                    },
+                    "id": "08e37c34-a7ad-6c50-875a-764703bff1eb",
+                    "uniqueName": "amitcohen@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=08e37c34-a7ad-6c50-875a-764703bff1eb",
+                    "descriptor": "aad.MDhlMzdjMzQtYTdhZC03YzUwLTg3NWEtNzY0NzAzYmZmMWVi"
+                },
+                "createdDate": "2024-12-08T10:35:50.8320447Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636050"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/c6a1889d-b943-4856-b76f-9e46bb6b0df2"
+                    }
+                },
+                "revision": 1,
+                "id": 636050,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636050",
+                "type": {
+                    "id": "c6a1889d-b943-4856-b76f-9e46bb6b0df2",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/c6a1889d-b943-4856-b76f-9e46bb6b0df2",
+                    "displayName": "Comment requirements"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "739ffe01-b2ee-4dd5-b83e-24006918faac",
+            "startedDate": "2025-11-23T08:18:43.756651Z",
+            "completedDate": "2025-11-23T08:18:44.0066537Z",
+            "status": "approved"
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Amit Cohen",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/08e37c34-a7ad-6c50-875a-764703bff1eb",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.MDhlMzdjMzQtYTdhZC03YzUwLTg3NWEtNzY0NzAzYmZmMWVi"
+                        }
+                    },
+                    "id": "08e37c34-a7ad-6c50-875a-764703bff1eb",
+                    "uniqueName": "amitcohen@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=08e37c34-a7ad-6c50-875a-764703bff1eb",
+                    "descriptor": "aad.MDhlMzdjMzQtYTdhZC03YzUwLTg3NWEtNzY0NzAzYmZmMWVi"
+                },
+                "createdDate": "2024-12-08T10:35:50.8632933Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636051"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/40e92b44-2fe1-4dd6-b3d8-74a9c21d0c6e"
+                    }
+                },
+                "revision": 1,
+                "id": 636051,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636051",
+                "type": {
+                    "id": "40e92b44-2fe1-4dd6-b3d8-74a9c21d0c6e",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/40e92b44-2fe1-4dd6-b3d8-74a9c21d0c6e",
+                    "displayName": "Work item linking"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "0bc567a4-3853-41f6-ad54-9b071411f10f",
+            "startedDate": "2025-11-23T08:18:43.756651Z",
+            "status": "approved"
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-03-27T08:02:37.7978552Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "minimumApproverCount": 1,
+                    "creatorVoteCounts": false,
+                    "allowDownvotes": false,
+                    "resetOnSourcePush": true,
+                    "requireVoteOnLastIteration": false,
+                    "resetRejectionsOnSourcePush": true,
+                    "blockLastPusherVote": true,
+                    "requireVoteOnEachIteration": false,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        },
+                        {
+                            "refName": "refs/heads/master",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        },
+                        {
+                            "refName": "refs/heads/release/",
+                            "matchKind": "Prefix",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636052"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/fa4e907d-c16b-4a4c-9dfa-4906e5d171dd"
+                    }
+                },
+                "revision": 6,
+                "id": 636052,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636052",
+                "type": {
+                    "id": "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/fa4e907d-c16b-4a4c-9dfa-4906e5d171dd",
+                    "displayName": "Minimum number of reviewers"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "f7d3e539-bb9c-4f00-aff4-966ef4613b5f",
+            "startedDate": "2025-11-23T08:18:43.756651Z",
+            "status": "queued"
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2024-12-08T10:52:47.1855493Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "allowSquash": true,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636053"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/fa4e907d-c16b-4a4c-9dfa-4916e5d171ab"
+                    }
+                },
+                "revision": 4,
+                "id": 636053,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/636053",
+                "type": {
+                    "id": "fa4e907d-c16b-4a4c-9dfa-4916e5d171ab",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/fa4e907d-c16b-4a4c-9dfa-4916e5d171ab",
+                    "displayName": "Require a merge strategy"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "b8ec2f15-f11e-4ebe-ba99-a2c9f85fbae4",
+            "startedDate": "2025-11-23T08:18:43.756651Z",
+            "status": "rejected"
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Yaniv Franco",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/936077e6-59a7-64dd-9894-f314ee43e1f2",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.OTM2MDc3ZTYtNTlhNy03NGRkLTk4OTQtZjMxNGVlNDNlMWYy"
+                        }
+                    },
+                    "id": "936077e6-59a7-64dd-9894-f314ee43e1f2",
+                    "uniqueName": "yanivfranco@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=936077e6-59a7-64dd-9894-f314ee43e1f2",
+                    "descriptor": "aad.OTM2MDc3ZTYtNTlhNy03NGRkLTk4OTQtZjMxNGVlNDNlMWYy"
+                },
+                "createdDate": "2025-10-30T12:28:50.2108075Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "minimumApproverCount": 1,
+                    "creatorVoteCounts": false,
+                    "allowDownvotes": false,
+                    "resetOnSourcePush": true,
+                    "requireVoteOnLastIteration": false,
+                    "resetRejectionsOnSourcePush": false,
+                    "blockLastPusherVote": true,
+                    "requireVoteOnEachIteration": false,
+                    "scope": [
+                        {
+                            "refName": null,
+                            "matchKind": "DefaultBranch",
+                            "repositoryId": null
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/653071"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/fa4e907d-c16b-4a4c-9dfa-4906e5d171dd"
+                    }
+                },
+                "revision": 23,
+                "id": 653071,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/653071",
+                "type": {
+                    "id": "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/fa4e907d-c16b-4a4c-9dfa-4906e5d171dd",
+                    "displayName": "Minimum number of reviewers"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "f621d3db-25cd-42ac-96ab-c28eb0ea7e1a",
+            "startedDate": "2025-11-23T08:18:43.756651Z",
+            "status": "queued"
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "AAD PME Policy (Prod) App maintained by the 1ES team (CompToolEng@microsoft.com)",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/094af63f-3b10-4070-864a-97e2d6fe8418",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/s2s.MDk0YWY2M2YtM2IxMC00MDcwLTg2NGEtOTdlMmQ2ZmU4NDE4QDcyZjk4OGJmLTg2ZjEtNDFhZi05MWFiLTJkN2NkMDExZGI0Nw"
+                        }
+                    },
+                    "id": "094af63f-3b10-4070-864a-97e2d6fe8418",
+                    "uniqueName": "094af63f-3b10-4070-864a-97e2d6fe8418@72f988bf-86f1-41af-91ab-2d7cd011db47",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=094af63f-3b10-4070-864a-97e2d6fe8418",
+                    "descriptor": "s2s.MDk0YWY2M2YtM2IxMC00MDcwLTg2NGEtOTdlMmQ2ZmU4NDE4QDcyZjk4OGJmLTg2ZjEtNDFhZi05MWFiLTJkN2NkMDExZGI0Nw"
+                },
+                "createdDate": "2025-12-20T12:38:27.5533532Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "tenants": [
+                        {
+                            "id": "72f988bf-86f1-41af-91ab-2d7cd011db47"
+                        },
+                        {
+                            "id": "cdc5aeea-15c5-4db6-b079-fcadd2505dc2"
+                        },
+                        {
+                            "id": "33e01921-4d64-4f8c-a055-5bdaffd5e33d"
+                        },
+                        {
+                            "id": "975f013f-7f24-47e8-a7d3-abc4752bf346"
+                        },
+                        {
+                            "id": "13073fbc-eb57-49dc-9224-dced586389de"
+                        },
+                        {
+                            "id": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+                            "variant": "SecurityKey"
+                        }
+                    ],
+                    "exemptIdentities": [],
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/664223"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/67ed70bd-2a6b-4006-af44-be590463f46d"
+                    }
+                },
+                "revision": 2,
+                "id": 664223,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/664223",
+                "type": {
+                    "id": "67ed70bd-2a6b-4006-af44-be590463f46d",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/67ed70bd-2a6b-4006-af44-be590463f46d",
+                    "displayName": "Proof Of Presence"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "f4be1843-6ac3-4d32-81ad-904797ba3a73",
+            "startedDate": "2026-02-20T06:44:50.3910057Z",
+            "status": "queued"
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-09-21T04:20:00.1696862Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 411250,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.BotProcessorService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/719817"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 11,
+                "id": 719817,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/719817",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "622edc9a-69bb-4237-a228-30b380e3b133",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062618,
+                "buildDefinitionId": 411250,
+                "buildDefinitionName": "SecurityForAi.BotProcessor.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:23.6192934Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-09-21T04:19:20.6789577Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 412338,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.PowerPlatformPluginApiService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/726062"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 8,
+                "id": 726062,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/726062",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "a0535ea5-083e-4382-b855-3ad4c51c117f",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062621,
+                "buildDefinitionId": 412338,
+                "buildDefinitionName": "SecurityForAI.PowerPlatformPluginApi.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:25.9060247Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-10-05T14:40:33.2657771Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 412841,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.DataversePlugin/*",
+                        "/libraries/Prevention.SecurityForAI.PowerPlatformApiModels/src/*",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/727429"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 7,
+                "id": 727429,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/727429",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "904a1e0e-b522-4769-904a-40d21e26ec5f",
+            "startedDate": "2026-03-02T16:03:53.5099008Z",
+            "completedDate": "2026-03-02T16:17:21.917733Z",
+            "status": "rejected",
+            "context": {
+                "lastMergeCommitId": "6d4f9840dc3a3c17334fa91d1114081d5397a7ba",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "47d4459221e5872a1e534a9919714164ad80cd1c",
+                "buildId": 155091553,
+                "buildDefinitionId": 412841,
+                "buildDefinitionName": "SecurityForAI.DataversePlugin.PR",
+                "buildIsNotCurrent": false,
+                "buildStartedUtc": "2026-03-02T16:03:53.3495462Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": {
+                    "jobName": "build_nuget_job",
+                    "taskName": "dotnet build (windows_build_container)",
+                    "errors": [
+                        {
+                            "lineNumber": 13,
+                            "message": "components\\Prevention.SecurityForAI.DataversePlugin\\src\\GuardianHealthCheckExecutor.cs(41,1): Error IDE0055: Fix formatting (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/ide0055)"
+                        },
+                        {
+                            "lineNumber": 15,
+                            "message": "components\\Prevention.SecurityForAI.DataversePlugin\\src\\GuardianHealthCheckExecutor.cs(54,1): Error IDE0055: Fix formatting (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/ide0055)"
+                        },
+                        {
+                            "lineNumber": 17,
+                            "message": "components\\Prevention.SecurityForAI.DataversePlugin\\src\\GuardianHealthCheckExecutor.cs(93,1): Error IDE0055: Fix formatting (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/ide0055)"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-09-21T04:19:11.9751222Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 415897,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.PowerPlatform.Admin/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/742016"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 10,
+                "id": 742016,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/742016",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "da27c13e-518f-479a-9272-7e1da8f789b9",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062636,
+                "buildDefinitionId": 415897,
+                "buildDefinitionName": "SecurityForAI.PowerPlatform.Admin.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:32.2179889Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-09-21T04:19:06.2230921Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 418273,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": "Prevention.SecurityForAI.Backfill.PR",
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.BackfillJob/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/752992"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 4,
+                "id": 752992,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/752992",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "bce47999-d72e-4249-9201-0ea64aa83fef",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062641,
+                "buildDefinitionId": 418273,
+                "buildDefinitionName": "SecurityForAI.Backfill.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:34.2495215Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "MerlinBot",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/svc.NDFiZjU0ODYtNzM5Mi00YjdhLWE3ZTMtYTczNWM3NjdlM2IzOkFwcGxpY2F0aW9uOjU2YjBmMDQyLWIwNWUtODZkOS1iMGY3LWM1ZGRiMWU3NjM4NQ"
+                        }
+                    },
+                    "id": "56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "uniqueName": "Application\\56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "descriptor": "svc.NDFiZjU0ODYtNzM5Mi00YjdhLWE3ZTMtYTczNWM3NjdlM2IzOkFwcGxpY2F0aW9uOjU2YjBmMDQyLWIwNWUtODZkOS1iMGY3LWM1ZGRiMWU3NjM4NQ"
+                },
+                "createdDate": "2025-05-15T06:54:16.2248305Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "statusName": "ComponentGovernance",
+                    "statusGenre": "cg",
+                    "authorId": null,
+                    "invalidateOnSourceUpdate": false,
+                    "defaultDisplayName": null,
+                    "policyApplicability": 1,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/760315"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226"
+                    }
+                },
+                "revision": 1,
+                "id": 760315,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/760315",
+                "type": {
+                    "id": "cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "displayName": "Status"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "09fa6cdc-ca33-4c37-aec9-9fc9cbaee146",
+            "startedDate": "2025-11-23T08:18:43.756651Z",
+            "completedDate": "2026-03-02T10:31:13.4888016Z",
+            "status": "approved",
+            "context": {
+                "latestStatusId": 512
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-09-21T04:19:47.1214833Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 421146,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.WebhooksService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/770820"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 3,
+                "id": 770820,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/770820",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "04d9fa07-02cf-4a5b-8ae4-bf29c6e88cfd",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062647,
+                "buildDefinitionId": 421146,
+                "buildDefinitionName": "SecurityForAI.Webhooks.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:35.9456534Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-06-25T07:48:02.3593874Z",
+                "isEnabled": true,
+                "isBlocking": false,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 422307,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.AppHost/*",
+                        "/components/Prevention.SecurityForAI.BotProcessorService/*",
+                        "/components/Prevention.SecurityForAI.PowerPlatformPluginApiService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/775335"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 5,
+                "id": 775335,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/775335",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "da599048-7d43-40f1-8562-272a51bed737",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062652,
+                "buildDefinitionId": 422307,
+                "buildDefinitionName": "SecurityForAI.AppHost.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:37.7772403Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-09-21T04:19:51.9345887Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 423009,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.WebhooksCacheJob/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/778357"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 3,
+                "id": 778357,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/778357",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "52d7a313-e06a-49f0-aba8-6dd92e49134b",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062657,
+                "buildDefinitionId": 423009,
+                "buildDefinitionName": "SecurityForAI.WebhooksCache.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:39.882843Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-09-21T04:19:55.9196356Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 425396,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.WebhooksSettingsApiService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/795555"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 2,
+                "id": 795555,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/795555",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "9e75fcd3-5b49-44e4-8181-4d8194e9f9a1",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062662,
+                "buildDefinitionId": 425396,
+                "buildDefinitionName": "SecurityForAI.WebhooksSettingsApi.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:41.4896841Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-09-21T04:19:26.8378716Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 426090,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.PowerPlatform.Scheduler/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/797648"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 3,
+                "id": 797648,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/797648",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "7b4c698c-1093-402b-990e-35f470feb730",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062666,
+                "buildDefinitionId": 426090,
+                "buildDefinitionName": "SecurityForAI.PowerPlatformScheduler.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:43.2439359Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "AAD PME Policy (Prod) App maintained by the 1ES team (CompToolEng@microsoft.com)",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/094af63f-3b10-4070-864a-97e2d6fe8418",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/s2s.MDk0YWY2M2YtM2IxMC00MDcwLTg2NGEtOTdlMmQ2ZmU4NDE4QDcyZjk4OGJmLTg2ZjEtNDFhZi05MWFiLTJkN2NkMDExZGI0Nw"
+                        }
+                    },
+                    "id": "094af63f-3b10-4070-864a-97e2d6fe8418",
+                    "uniqueName": "094af63f-3b10-4070-864a-97e2d6fe8418@72f988bf-86f1-41af-91ab-2d7cd011db47",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=094af63f-3b10-4070-864a-97e2d6fe8418",
+                    "descriptor": "s2s.MDk0YWY2M2YtM2IxMC00MDcwLTg2NGEtOTdlMmQ2ZmU4NDE4QDcyZjk4OGJmLTg2ZjEtNDFhZi05MWFiLTJkN2NkMDExZGI0Nw"
+                },
+                "createdDate": "2025-11-03T19:41:18.410608Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "minimumApproverCount": 1,
+                    "creatorVoteCounts": false,
+                    "allowDownvotes": false,
+                    "resetOnSourcePush": false,
+                    "requireVoteOnLastIteration": true,
+                    "resetRejectionsOnSourcePush": false,
+                    "blockLastPusherVote": true,
+                    "requireVoteOnEachIteration": false,
+                    "scope": [
+                        {
+                            "refName": null,
+                            "matchKind": "DefaultBranch",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/808969"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/fa4e907d-c16b-4a4c-9dfa-4906e5d171dd"
+                    }
+                },
+                "revision": 54,
+                "id": 808969,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/808969",
+                "type": {
+                    "id": "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/fa4e907d-c16b-4a4c-9dfa-4906e5d171dd",
+                    "displayName": "Minimum number of reviewers"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "b0b6c6d5-3e83-4663-bf52-cc92c113556a",
+            "startedDate": "2025-11-23T08:18:43.756651Z",
+            "status": "queued"
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-11-24T16:16:20.8627675Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 441033,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.ArnSubscriberService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/950942"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 1,
+                "id": 950942,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/950942",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "b3c54a69-c104-40ce-99fb-89c722706599",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062668,
+                "buildDefinitionId": 441033,
+                "buildDefinitionName": "SecurityForAI.ArnSubscriber.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:45.084081Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-12-02T18:18:07.7955577Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 441589,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.ArgReaderService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/956217"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 1,
+                "id": 956217,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/956217",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "4bd7c232-0f6a-425f-b9b4-44f6a62c5765",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062670,
+                "buildDefinitionId": 441589,
+                "buildDefinitionName": "SecurityForAI.ArgReader.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:46.8876026Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "GitOps (Git HighPriv)",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/a54d421d-bc7c-4860-916f-9cc10767fb2f",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/s2s.YTU0ZDQyMWQtYmM3Yy00ODYwLTkxNmYtOWNjMTA3NjdmYjJmQDcyZjk4OGJmLTg2ZjEtNDFhZi05MWFiLTJkN2NkMDExZGI0Nw"
+                        }
+                    },
+                    "id": "a54d421d-bc7c-4860-916f-9cc10767fb2f",
+                    "uniqueName": "a54d421d-bc7c-4860-916f-9cc10767fb2f@72f988bf-86f1-41af-91ab-2d7cd011db47",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=a54d421d-bc7c-4860-916f-9cc10767fb2f",
+                    "descriptor": "s2s.YTU0ZDQyMWQtYmM3Yy00ODYwLTkxNmYtOWNjMTA3NjdmYjJmQDcyZjk4OGJmLTg2ZjEtNDFhZi05MWFiLTJkN2NkMDExZGI0Nw"
+                },
+                "createdDate": "2025-12-09T07:45:19.3210133Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "statusName": "LicenseCheck",
+                    "statusGenre": "cg",
+                    "authorId": null,
+                    "invalidateOnSourceUpdate": false,
+                    "defaultDisplayName": null,
+                    "policyApplicability": 1,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/965664"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226"
+                    }
+                },
+                "revision": 1,
+                "id": 965664,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/965664",
+                "type": {
+                    "id": "cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "displayName": "Status"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "ad598de6-aac7-4a58-b384-d09f7e522db0",
+            "startedDate": "2026-02-20T06:44:50.3910057Z",
+            "completedDate": "2026-03-02T10:31:13.66067Z",
+            "status": "approved",
+            "context": {
+                "latestStatusId": 513
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "MerlinBot",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/svc.NDFiZjU0ODYtNzM5Mi00YjdhLWE3ZTMtYTczNWM3NjdlM2IzOkFwcGxpY2F0aW9uOjU2YjBmMDQyLWIwNWUtODZkOS1iMGY3LWM1ZGRiMWU3NjM4NQ"
+                        }
+                    },
+                    "id": "56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "uniqueName": "Application\\56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "descriptor": "svc.NDFiZjU0ODYtNzM5Mi00YjdhLWE3ZTMtYTczNWM3NjdlM2IzOkFwcGxpY2F0aW9uOjU2YjBmMDQyLWIwNWUtODZkOS1iMGY3LWM1ZGRiMWU3NjM4NQ"
+                },
+                "createdDate": "2025-12-09T09:06:31.6247896Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "statusName": "review-checker",
+                    "statusGenre": "1es-compliance",
+                    "authorId": "56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "invalidateOnSourceUpdate": false,
+                    "defaultDisplayName": "Copilot PR Review Check Policy",
+                    "policyApplicability": 1,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/966344"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226"
+                    }
+                },
+                "revision": 1,
+                "id": 966344,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/966344",
+                "type": {
+                    "id": "cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "displayName": "Status"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "0ceecbb2-af64-44a9-945a-a0f5dba1c5da",
+            "startedDate": "2026-03-02T16:04:15.8456767Z",
+            "status": "queued",
+            "context": {
+                "latestStatusId": 561
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Meir Blachman",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                        }
+                    },
+                    "id": "c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "uniqueName": "meblachm@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=c9a3c283-83ee-6a69-bfad-da1073126485",
+                    "descriptor": "aad.YzlhM2MyODMtODNlZS03YTY5LWJmYWQtZGExMDczMTI2NDg1"
+                },
+                "createdDate": "2025-12-22T07:35:52.6664271Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 443242,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.Mos3SubscriberService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/994388"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 1,
+                "id": 994388,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/994388",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "02f1ef76-61e7-48ed-99de-8790c2d79382",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062675,
+                "buildDefinitionId": 443242,
+                "buildDefinitionName": "SecurityForAI.Mos3Subscriber.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:48.5244536Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Tal Nanus",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/ecf91837-2793-69c7-a694-7526d14cce94",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.ZWNmOTE4MzctMjc5My03OWM3LWE2OTQtNzUyNmQxNGNjZTk0"
+                        }
+                    },
+                    "id": "ecf91837-2793-69c7-a694-7526d14cce94",
+                    "uniqueName": "talnanus@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=ecf91837-2793-69c7-a694-7526d14cce94",
+                    "descriptor": "aad.ZWNmOTE4MzctMjc5My03OWM3LWE2OTQtNzUyNmQxNGNjZTk0"
+                },
+                "createdDate": "2026-01-26T14:31:12.4718737Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 445626,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.DormantEnvironmentRefresherService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/1018233"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 1,
+                "id": 1018233,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/1018233",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "cb0cf763-37f9-44d2-84e8-a5d9f4afea44",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062676,
+                "buildDefinitionId": 445626,
+                "buildDefinitionName": "SecurityForAi.DormantEnvironmentRefresher.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:50.53208Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Tal Nanus",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/ecf91837-2793-69c7-a694-7526d14cce94",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.ZWNmOTE4MzctMjc5My03OWM3LWE2OTQtNzUyNmQxNGNjZTk0"
+                        }
+                    },
+                    "id": "ecf91837-2793-69c7-a694-7526d14cce94",
+                    "uniqueName": "talnanus@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=ecf91837-2793-69c7-a694-7526d14cce94",
+                    "descriptor": "aad.ZWNmOTE4MzctMjc5My03OWM3LWE2OTQtNzUyNmQxNGNjZTk0"
+                },
+                "createdDate": "2026-01-27T08:24:38.2031026Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 445627,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.EkgBatchingJob/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/1019028"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 1,
+                "id": 1019028,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/1019028",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "12f78af1-0b2b-4fdc-a9ed-b33d62bfab07",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062680,
+                "buildDefinitionId": 445627,
+                "buildDefinitionName": "SecurityForAI.EKGBatchJob.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:52.6862882Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "Mor Aharoni",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/caf0925b-ef99-65ae-b6b7-f178c6b47e74",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/aad.Y2FmMDkyNWItZWY5OS03NWFlLWI2YjctZjE3OGM2YjQ3ZTc0"
+                        }
+                    },
+                    "id": "caf0925b-ef99-65ae-b6b7-f178c6b47e74",
+                    "uniqueName": "moraharoni@microsoft.com",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=caf0925b-ef99-65ae-b6b7-f178c6b47e74",
+                    "descriptor": "aad.Y2FmMDkyNWItZWY5OS03NWFlLWI2YjctZjE3OGM2YjQ3ZTc0"
+                },
+                "createdDate": "2026-01-29T09:48:24.2425325Z",
+                "isEnabled": true,
+                "isBlocking": true,
+                "isDeleted": false,
+                "settings": {
+                    "buildDefinitionId": 444962,
+                    "queueOnSourceUpdateOnly": true,
+                    "manualQueueOnly": false,
+                    "displayName": null,
+                    "validDuration": 720.0,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ],
+                    "filenamePatterns": [
+                        "/components/Prevention.SecurityForAI.Mos3FullScanService/*",
+                        "/libraries/*",
+                        "/Directory.Build.props",
+                        "/Directory.Packages.props",
+                        "/global.json",
+                        "/nuget.config",
+                        "/.editorconfig",
+                        "/BannedSymbols.txt"
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/1021727"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241"
+                    }
+                },
+                "revision": 1,
+                "id": 1021727,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/1021727",
+                "type": {
+                    "id": "0609b952-1397-4640-95ec-e00a01b2c241",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/0609b952-1397-4640-95ec-e00a01b2c241",
+                    "displayName": "Build"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "2da7406e-3f7c-4c8f-93fc-f386bef5c1ca",
+            "startedDate": "2026-03-02T10:18:54.3539677Z",
+            "completedDate": "2026-03-02T16:03:53.5099008Z",
+            "status": "approved",
+            "context": {
+                "lastMergeCommitId": "576141d5854e4535133d1bd7d759c8070e0d5366",
+                "lastMergeSourceCommitId": "1448173866b1784add6bcb08637789b9b1016961",
+                "lastMergeTargetCommitId": "5e912cc39819281854c768beb721d21c5662f8ca",
+                "buildId": 155062682,
+                "buildDefinitionId": 444962,
+                "buildDefinitionName": "SecurityForAI.Mos3FullScan.PR",
+                "buildIsNotCurrent": true,
+                "buildStartedUtc": "2026-03-02T10:18:54.3561353Z",
+                "isExpired": false,
+                "buildAfterMerge": false,
+                "wasAutoRequeued": false,
+                "buildOutputPreview": null
+            }
+        },
+        {
+            "configuration": {
+                "createdBy": {
+                    "displayName": "MerlinBot",
+                    "url": "https://spsprodwus23.vssps.visualstudio.com/A41b4f3ee-c651-4a14-9847-b7cbb5315b80/_apis/Identities/56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "_links": {
+                        "avatar": {
+                            "href": "https://dev.azure.com/msazure/_apis/GraphProfile/MemberAvatars/svc.NDFiZjU0ODYtNzM5Mi00YjdhLWE3ZTMtYTczNWM3NjdlM2IzOkFwcGxpY2F0aW9uOjU2YjBmMDQyLWIwNWUtODZkOS1iMGY3LWM1ZGRiMWU3NjM4NQ"
+                        }
+                    },
+                    "id": "56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "uniqueName": "Application\\56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "imageUrl": "https://dev.azure.com/msazure/_api/_common/identityImage?id=56b0f042-b05e-86d9-b0f7-c5ddb1e76385",
+                    "descriptor": "svc.NDFiZjU0ODYtNzM5Mi00YjdhLWE3ZTMtYTczNWM3NjdlM2IzOkFwcGxpY2F0aW9uOjU2YjBmMDQyLWIwNWUtODZkOS1iMGY3LWM1ZGRiMWU3NjM4NQ"
+                },
+                "createdDate": "2026-02-08T07:37:45.6685689Z",
+                "isEnabled": true,
+                "isBlocking": false,
+                "isDeleted": false,
+                "settings": {
+                    "statusName": "FCIB Governance",
+                    "statusGenre": "MerlinBot-FileAffordance",
+                    "authorId": null,
+                    "invalidateOnSourceUpdate": false,
+                    "defaultDisplayName": "FCIB Governance",
+                    "policyApplicability": 1,
+                    "scope": [
+                        {
+                            "refName": "refs/heads/main",
+                            "matchKind": "Exact",
+                            "repositoryId": "72c0bbf0-815a-4f85-9b09-753cc853d796"
+                        }
+                    ]
+                },
+                "isEnterpriseManaged": false,
+                "_links": {
+                    "self": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/1029142"
+                    },
+                    "policyType": {
+                        "href": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226"
+                    }
+                },
+                "revision": 3,
+                "id": 1029142,
+                "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/configurations/1029142",
+                "type": {
+                    "id": "cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "url": "https://dev.azure.com/msazure/e221331b-85d0-4445-b9e5-389c08b2079c/_apis/policy/types/cbdc66da-9728-4af8-aada-9a5a32e4a226",
+                    "displayName": "Status"
+                }
+            },
+            "artifactId": "vstfs:///CodeReview/CodeReviewId/e221331b-85d0-4445-b9e5-389c08b2079c%2f14086913",
+            "evaluationId": "467e8e56-6358-499d-81da-bd901242b68d",
+            "startedDate": "2026-02-20T06:44:50.3910057Z",
+            "status": "notApplicable",
+            "context": {
+                "latestStatusId": null
+            }
+        }
+    ],
+    "count": 29
+}
