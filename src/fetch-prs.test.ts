@@ -399,7 +399,7 @@ describe("determineFetchPlan", () => {
     expect(plan.threads).toBe(false);
     expect(plan.pipeline).toBe(false);
     expect(plan.policy).toBe(false);
-    expect(plan.size).toBe(false);
+    expect(plan.size).toBe(true);
     expect(plan.filePatterns).toBe(false);
     expect(plan.skipReason).toBe("merge conflict");
   });

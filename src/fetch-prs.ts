@@ -40,7 +40,7 @@ export function determineFetchPlan(pr: GitPullRequest): FetchPlan {
   // PRs with merge conflicts: author must resolve conflicts first,
   // so threads, pipeline, policy, size, and file-pattern data are not actionable.
   if (pr.mergeStatus === PullRequestAsyncStatus.Conflicts) {
-    return { threads: false, pipeline: false, policy: false, size: false, filePatterns: false, skipReason: "merge conflict" };
+    return { threads: false, pipeline: false, policy: false, size: true, filePatterns: false, skipReason: "merge conflict" };
   }
 
   return FULL_FETCH_PLAN;
