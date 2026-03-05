@@ -23,8 +23,44 @@
   .tab { background: var(--surface); border: 1px solid var(--border); border-radius: 6px 6px 0 0; padding: 0.5rem 1rem; cursor: pointer; color: var(--text-dim); font-size: 0.9rem; }
   .tab.active { background: var(--border); color: var(--text); border-bottom-color: var(--border); }
   .search-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-  .search-bar input, .search-bar select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.75rem; color: var(--text); font-size: 0.9rem; }
-  .search-bar input { flex: 1; min-width: 200px; }
+  .search-bar input[type="text"], .search-bar select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.75rem; color: var(--text); font-size: 0.9rem; }
+  .search-bar input[type="text"] { flex: 1; min-width: 200px; }
+  /* Customizable select */
+  select, ::picker(select) { appearance: base-select; }
+  .search-bar select { cursor: pointer; }
+  select::picker-icon { color: var(--text-dim); transition: rotate 0.3s; }
+  select:open::picker-icon { rotate: 180deg; }
+  ::picker(select) { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 0.35rem; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  select option { padding: 0.55rem 0.75rem; border-radius: 6px; color: var(--text); transition: background 0.15s; }
+  select option:hover { background: rgba(88,166,255,0.12); }
+  select option:checked { background: rgba(88,166,255,0.18); color: var(--accent); }
+  select option::checkmark { color: var(--accent); }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; vertical-align: middle; }
+  .status-dot.dot-yellow { background: var(--yellow); }
+  .status-dot.dot-red { background: var(--red); }
+  .status-dot.dot-green { background: var(--green); }
+  /* Multi-select dropdown */
+  .multi-select { position: relative; }
+  .multi-select-btn { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.75rem; color: var(--text); font-size: 0.9rem; cursor: pointer; min-width: 140px; white-space: nowrap; font-family: inherit; }
+  .multi-select-btn:hover, .multi-select.open .multi-select-btn { border-color: var(--accent); }
+  .multi-select-btn .arrow { color: var(--text-dim); font-size: 0.7rem; transition: rotate 0.3s; margin-left: auto; }
+  .multi-select.open .arrow { rotate: 180deg; }
+  .multi-select-popup { display: none; position: absolute; z-index: 200; top: calc(100% + 4px); left: 0; min-width: 100%; max-height: 260px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .multi-select.open .multi-select-popup { display: block; }
+  .multi-select-option { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem; color: var(--text); white-space: nowrap; }
+  .multi-select-option:hover { background: rgba(88,166,255,0.1); }
+  .multi-select-option input[type="checkbox"] { -webkit-appearance: none; appearance: none; flex: 0 0 16px; width: 16px; height: 16px; margin: 0; cursor: pointer; border: 2px solid var(--border); border-radius: 4px; background: transparent; position: relative; }
+  .multi-select-option input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+  .multi-select-option input[type="checkbox"]:checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  /* Toggle switch */
+  .toggle-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-dim); cursor: pointer; white-space: nowrap; user-select: none; }
+  .toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .toggle-track { position: absolute; inset: 0; background: var(--border); border-radius: 10px; transition: background 0.2s; cursor: pointer; }
+  .toggle-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: var(--text); border-radius: 50%; transition: transform 0.2s; }
+  .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-track .toggle-knob { transform: translateX(16px); }
+  .card .filtered-value { font-size: 1rem; color: var(--text-dim); font-weight: 400; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
   th { background: var(--surface); color: var(--text-dim); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; user-select: none; }
   th:hover { color: var(--accent); }
@@ -91,15 +127,26 @@
   <div class="search-bar">
     <input type="text" id="search" placeholder="Search PRs by title, author, ID..." oninput="filterTable()">
     <select id="status-filter" onchange="filterTable()">
+      <button><selectedcontent></selectedcontent></button>
       <option value="all">All Status</option>
-      <option value="needingReview">Needing Review</option>
-      <option value="waitingOnAuthor">Waiting on Author</option>
-      <option value="approved">Approved</option>
+      <option value="needingReview"><span class="status-dot dot-yellow"></span> Needing Review</option>
+      <option value="waitingOnAuthor"><span class="status-dot dot-red"></span> Waiting on Author</option>
+      <option value="approved"><span class="status-dot dot-green"></span> Approved</option>
     </select>
-    <select id="repo-filter" onchange="filterTable()"></select>
-    <select id="reviewer-filter" onchange="filterTable()"></select>
-    <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.9rem;color:var(--text-dim);cursor:pointer;white-space:nowrap;">
-      <input type="checkbox" id="hide-conflicts" onchange="filterTable()"> Hide conflicts
+    <div class="multi-select" id="repo-filter">
+      <button class="multi-select-btn" type="button"><span class="multi-select-text">All Repos</span><span class="arrow">▼</span></button>
+      <div class="multi-select-popup"></div>
+    </div>
+    <div class="multi-select" id="reviewer-filter">
+      <button class="multi-select-btn" type="button"><span class="multi-select-text">All Reviewers</span><span class="arrow">▼</span></button>
+      <div class="multi-select-popup"></div>
+    </div>
+    <label class="toggle-label">
+      <span class="toggle-switch">
+        <input type="checkbox" id="hide-conflicts" onchange="filterTable()">
+        <span class="toggle-track"><span class="toggle-knob"></span></span>
+      </span>
+      Hide conflicts
     </label>
   </div>
 
@@ -161,10 +208,10 @@ function renderSummaryCards() {
   }
 
   const cards = [
-    { label: 'Total PRs', value: total, cls: '' },
-    { label: 'Needing Review', value: needingReview, cls: 'yellow' },
-    { label: 'Approved', value: approved, cls: 'green' },
-    { label: 'Waiting on Author', value: waitingOnAuthor, cls: 'red' },
+    { id: 'total', label: 'Total PRs', value: total, cls: '' },
+    { id: 'needing-review', label: 'Needing Review', value: needingReview, cls: 'yellow' },
+    { id: 'approved', label: 'Approved', value: approved, cls: 'green' },
+    { id: 'waiting', label: 'Waiting on Author', value: waitingOnAuthor, cls: 'red' },
   ];
 
   let conflicts = 0;
@@ -174,26 +221,25 @@ function renderSummaryCards() {
     }
   }
   if (conflicts > 0) {
-    cards.push({ label: 'Conflicts', value: conflicts, cls: 'red' });
+    cards.push({ id: 'conflicts', label: 'Conflicts', value: conflicts, cls: 'red' });
   }
 
   if (agg.metrics) {
-    cards.push({ label: 'Median Age', value: agg.metrics.medianAgeInDays.toFixed(1) + 'd', cls: '' });
+    cards.push({ id: 'median-age', label: 'Median Age', value: agg.metrics.medianAgeInDays.toFixed(1) + 'd', cls: '' });
   }
 
   const el = document.getElementById('summary-cards');
-  el.innerHTML = cards.map(c => `<div class="card ${c.cls}"><div class="label">${c.label}</div><div class="value">${c.value}</div></div>`).join('');
+  el.innerHTML = cards.map(c => `<div class="card ${c.cls}"><div class="label">${c.label}</div><div class="value" data-card="${c.id}" data-total="${c.value}">${c.value}</div></div>`).join('');
 }
 
 function renderRepoFilter() {
-  const sel = document.getElementById('repo-filter');
-  sel.innerHTML = '<option value="all">All Repos</option>';
+  const repoPopup = document.querySelector('#repo-filter .multi-select-popup');
+  repoPopup.innerHTML = '';
   for (const repo of DATA.repositories) {
-    sel.innerHTML += `<option value="${repo.repoLabel}">${repo.repoLabel}</option>`;
+    repoPopup.innerHTML += `<label class="multi-select-option"><input type="checkbox" value="${escapeHtml(repo.repoLabel)}" onchange="filterTable()"><span>${escapeHtml(repo.repoLabel)}</span></label>`;
   }
 
   // Populate required reviewer filter
-  const revSel = document.getElementById('reviewer-filter');
   const requiredReviewers = new Set();
   for (const repo of DATA.repositories) {
     for (const list of [repo.analysis.needingReview, repo.analysis.approved, repo.analysis.waitingOnAuthor]) {
@@ -204,9 +250,10 @@ function renderRepoFilter() {
       }
     }
   }
-  revSel.innerHTML = '<option value="all">All Reviewers</option>';
+  const revPopup = document.querySelector('#reviewer-filter .multi-select-popup');
+  revPopup.innerHTML = '';
   for (const name of [...requiredReviewers].sort()) {
-    revSel.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+    revPopup.innerHTML += `<label class="multi-select-option"><input type="checkbox" value="${escapeHtml(name)}" onchange="filterTable()"><span>${escapeHtml(name)}</span></label>`;
   }
 }
 
@@ -228,20 +275,34 @@ function renderPrTable() {
   filterTable();
 }
 
+function getMultiSelectValues(id) {
+  return Array.from(document.querySelectorAll(`#${id} .multi-select-popup input[type="checkbox"]:checked`)).map(cb => cb.value);
+}
+
+function updateMultiSelectLabel(id, defaultLabel) {
+  const values = getMultiSelectValues(id);
+  const textEl = document.querySelector(`#${id} .multi-select-text`);
+  if (!textEl) return;
+  textEl.textContent = values.length === 0 ? defaultLabel : values.length === 1 ? values[0] : values.length + ' selected';
+}
+
 function filterTable() {
   const q = document.getElementById('search').value.toLowerCase();
   const sf = document.getElementById('status-filter').value;
-  const rf = document.getElementById('repo-filter').value;
-  const rvf = document.getElementById('reviewer-filter').value;
+  const rf = getMultiSelectValues('repo-filter');
+  const rvf = getMultiSelectValues('reviewer-filter');
   const hc = document.getElementById('hide-conflicts').checked;
+
+  updateMultiSelectLabel('repo-filter', 'All Repos');
+  updateMultiSelectLabel('reviewer-filter', 'All Reviewers');
 
   let filtered = allPrs.filter(pr => {
     if (q && !`${pr.id} ${pr.title} ${pr.author}`.toLowerCase().includes(q)) return false;
     if (sf !== 'all' && pr.status !== sf) return false;
-    if (rf !== 'all' && pr.repo !== rf) return false;
+    if (rf.length > 0 && !rf.includes(pr.repo)) return false;
     if (hc && pr.hasMergeConflict) return false;
-    if (rvf !== 'all') {
-      const hasRequiredReviewer = (pr.reviewers || []).some(r => r.isRequired && r.displayName === rvf);
+    if (rvf.length > 0) {
+      const hasRequiredReviewer = (pr.reviewers || []).some(r => r.isRequired && rvf.includes(r.displayName));
       if (!hasRequiredReviewer) return false;
     }
     return true;
@@ -252,6 +313,8 @@ function filterTable() {
     const vb = getCellValue(b, sortCol);
     return (va < vb ? -1 : va > vb ? 1 : 0) * sortDir;
   });
+
+  updateSummaryCards(filtered);
 
   const tbody = document.getElementById('pr-table');
   const empty = document.getElementById('empty-message');
@@ -284,6 +347,23 @@ function filterTable() {
       <td>${staleness}</td>
     </tr>`;
   }).join('');
+}
+
+function updateSummaryCards(filtered) {
+  const isFiltered = filtered.length !== allPrs.length;
+  const counts = { 'total': filtered.length, 'needing-review': 0, 'approved': 0, 'waiting': 0, 'conflicts': 0 };
+  for (const pr of filtered) {
+    if (pr.status === 'needingReview') counts['needing-review']++;
+    else if (pr.status === 'approved') counts['approved']++;
+    else if (pr.status === 'waitingOnAuthor') counts['waiting']++;
+    if (pr.hasMergeConflict) counts['conflicts']++;
+  }
+  for (const id of ['total', 'needing-review', 'approved', 'waiting', 'conflicts']) {
+    const el = document.querySelector(`[data-card="${id}"]`);
+    if (!el) continue;
+    const total = el.getAttribute('data-total');
+    el.innerHTML = isFiltered ? `${counts[id]}<span class="filtered-value"> / ${total}</span>` : total;
+  }
 }
 
 function getCellValue(pr, col) {
@@ -488,11 +568,13 @@ function escapeHtml(s) {
   function cancelHide() { clearTimeout(hideTimer); }
 
   document.addEventListener('mouseenter', e => {
+    if (!(e.target instanceof Element)) return;
     const wrap = e.target.closest('.policy-popup-wrap') || e.target.closest('.reviewer-popup-wrap');
     if (wrap) showPopup(wrap);
     if (e.target.closest('.policy-popup') || e.target.closest('.reviewer-popup')) cancelHide();
   }, true);
   document.addEventListener('mouseleave', e => {
+    if (!(e.target instanceof Element)) return;
     const wrap = e.target.closest('.policy-popup-wrap') || e.target.closest('.reviewer-popup-wrap');
     if (wrap) scheduleHide(wrap);
     if (e.target.closest('.policy-popup') || e.target.closest('.reviewer-popup')) {
@@ -502,11 +584,27 @@ function escapeHtml(s) {
   }, true);
   // Close on click outside
   document.addEventListener('click', e => {
+    if (!(e.target instanceof Element)) return;
     if (!e.target.closest('.policy-popup-wrap') && !e.target.closest('.reviewer-popup-wrap')) {
       document.querySelectorAll('.policy-popup.visible, .reviewer-popup.visible').forEach(p => p.classList.remove('visible'));
     }
   });
 })();
+
+// Multi-select dropdown interaction
+document.addEventListener('click', function(e) {
+  if (!(e.target instanceof Element)) return;
+  const btn = e.target.closest('.multi-select-btn');
+  if (btn) {
+    const ms = btn.closest('.multi-select');
+    document.querySelectorAll('.multi-select.open').forEach(el => { if (el !== ms) el.classList.remove('open'); });
+    ms.classList.toggle('open');
+    return;
+  }
+  if (!(e.target instanceof Element)) return;
+  if (e.target.closest('.multi-select-popup')) return;
+  document.querySelectorAll('.multi-select.open').forEach(el => el.classList.remove('open'));
+});
 
 init();
 </script>
