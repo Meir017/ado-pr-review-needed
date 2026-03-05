@@ -3,7 +3,7 @@ import type { PrNeedingReview, PrApproved, PrWaitingOnAuthor } from "../../../ty
 
 // Dates fixed relative to a known point so staleness tests are deterministic
 const NOW = "2025-06-15T12:00:00Z";
-const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
+const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000);
 
 function prNeedingReview(overrides: Partial<PrNeedingReview> & { id: number; title: string; author: string }): PrNeedingReview {
   return {
@@ -172,6 +172,7 @@ export function createMockReport(): JsonReport {
         avgTimeToFirstReviewInDays: 1.3,
         avgReviewRounds: 2.1,
         prsWithNoReviewActivity: 1,
+        totalPrs: 6,
       },
     },
   };
