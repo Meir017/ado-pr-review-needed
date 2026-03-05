@@ -328,6 +328,9 @@ describe("generateHtmlReport", () => {
       expect(html).toContain("'Status'");
       expect(html).toContain("'Repo'");
       expect(html).toContain("'Size'");
+      expect(html).toContain("'Additions'");
+      expect(html).toContain("'Deletions'");
+      expect(html).toContain("'Files Changed'");
       expect(html).toContain("'Policies'");
       expect(html).toContain("'Age (days)'");
     });
@@ -350,6 +353,23 @@ describe("generateHtmlReport", () => {
       const html = generateHtmlReport(makeReport());
       expect(html).toContain("sortTable(0)");
       expect(html).toContain("sortTable(7)");
+    });
+  });
+
+  describe("size tooltip", () => {
+    it("contains size badge and tooltip rendering functions", () => {
+      const html = generateHtmlReport(makeReport());
+      expect(html).toContain("getSizeCell");
+      expect(html).toContain("getSizeBadgeClass");
+      expect(html).toContain("size-tooltip");
+      expect(html).toContain("size-badge-wrap");
+    });
+
+    it("contains tooltip rows for additions, deletions, and files changed", () => {
+      const html = generateHtmlReport(makeReport());
+      expect(html).toContain("Additions");
+      expect(html).toContain("Deletions");
+      expect(html).toContain("Files changed");
     });
   });
 

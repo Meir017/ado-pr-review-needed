@@ -332,14 +332,14 @@ describe("mergeAnalysisResults", () => {
   });
 
   it("propagates size info to needingReview", () => {
-    const size = { linesAdded: 20, linesDeleted: 10, totalChanges: 30, label: "S" as const };
+    const size = { linesAdded: 20, linesDeleted: 10, filesChanged: 3, totalChanges: 30, label: "S" as const };
     const pr = makePr({ size });
     const { needingReview } = analyzePrs([pr]);
     expect(needingReview[0].size).toEqual(size);
   });
 
   it("propagates size info to approved", () => {
-    const size = { linesAdded: 50, linesDeleted: 50, totalChanges: 100, label: "M" as const };
+    const size = { linesAdded: 50, linesDeleted: 50, filesChanged: 5, totalChanges: 100, label: "M" as const };
     const pr = makePr({
       size,
       reviewers: [{ displayName: "Bob", uniqueName: "bob@example.com", vote: 10 }],
@@ -349,7 +349,7 @@ describe("mergeAnalysisResults", () => {
   });
 
   it("propagates size info to waitingOnAuthor", () => {
-    const size = { linesAdded: 300, linesDeleted: 200, totalChanges: 500, label: "XL" as const };
+    const size = { linesAdded: 300, linesDeleted: 200, filesChanged: 15, totalChanges: 500, label: "XL" as const };
     const pr = makePr({
       size,
       threads: [{

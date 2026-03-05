@@ -249,7 +249,7 @@ describe("generateMarkdown", () => {
       const md = generateMarkdown({ analysis: makeAnalysis({
         needingReview: [makePrNeeding({
           id: 1,
-          size: { linesAdded: 5, linesDeleted: 3, totalChanges: 8, label: "XS" },
+          size: { linesAdded: 5, linesDeleted: 3, filesChanged: 2, totalChanges: 8, label: "XS" },
         })],
       }) });
       expect(md).toContain("| Size |");
@@ -259,7 +259,7 @@ describe("generateMarkdown", () => {
     it("shows 🟡 for medium PRs", () => {
       const md = generateMarkdown({ analysis: makeAnalysis({
         needingReview: [makePrNeeding({
-          size: { linesAdded: 50, linesDeleted: 20, totalChanges: 70, label: "M" },
+          size: { linesAdded: 50, linesDeleted: 20, filesChanged: 5, totalChanges: 70, label: "M" },
         })],
       }) });
       expect(md).toContain("🟡 M");
@@ -268,7 +268,7 @@ describe("generateMarkdown", () => {
     it("shows 🔴 for large PRs", () => {
       const md = generateMarkdown({ analysis: makeAnalysis({
         needingReview: [makePrNeeding({
-          size: { linesAdded: 300, linesDeleted: 200, totalChanges: 500, label: "XL" },
+          size: { linesAdded: 300, linesDeleted: 200, filesChanged: 15, totalChanges: 500, label: "XL" },
         })],
       }) });
       expect(md).toContain("🔴 XL");
@@ -277,7 +277,7 @@ describe("generateMarkdown", () => {
     it("shows 🔴 for L PRs", () => {
       const md = generateMarkdown({ analysis: makeAnalysis({
         needingReview: [makePrNeeding({
-          size: { linesAdded: 150, linesDeleted: 100, totalChanges: 250, label: "L" },
+          size: { linesAdded: 150, linesDeleted: 100, filesChanged: 10, totalChanges: 250, label: "L" },
         })],
       }) });
       expect(md).toContain("🔴 L");
@@ -286,7 +286,7 @@ describe("generateMarkdown", () => {
     it("shows 🟢 for S PRs", () => {
       const md = generateMarkdown({ analysis: makeAnalysis({
         needingReview: [makePrNeeding({
-          size: { linesAdded: 20, linesDeleted: 10, totalChanges: 30, label: "S" },
+          size: { linesAdded: 20, linesDeleted: 10, filesChanged: 3, totalChanges: 30, label: "S" },
         })],
       }) });
       expect(md).toContain("🟢 S");
@@ -304,7 +304,7 @@ describe("generateMarkdown", () => {
         needingReview: [makePrNeeding({
           id: 1,
           repository: "Project/Repo",
-          size: { linesAdded: 5, linesDeleted: 3, totalChanges: 8, label: "XS" },
+          size: { linesAdded: 5, linesDeleted: 3, filesChanged: 2, totalChanges: 8, label: "XS" },
         })],
       }), multiRepo: true });
       expect(md).toContain("| PR | Repository | Author | Action | Size | Waiting for feedback |");

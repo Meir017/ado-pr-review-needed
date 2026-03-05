@@ -47,6 +47,16 @@
   .policy-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .policy-blocking { font-size: 0.7rem; padding: 0.1rem 0.35rem; border-radius: 4px; background: rgba(248,81,73,0.15); color: var(--red); white-space: nowrap; }
   .policy-optional { font-size: 0.7rem; padding: 0.1rem 0.35rem; border-radius: 4px; background: rgba(139,148,158,0.15); color: var(--text-dim); white-space: nowrap; }
+  .size-cell { position: relative; }
+  .size-badge-wrap { cursor: default; position: relative; display: inline-block; }
+  .size-tooltip { display: none; position: absolute; z-index: 100; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 6px; min-width: 180px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); padding: 0.5rem 0.65rem; font-size: 0.8rem; white-space: nowrap; pointer-events: none; }
+  .size-badge-wrap:hover .size-tooltip { display: block; }
+  .size-tooltip .size-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+  .size-tooltip .size-row .size-label { color: var(--text-dim); }
+  .size-tooltip .size-row .size-value { font-weight: 600; }
+  .size-tooltip .size-added { color: var(--green); }
+  .size-tooltip .size-deleted { color: var(--red); }
+  .size-tooltip .size-files { color: var(--accent); }
   .reviewer-cell { position: relative; }
   .reviewer-popup-wrap { cursor: pointer; }
   .reviewer-popup { display: none; position: absolute; z-index: 100; top: 100%; left: 0; min-width: 300px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); padding: 0.75rem; font-size: 0.82rem; }
@@ -58,6 +68,7 @@
   .reviewer-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   @media print { .reviewer-popup { display: none !important; } }
   @media print { .policy-popup { display: none !important; } }
+  @media print { .size-tooltip { display: none !important; } }
   .section { margin-bottom: 2rem; }
   .section h2 { font-size: 1.1rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
   .export-bar { display: flex; gap: 0.5rem; margin-top: 1rem; }
@@ -256,7 +267,7 @@ function filterTable() {
     const statusBadge = pr.status === 'needingReview' ? '<span class="badge badge-yellow">Needs Review</span>'
       : pr.status === 'approved' ? '<span class="badge badge-green">Approved</span>'
       : '<span class="badge badge-red">Waiting</span>';
-    const size = pr.size ? pr.size.label : '—';
+    const size = getSizeCell(pr.size);
     const staleness = getStaleness(pr);
     const policyCell = getPolicyCell(pr.policyStatus, pr.pipelineStatus);
     const reviewerCell = getReviewerCell(pr.reviewers);
@@ -267,7 +278,7 @@ function filterTable() {
       <td>${pr.isStarred ? '⭐ ' : ''}${escapeHtml(pr.author)}</td>
       <td>${statusBadge}</td>
       <td>${escapeHtml(pr.repo)}</td>
-      <td>${size}</td>
+      <td class="size-cell">${size}</td>
       <td class="reviewer-cell">${reviewerCell}</td>
       <td class="policy-cell">${policyCell}</td>
       <td>${staleness}</td>
@@ -350,6 +361,20 @@ function getReviewerCell(reviewers) {
   return `<div class="reviewer-popup-wrap">${badge}${popup}</div>`;
 }
 
+function getSizeBadgeClass(label) {
+  if (label === 'XS' || label === 'S') return 'badge-green';
+  if (label === 'M') return 'badge-yellow';
+  return 'badge-red';
+}
+
+function getSizeCell(size) {
+  if (!size) return '—';
+  const cls = getSizeBadgeClass(size.label);
+  const filesChanged = size.filesChanged != null ? size.filesChanged : '?';
+  const tooltip = `<div class="size-tooltip"><div class="size-row"><span class="size-label">Additions</span><span class="size-value size-added">+${size.linesAdded}</span></div><div class="size-row"><span class="size-label">Deletions</span><span class="size-value size-deleted">-${size.linesDeleted}</span></div><div class="size-row"><span class="size-label">Files changed</span><span class="size-value size-files">${filesChanged}</span></div></div>`;
+  return `<div class="size-badge-wrap"><span class="badge ${cls}">${size.label}</span>${tooltip}</div>`;
+}
+
 function getPipelineBadge(ps) {
   if (!ps) return '—';
   if (ps.failed > 0) return `<span class="badge badge-red">🔴 ${ps.failed}/${ps.total} failed</span>`;
@@ -419,7 +444,7 @@ function renderMetrics() {
 }
 
 function exportCsv() {
-  const rows = [['ID','Title','Author','Status','Repo','Size','Reviewers','Policies','Age (days)']];
+  const rows = [['ID','Title','Author','Status','Repo','Size','Additions','Deletions','Files Changed','Reviewers','Policies','Age (days)']];
   for (const pr of allPrs) {
     const days = pr.date ? Math.floor((Date.now() - new Date(pr.date).getTime()) / 86400000) : '';
     let policyCol = '';
@@ -429,7 +454,7 @@ function exportCsv() {
       policyCol = `${pr.pipelineStatus.succeeded}/${pr.pipelineStatus.total} passed`;
     }
     const reviewerCol = (pr.reviewers || []).map(r => `${r.displayName} (${r.isRequired ? 'required' : 'optional'})`).join('; ');
-    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, (pr.isStarred ? '⭐ ' : '') + pr.author, pr.status, pr.repo, pr.size?.label || '', `"${reviewerCol}"`, policyCol, days]);
+    rows.push([pr.id, `"${pr.title.replace(/"/g,'""')}"`, (pr.isStarred ? '⭐ ' : '') + pr.author, pr.status, pr.repo, pr.size?.label || '', pr.size?.linesAdded ?? '', pr.size?.linesDeleted ?? '', pr.size?.filesChanged ?? '', `"${reviewerCol}"`, policyCol, days]);
   }
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
