@@ -66,7 +66,7 @@ export async function computePrSize(
   );
 
   if (!iterations || iterations.length === 0) {
-    return { linesAdded: 0, linesDeleted: 0, totalChanges: 0, label: classifyPrSize(0, config.thresholds) };
+    return { linesAdded: 0, linesDeleted: 0, filesChanged: 0, totalChanges: 0, label: classifyPrSize(0, config.thresholds) };
   }
 
   const lastIteration = iterations[iterations.length - 1];
@@ -101,7 +101,7 @@ export async function computePrSize(
   }
 
   if (allChanges.length === 0) {
-    return { linesAdded: 0, linesDeleted: 0, totalChanges: 0, label: classifyPrSize(0, config.thresholds) };
+    return { linesAdded: 0, linesDeleted: 0, filesChanged: 0, totalChanges: 0, label: classifyPrSize(0, config.thresholds) };
   }
 
   // Use getFileDiffs to get line-level counts
@@ -113,7 +113,7 @@ export async function computePrSize(
   if (!sourceCommit || !targetCommit) {
     log.debug(`  PR #${pullRequestId} — no commit refs, using file count as proxy`);
     const total = allChanges.length;
-    return { linesAdded: total, linesDeleted: 0, totalChanges: total, label: classifyPrSize(total, config.thresholds) };
+    return { linesAdded: total, linesDeleted: 0, filesChanged: total, totalChanges: total, label: classifyPrSize(total, config.thresholds) };
   }
 
   // Build FileDiffParams with correct paths based on change type.
@@ -178,9 +178,10 @@ export async function computePrSize(
   }
 
   const totalChanges = totalAdded + totalDeleted;
+  const filesChanged = allChanges.length;
   const label = classifyPrSize(totalChanges, config.thresholds);
 
-  log.debug(`  PR #${pullRequestId} — +${totalAdded} -${totalDeleted} = ${totalChanges} (${label})`);
+  log.debug(`  PR #${pullRequestId} — +${totalAdded} -${totalDeleted} = ${totalChanges} (${label}), ${filesChanged} files`);
 
-  return { linesAdded: totalAdded, linesDeleted: totalDeleted, totalChanges, label };
+  return { linesAdded: totalAdded, linesDeleted: totalDeleted, filesChanged, totalChanges, label };
 }

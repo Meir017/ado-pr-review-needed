@@ -7,6 +7,7 @@ export type PrSizeLabel = "XS" | "S" | "M" | "L" | "XL";
 export interface PrSizeInfo {
   linesAdded: number;
   linesDeleted: number;
+  filesChanged: number;
   totalChanges: number;
   label: PrSizeLabel;
 }
