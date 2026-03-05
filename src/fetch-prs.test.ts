@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { mapBuildResult, fetchPipelineStatus, fetchPolicyEvaluations, enhancePolicyDisplayName, determineFetchPlan } from "./fetch-prs.js";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 import { PolicyEvaluationStatus } from "azure-devops-node-api/interfaces/PolicyInterfaces.js";
-import { PullRequestAsyncStatus } from "azure-devops-node-api/interfaces/GitInterfaces.js";
+import { PullRequestAsyncStatus, type GitPullRequest } from "azure-devops-node-api/interfaces/GitInterfaces.js";
 import type { IBuildApi } from "azure-devops-node-api/BuildApi.js";
 import type { IPolicyApi } from "azure-devops-node-api/PolicyApi.js";
 
@@ -395,7 +395,7 @@ describe("fetchPolicyEvaluations", () => {
 
 describe("determineFetchPlan", () => {
   it("skips all extra fetches for PRs with merge conflicts", () => {
-    const plan = determineFetchPlan({ mergeStatus: PullRequestAsyncStatus.Conflicts } as any);
+    const plan = determineFetchPlan({ mergeStatus: PullRequestAsyncStatus.Conflicts } as GitPullRequest);
     expect(plan.threads).toBe(false);
     expect(plan.pipeline).toBe(false);
     expect(plan.policy).toBe(false);
@@ -405,7 +405,7 @@ describe("determineFetchPlan", () => {
   });
 
   it("fetches everything for PRs with succeeded merge status", () => {
-    const plan = determineFetchPlan({ mergeStatus: PullRequestAsyncStatus.Succeeded } as any);
+    const plan = determineFetchPlan({ mergeStatus: PullRequestAsyncStatus.Succeeded } as GitPullRequest);
     expect(plan.threads).toBe(true);
     expect(plan.pipeline).toBe(true);
     expect(plan.policy).toBe(true);
@@ -415,19 +415,19 @@ describe("determineFetchPlan", () => {
   });
 
   it("fetches everything for PRs with queued merge status", () => {
-    const plan = determineFetchPlan({ mergeStatus: PullRequestAsyncStatus.Queued } as any);
+    const plan = determineFetchPlan({ mergeStatus: PullRequestAsyncStatus.Queued } as GitPullRequest);
     expect(plan.threads).toBe(true);
     expect(plan.skipReason).toBeUndefined();
   });
 
   it("fetches everything for PRs with NotSet merge status", () => {
-    const plan = determineFetchPlan({ mergeStatus: PullRequestAsyncStatus.NotSet } as any);
+    const plan = determineFetchPlan({ mergeStatus: PullRequestAsyncStatus.NotSet } as GitPullRequest);
     expect(plan.threads).toBe(true);
     expect(plan.skipReason).toBeUndefined();
   });
 
   it("fetches everything for PRs with undefined merge status", () => {
-    const plan = determineFetchPlan({} as any);
+    const plan = determineFetchPlan({} as GitPullRequest);
     expect(plan.threads).toBe(true);
     expect(plan.skipReason).toBeUndefined();
   });
