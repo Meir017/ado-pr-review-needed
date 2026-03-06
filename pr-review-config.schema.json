@@ -237,7 +237,8 @@
                 },
                 "minStalenessLevel": {
                   "type": "string",
-                  "description": "Only include PRs at or above this staleness level."
+                  "description": "Only include PRs at or above this staleness level. Must match a label from staleness thresholds. Defaults include '⚠️ Aging', '🔴 Stale', and '💀 Abandoned', but custom labels are supported.",
+                  "examples": ["⚠️ Aging", "🔴 Stale", "💀 Abandoned"]
                 }
               }
             }
@@ -284,8 +285,8 @@
         },
         "minStalenessLevel": {
           "type": "string",
-          "description": "Only nudge PRs at or above this staleness level. Must match a label from staleness thresholds.",
-          "examples": ["🔴 Stale", "💀 Abandoned"]
+          "description": "Only nudge PRs at or above this staleness level. Must match a label from staleness thresholds. Defaults include '⚠️ Aging', '🔴 Stale', and '💀 Abandoned', but custom labels are supported.",
+          "examples": ["⚠️ Aging", "🔴 Stale", "💀 Abandoned"]
         },
         "cooldownDays": {
           "type": "integer",
