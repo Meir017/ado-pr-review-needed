@@ -8,6 +8,11 @@ interface AdaptiveCardAction {
   url: string;
 }
 
+interface AdaptiveCardFact {
+  title: string;
+  value: string;
+}
+
 interface AdaptiveCardElement {
   type: string;
   text?: string;
@@ -21,6 +26,8 @@ interface AdaptiveCardElement {
   width?: string;
   items?: AdaptiveCardElement[];
   actions?: AdaptiveCardAction[];
+  style?: string;
+  facts?: AdaptiveCardFact[];
 }
 
 interface AdaptiveCard {
@@ -38,10 +45,37 @@ interface TeamsPayload {
   }>;
 }
 
-function formatPrLine(pr: { id: number; title: string; author: string; url: string; isStarred?: boolean }, badge?: string | null): string {
+function textBlock(text: string, options?: Partial<AdaptiveCardElement>): AdaptiveCardElement {
+  return { type: "TextBlock", text, ...options };
+}
+
+function formatPrLine(pr: { id: number; title: string; author: string; url: string; isStarred?: boolean; hasMergeConflict?: boolean }, badge?: string | null): string {
   const stale = badge ? ` ${badge}` : "";
-  const starBadge = pr.isStarred ? "⭐ " : "";
-  return `[#${pr.id} - ${pr.title}](${pr.url}) — ${starBadge}${pr.author}${stale}`;
+  const conflict = pr.hasMergeConflict ? " ❌" : "";
+  const star = pr.isStarred ? "⭐ " : "";
+  return `[#${pr.id} - ${pr.title}](${pr.url})${conflict} — ${star}${pr.author}${stale}`;
+}
+
+function buildPrFactSet(
+  prs: Array<{ id: number; title: string; author: string; url: string; isStarred?: boolean; hasMergeConflict?: boolean; repository?: string }>,
+  dateExtractor: (pr: Record<string, unknown>) => Date | undefined,
+  thresholds: Array<{ label: string; minDays: number }>,
+): AdaptiveCardElement {
+  const facts: AdaptiveCardFact[] = prs.map((pr) => {
+    const date = dateExtractor(pr as unknown as Record<string, unknown>);
+    const badge = date ? computeStalenessBadge(date, thresholds) : null;
+    const conflict = pr.hasMergeConflict ? " ❌" : "";
+    const star = pr.isStarred ? "⭐ " : "";
+    const stale = badge ? ` ${badge}` : "";
+    const repo = pr.repository ? `${pr.repository} · ` : "";
+
+    return {
+      title: `${repo}#${pr.id}${conflict}`,
+      value: `[${pr.title}](${pr.url}) — ${star}${pr.author}${stale}`,
+    };
+  });
+
+  return { type: "FactSet", facts, spacing: "Small" };
 }
 
 export function buildTeamsPayload(
@@ -53,65 +87,45 @@ export function buildTeamsPayload(
   const thresholds = staleness?.enabled !== false ? staleness?.thresholds ?? [] : [];
   const total = analysis.approved.length + analysis.needingReview.length + analysis.waitingOnAuthor.length;
 
+  const allPrs = [...analysis.approved, ...analysis.needingReview, ...analysis.waitingOnAuthor];
+  const repos = [...new Set(allPrs.map((pr) => pr.repository).filter(Boolean))];
+  const repoLine = repos.length > 0 ? ` for ${repos.join(", ")}` : "";
+
   const body: AdaptiveCardElement[] = [
-    {
-      type: "TextBlock",
-      text: `📋 PR Review Summary — ${total} open PRs`,
-      size: "Large",
-      weight: "Bolder",
-    },
-    {
-      type: "TextBlock",
-      text: `✅ ${analysis.approved.length} approved | 👀 ${analysis.needingReview.length} needing review | ✍️ ${analysis.waitingOnAuthor.length} waiting on author | ❌ ${stats.totalConflicts} conflicts`,
-      wrap: true,
-      spacing: "Small",
-    },
+    textBlock(`📋 PR Review Summary — ${total} open PRs${repoLine}`, { size: "Large", weight: "Bolder", wrap: true }),
+    textBlock(
+      `✅ ${analysis.approved.length} approved | 👀 ${analysis.needingReview.length} needing review | ✍️ ${analysis.waitingOnAuthor.length} waiting on author | ❌ ${stats.totalConflicts} conflicts`,
+      { wrap: true, spacing: "Small" },
+    ),
   ];
 
   const showSection = (name: string) => !sections || sections.includes(name);
 
   if (showSection("needingReview") && analysis.needingReview.length > 0) {
-    body.push({
-      type: "TextBlock",
-      text: `**👀 PRs Needing Review (${analysis.needingReview.length})**`,
-      separator: true,
-      spacing: "Medium",
-    });
-    const items = analysis.needingReview.slice(0, 15);
-    for (const pr of items) {
-      const badge = computeStalenessBadge(pr.waitingSince, thresholds);
-      body.push({ type: "TextBlock", text: formatPrLine(pr, badge), wrap: true, spacing: "Small" });
-    }
-    if (analysis.needingReview.length > 15) {
-      body.push({ type: "TextBlock", text: `_…and ${analysis.needingReview.length - 15} more_`, spacing: "Small" });
-    }
+    body.push(textBlock(`**👀 PRs Needing Review (${analysis.needingReview.length})**`, { separator: true, spacing: "Medium" }));
+    body.push(buildPrFactSet(
+      analysis.needingReview,
+      (pr) => pr.waitingSince as Date | undefined,
+      thresholds,
+    ));
   }
 
   if (showSection("waitingOnAuthor") && analysis.waitingOnAuthor.length > 0) {
-    body.push({
-      type: "TextBlock",
-      text: `**✍️ Waiting on Author (${analysis.waitingOnAuthor.length})**`,
-      separator: true,
-      spacing: "Medium",
-    });
-    const items = analysis.waitingOnAuthor.slice(0, 10);
-    for (const pr of items) {
-      const badge = computeStalenessBadge(pr.lastReviewerActivityDate, thresholds);
-      body.push({ type: "TextBlock", text: formatPrLine(pr, badge), wrap: true, spacing: "Small" });
-    }
-    if (analysis.waitingOnAuthor.length > 10) {
-      body.push({ type: "TextBlock", text: `_…and ${analysis.waitingOnAuthor.length - 10} more_`, spacing: "Small" });
-    }
+    body.push(textBlock(`**✍️ Waiting on Author (${analysis.waitingOnAuthor.length})**`, { separator: true, spacing: "Medium" }));
+    body.push(buildPrFactSet(
+      analysis.waitingOnAuthor,
+      (pr) => pr.lastReviewerActivityDate as Date | undefined,
+      thresholds,
+    ));
   }
 
   if (showSection("approved") && analysis.approved.length > 0) {
-    body.push({
-      type: "TextBlock",
-      text: `**✅ Approved (${analysis.approved.length})**`,
-      separator: true,
-      spacing: "Medium",
-    });
-    body.push({ type: "TextBlock", text: `${analysis.approved.length} PRs approved and ready to merge.`, spacing: "Small" });
+    body.push(textBlock(`**✅ Approved (${analysis.approved.length})**`, { separator: true, spacing: "Medium" }));
+    body.push(buildPrFactSet(
+      analysis.approved,
+      (pr) => pr.createdDate as Date | undefined,
+      thresholds,
+    ));
   }
 
   return {
@@ -136,6 +150,9 @@ export async function sendTeamsNotification(
 ): Promise<void> {
   const payload = buildTeamsPayload(analysis, stats, staleness, config.filters?.sections);
 
+  log.debug(`Teams webhook URL: ${config.webhookUrl.replace(/[?&](?:sig|sp|sv|se)=[^&]+/g, "=***")}`);
+  log.debug(`Teams payload: ${JSON.stringify(payload, null, 2)}`);
+
   try {
     const response = await fetch(config.webhookUrl, {
       method: "POST",
@@ -143,10 +160,13 @@ export async function sendTeamsNotification(
       body: JSON.stringify(payload),
     });
 
+    const responseBody = await response.text();
     if (!response.ok) {
       log.warn(`Teams notification failed: ${response.status} ${response.statusText}`);
+      log.warn(`Response body: ${responseBody}`);
     } else {
       log.success("Teams notification sent successfully");
+      log.debug(`Response: ${responseBody}`);
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
