@@ -49,12 +49,6 @@ function textBlock(text: string, options?: Partial<AdaptiveCardElement>): Adapti
   return { type: "TextBlock", text, ...options };
 }
 
-function formatPrLine(pr: { id: number; title: string; author: string; url: string; isStarred?: boolean; hasMergeConflict?: boolean }, badge?: string | null): string {
-  const stale = badge ? ` ${badge}` : "";
-  const conflict = pr.hasMergeConflict ? " ❌" : "";
-  const star = pr.isStarred ? "⭐ " : "";
-  return `[#${pr.id} - ${pr.title}](${pr.url})${conflict} — ${star}${pr.author}${stale}`;
-}
 
 function buildPrFactSet(
   prs: Array<{ id: number; title: string; author: string; url: string; isStarred?: boolean; hasMergeConflict?: boolean; repository?: string }>,
