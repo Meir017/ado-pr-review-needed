@@ -239,20 +239,20 @@ function renderRepoFilter() {
     repoPopup.innerHTML += `<label class="multi-select-option"><input type="checkbox" value="${escapeHtml(repo.repoLabel)}" onchange="filterTable()"><span>${escapeHtml(repo.repoLabel)}</span></label>`;
   }
 
-  // Populate required reviewer filter
-  const requiredReviewers = new Set();
+  // Populate reviewer filter
+  const allReviewers = new Set();
   for (const repo of DATA.repositories) {
     for (const list of [repo.analysis.needingReview, repo.analysis.approved, repo.analysis.waitingOnAuthor]) {
       for (const pr of list) {
         for (const r of (pr.reviewers || [])) {
-          if (r.isRequired) requiredReviewers.add(r.displayName);
+          allReviewers.add(r.displayName);
         }
       }
     }
   }
   const revPopup = document.querySelector('#reviewer-filter .multi-select-popup');
   revPopup.innerHTML = '';
-  for (const name of [...requiredReviewers].sort()) {
+  for (const name of [...allReviewers].sort()) {
     revPopup.innerHTML += `<label class="multi-select-option"><input type="checkbox" value="${escapeHtml(name)}" onchange="filterTable()"><span>${escapeHtml(name)}</span></label>`;
   }
 }
@@ -302,8 +302,8 @@ function filterTable() {
     if (rf.length > 0 && !rf.includes(pr.repo)) return false;
     if (hc && pr.hasMergeConflict) return false;
     if (rvf.length > 0) {
-      const hasRequiredReviewer = (pr.reviewers || []).some(r => r.isRequired && rvf.includes(r.displayName));
-      if (!hasRequiredReviewer) return false;
+      const hasReviewer = (pr.reviewers || []).some(r => rvf.includes(r.displayName));
+      if (!hasReviewer) return false;
     }
     return true;
   });

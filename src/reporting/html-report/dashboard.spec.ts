@@ -174,13 +174,13 @@ test.describe("HTML Dashboard — reviewer multi-select filter", () => {
     await renderMock(page);
   });
 
-  test("shows only required reviewers", async ({ page }) => {
+  test("shows all reviewers", async ({ page }) => {
     await page.click("#reviewer-filter .multi-select-btn");
     const options = page.locator("#reviewer-filter .multi-select-option");
-    // Required reviewers: Alice, Bob (from our mock data)
-    await expect(options).toHaveCount(2);
+    // All reviewers: Alice, Bob (required) and Charlie (optional)
+    await expect(options).toHaveCount(3);
     const texts = await options.allTextContents();
-    expect(texts.sort()).toEqual(["Alice", "Bob"]);
+    expect(texts.sort()).toEqual(["Alice", "Bob", "Charlie"]);
   });
 
   test("filters PRs by required reviewer", async ({ page }) => {
