@@ -30,6 +30,7 @@ const TEMPLATE_CONFIG = {
   $schema: "https://raw.githubusercontent.com/Meir017/ado-pr-review-needed/main/pr-review-config.schema.json",
   repositories: [
     { url: "https://dev.azure.com/{org}/{project}/_git/{repo}" },
+    { url: "https://github.com/{owner}/{repo}", visibility: "public" },
   ],
   orgManager: null,
   teamMembers: [],
@@ -66,7 +67,7 @@ export function runSetup(): void {
   }
   writeFileSync(configPath, JSON.stringify(TEMPLATE_CONFIG, null, 2) + "\n", "utf-8");
   log.success(`Created template config: ${configPath}`);
-  log.info("Edit the file to add your Azure DevOps repository URLs and team members.");
+  log.info("Edit the file to add your repository URLs (Azure DevOps or GitHub) and team members.");
 }
 
 export interface RepoError {
