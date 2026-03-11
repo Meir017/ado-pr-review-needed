@@ -21,7 +21,6 @@ import { computeSummaryStats, computeRepoSummaryStats } from "./types.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 import { withRetry } from "./retry.js";
 import * as log from "./log.js";
-import type { RepoTarget } from "./config.js";
 import type { AdoRepoTarget, ProviderRepoTarget } from "./types.js";
 import { computeStalenessBadge } from "./analysis/staleness.js";
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";

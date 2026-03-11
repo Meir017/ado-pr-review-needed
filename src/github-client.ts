@@ -24,9 +24,10 @@ export async function getGitHubToken(): Promise<string> {
     if (msg.includes("ENOENT") || msg.includes("not recognized") || msg.includes("not found")) {
       throw new Error(
         "GitHub CLI (gh) is not installed. Install it from https://cli.github.com/ and run `gh auth login`.",
+        { cause: err },
       );
     }
-    throw new Error(`Failed to get GitHub token: ${msg}. Ensure you are logged in with \`gh auth login\`.`);
+    throw new Error(`Failed to get GitHub token: ${msg}. Ensure you are logged in with \`gh auth login\`.`, { cause: err });
   }
 }
 

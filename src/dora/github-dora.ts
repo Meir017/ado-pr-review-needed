@@ -20,11 +20,6 @@ interface GitHubWorkflowRun {
   workflow_id: number;
 }
 
-interface GitHubWorkflowRunsResponse {
-  total_count: number;
-  workflow_runs: GitHubWorkflowRun[];
-}
-
 /**
  * Fetch merged PRs from GitHub within the given period.
  */
@@ -62,7 +57,7 @@ async function fetchWorkflowRuns(
   workflowIds?: number[],
 ): Promise<BuildInfo[]> {
   const sinceStr = since.toISOString();
-  let url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?created=>${sinceStr}&per_page=100`;
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?created=>${sinceStr}&per_page=100`;
 
   const response = await withRetry(
     `Fetch workflow runs for ${owner}/${repo}`,

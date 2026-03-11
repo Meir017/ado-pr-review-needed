@@ -1,5 +1,4 @@
 import { execSync } from "node:child_process";
-import type { Provider } from "./types/provider.js";
 
 interface GitRemoteInfo {
   orgUrl: string;
