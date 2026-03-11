@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/Meir017/ado-pr-review-needed/main/pr-review-config.schema.json",
   "title": "PR Review Needed Configuration",
-  "description": "Configuration file for the pr-review-needed tool, which generates a markdown summary of Azure DevOps pull requests that need review.",
+  "description": "Configuration file for the pr-review-needed tool, which generates a markdown summary of pull requests that need review. Supports Azure DevOps and GitHub repositories.",
   "type": "object",
   "required": ["repositories"],
   "additionalProperties": false,
@@ -13,7 +13,7 @@
     },
     "repositories": {
       "type": "array",
-      "description": "List of Azure DevOps Git repositories to monitor for open pull requests.",
+      "description": "List of Azure DevOps or GitHub Git repositories to monitor for open pull requests.",
       "minItems": 1,
       "items": {
         "type": "object",
@@ -22,9 +22,25 @@
         "properties": {
           "url": {
             "type": "string",
-            "description": "The full Azure DevOps repository URL in the format https://dev.azure.com/{org}/{project}/_git/{repo}.",
-            "pattern": "^https://dev\\.azure\\.com/.+/.+/_git/.+$",
-            "examples": ["https://dev.azure.com/myorg/myproject/_git/myrepo"]
+            "description": "The full repository URL. Supports Azure DevOps (https://dev.azure.com/{org}/{project}/_git/{repo}) and GitHub (https://github.com/{owner}/{repo}).",
+            "anyOf": [
+              {
+                "pattern": "^https://dev\\.azure\\.com/.+/.+/_git/.+$"
+              },
+              {
+                "pattern": "^https://github\\.com/[^/]+/[^/]+$"
+              }
+            ],
+            "examples": [
+              "https://dev.azure.com/myorg/myproject/_git/myrepo",
+              "https://github.com/owner/repo"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "description": "Repository visibility. For GitHub repos: 'public' requires no authentication, 'private' uses gh CLI token. Defaults to 'public'.",
+            "enum": ["public", "private"],
+            "default": "public"
           },
           "skipRestartMerge": {
             "type": "boolean",

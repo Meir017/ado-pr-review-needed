@@ -20,6 +20,7 @@ import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 import { withRetry } from "./retry.js";
 import * as log from "./log.js";
 import type { RepoTarget } from "./config.js";
+import type { AdoRepoTarget, ProviderRepoTarget } from "./types.js";
 import { computeStalenessBadge } from "./analysis/staleness.js";
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 
@@ -145,7 +146,7 @@ async function refreshMergeStatus(
 }
 
 interface ProcessRepoOptions {
-  repo: RepoTarget;
+  repo: AdoRepoTarget;
   isMultiRepo: boolean;
   restartMergeAfterDays: number;
   quantifierConfig: import("./types.js").QuantifierConfig | undefined;
@@ -220,7 +221,7 @@ async function processRepo(options: ProcessRepoOptions): Promise<RepoResult | Re
 
 export interface PipelineResult {
   multiConfig: import("./config.js").MultiRepoConfig;
-  repos: RepoTarget[];
+  repos: ProviderRepoTarget[];
   isMultiRepo: boolean;
   results: RepoResult[];
   repoErrors: RepoError[];
@@ -240,20 +241,24 @@ export async function runPipeline(configPath?: string): Promise<PipelineResult> 
   const repos = multiConfig.repos;
   const isMultiRepo = repos.length > 1;
 
-  log.info("Authenticating to Azure DevOps…");
-  const startAuth = Date.now();
-  const uniqueOrgs = [...new Set(repos.map((r) => r.orgUrl))];
-  for (const orgUrl of uniqueOrgs) {
-    await getGitApiForOrg(orgUrl);
+  const adoRepos = repos.filter((r): r is AdoRepoTarget => r.provider === "ado");
+
+  if (adoRepos.length > 0) {
+    log.info("Authenticating to Azure DevOps…");
+    const startAuth = Date.now();
+    const uniqueOrgs = [...new Set(adoRepos.map((r) => r.orgUrl))];
+    for (const orgUrl of uniqueOrgs) {
+      await getGitApiForOrg(orgUrl);
+    }
+    log.success(`Authenticated to ${uniqueOrgs.join(", ")} (${Date.now() - startAuth}ms)`);
   }
-  log.success(`Authenticated to ${uniqueOrgs.join(", ")} (${Date.now() - startAuth}ms)`);
 
   let totalPrs = 0;
   let totalRestarted = 0;
   let totalRestartFailed = 0;
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
-  const rawResults = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
+  const rawResults = await runConcurrent(adoRepos, DEFAULT_CONCURRENCY, (repo) =>
     processRepo({ repo, isMultiRepo, restartMergeAfterDays: multiConfig.restartMergeAfterDays, quantifierConfig: multiConfig.quantifier, teamMembers: multiConfig.teamMembers, ignoredUsers: multiConfig.ignoredUsers, botUsers: multiConfig.botUsers, aiBotUsers: multiConfig.aiBotUsers, starredUsers: multiConfig.starredUsers }),
   );
 
@@ -293,7 +298,11 @@ export async function runMarkdownExport(args: CliArgs): Promise<void> {
 
     const repoLabel = isMultiRepo
       ? `${repos.length} repositories`
-      : `${repos[0]?.project}/${repos[0]?.repository}`;
+      : repos[0]?.provider === "ado"
+        ? `${repos[0].project}/${repos[0].repository}`
+        : repos[0]?.provider === "github"
+          ? `${repos[0].owner}/${repos[0].repo}`
+          : "unknown";
     const output = renderDashboard({ analysis: merged, repoLabel, multiRepo: isMultiRepo, stats, staleness: multiConfig.staleness, metrics, workload });
     console.log(output);
 
