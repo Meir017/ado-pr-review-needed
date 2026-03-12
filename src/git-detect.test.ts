@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseAdoRemote } from "./git-detect.js";
+import { parseAdoRemote, parseGitHubRemote, parseGitRemote } from "./git-detect.js";
 
 describe("parseAdoRemote", () => {
   it("parses https dev.azure.com remote", () => {
@@ -53,5 +53,66 @@ describe("parseAdoRemote", () => {
 
   it("returns null for empty string", () => {
     expect(parseAdoRemote("")).toBeNull();
+  });
+});
+
+describe("parseGitHubRemote", () => {
+  it("parses https github.com remote", () => {
+    const result = parseGitHubRemote("https://github.com/owner/repo");
+    expect(result).toEqual({ owner: "owner", repo: "repo" });
+  });
+
+  it("parses https with .git", () => {
+    const result = parseGitHubRemote("https://github.com/owner/repo.git");
+    expect(result).toEqual({ owner: "owner", repo: "repo" });
+  });
+
+  it("parses SSH remote", () => {
+    const result = parseGitHubRemote("git@github.com:owner/repo.git");
+    expect(result).toEqual({ owner: "owner", repo: "repo" });
+  });
+
+  it("parses SSH without .git", () => {
+    const result = parseGitHubRemote("git@github.com:owner/repo");
+    expect(result).toEqual({ owner: "owner", repo: "repo" });
+  });
+
+  it("returns null for ADO URL", () => {
+    expect(parseGitHubRemote("https://dev.azure.com/microsoft/WDATP/_git/MyRepo")).toBeNull();
+  });
+
+  it("returns null for empty string", () => {
+    expect(parseGitHubRemote("")).toBeNull();
+  });
+
+  it("parses repo names with dots", () => {
+    const result = parseGitHubRemote("https://github.com/mtp-microsoft/Infra.K8s.BasePlatformRP");
+    expect(result).toEqual({ owner: "mtp-microsoft", repo: "Infra.K8s.BasePlatformRP" });
+  });
+});
+
+describe("parseGitRemote", () => {
+  it("returns github provider for github URL", () => {
+    const result = parseGitRemote("https://github.com/owner/repo.git");
+    expect(result).toEqual({
+      provider: "github",
+      info: { owner: "owner", repo: "repo" },
+    });
+  });
+
+  it("returns ado provider for ADO URL", () => {
+    const result = parseGitRemote("https://dev.azure.com/microsoft/WDATP/_git/MyRepo");
+    expect(result).toEqual({
+      provider: "ado",
+      info: {
+        orgUrl: "https://dev.azure.com/microsoft",
+        project: "WDATP",
+        repository: "MyRepo",
+      },
+    });
+  });
+
+  it("returns null for unknown URL", () => {
+    expect(parseGitRemote("https://gitlab.com/owner/repo.git")).toBeNull();
   });
 });

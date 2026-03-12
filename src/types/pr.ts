@@ -1,4 +1,5 @@
 import type { IdentityRef } from "azure-devops-node-api/interfaces/common/VSSInterfaces.js";
+import type { Provider } from "./provider.js";
 
 export type PrAction = "APPROVE" | "REVIEW" | "PENDING";
 
@@ -36,6 +37,7 @@ export interface ReviewerInfo {
   uniqueName: string;
   vote: number;
   isRequired: boolean;
+  isBot?: boolean;
 }
 
 export interface ThreadComment {
@@ -100,6 +102,7 @@ export interface PullRequestInfo {
   detectedLabels: string[];
   mergeStatus: number;
   lastSourcePushDate: Date | undefined;
+  provider?: Provider;
   size?: PrSizeInfo;
   description?: string;
   sourceBranch?: string;

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A TypeScript CLI tool that queries Azure DevOps for open pull requests and generates a markdown summary of PRs needing reviewer feedback. Published as `@meirblachman/pr-review-needed` on npm.
+A TypeScript CLI tool that queries Azure DevOps and GitHub for open pull requests and generates a markdown summary of PRs needing reviewer feedback. Published as `@meirblachman/pr-review-needed` on npm.
 
 ## Setup
 
@@ -44,8 +44,10 @@ src/
 ├── index.ts                        # CLI entry point & argument parsing
 ├── pipeline.ts                     # Main orchestrator (fetch → analyze → report)
 ├── ado-client.ts                   # Azure DevOps authentication (Git + Build API, multi-org)
-├── config.ts                       # Configuration loading (multi-repo support)
-├── fetch-prs.ts                    # Fetch & filter open PRs + pipeline status
+├── github-client.ts                # GitHub REST API client (token via `gh` CLI, rate limiting)
+├── github-fetch-prs.ts             # Fetch & enrich open GitHub PRs (reviews, checks, files)
+├── config.ts                       # Configuration loading (multi-repo, multi-provider support)
+├── fetch-prs.ts                    # Fetch & filter open ADO PRs + pipeline status
 ├── graph-client.ts                 # Microsoft Graph API for org/team resolution
 ├── git-detect.ts                   # Auto-detect ADO repo from git remote
 ├── metrics.ts                      # Review cycle time metrics
@@ -62,7 +64,8 @@ src/
 │   ├── notifications.ts            # Notification config types
 │   ├── nudge.ts                    # Auto-nudge config types
 │   ├── dependency.ts               # PR dependency graph types
-│   └── dora.ts                     # DORA metrics types
+│   ├── dora.ts                     # DORA metrics types
+│   └── provider.ts                 # Provider type union (ado | github) & repo target types
 ├── analysis/
 │   ├── review-logic.ts             # Determine which PRs need review
 │   ├── pr-quantifier.ts            # PR size classification (XS/S/M/L/XL)
@@ -78,13 +81,15 @@ src/
 │       ├── generate-html.ts        # HTML report generator
 │       └── template.html           # Self-contained HTML dashboard template
 ├── automation/
-│   ├── restart-merge.ts            # Restart merge for stale PRs
+│   ├── restart-merge.ts            # Restart merge for stale ADO PRs
+│   ├── github-update-branch.ts     # Update branch (merge base into head) for stale GitHub PRs
 │   ├── auto-nudge.ts               # Auto-nudge stale PRs with comments
 │   └── notifications/
 │       ├── index.ts                # Notification orchestrator
 │       └── teams.ts                # Teams Adaptive Card formatter
 ├── dora/
 │   ├── compute-dora.ts             # DORA metrics computation
+│   ├── github-dora.ts              # GitHub-specific DORA metrics (Actions + merged PRs)
 │   └── history-store.ts            # DORA history persistence
 └── e2e/                            # End-to-end tests with mock ADO API
 ```
@@ -93,6 +98,9 @@ src/
 
 - The CLI uses `commander` for argument parsing
 - Azure DevOps auth uses `@azure/identity` (`AzureCliCredential`) — no PAT required
+- GitHub auth uses the `gh` CLI token (`gh auth token`); public repos need no auth
+- GitHub client uses native `fetch` — no additional npm dependencies
 - File pattern matching uses `picomatch`
-- The `pipeline.ts` orchestrator ties together fetching, analysis, and reporting
+- The `pipeline.ts` orchestrator ties together fetching, analysis, and reporting for both ADO and GitHub providers
 - Configuration is loaded from `pr-review-config.json` (schema in `pr-review-config.schema.json`)
+- Provider-agnostic types (`ProviderRepoTarget`) allow ADO and GitHub repos in the same config

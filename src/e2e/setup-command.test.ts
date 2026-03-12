@@ -32,8 +32,9 @@ describe("e2e: setup command", () => {
     const content = JSON.parse(readFileSync(configPath, "utf-8"));
     expect(content).toHaveProperty("repositories");
     expect(content).toHaveProperty("teamMembers");
-    expect(content.repositories).toHaveLength(1);
-    expect(content.repositories[0].url).toContain("dev.azure.com");
+    expect(content.repositories.length).toBeGreaterThanOrEqual(1);
+    expect(content.repositories.some((r: { url: string }) => r.url.includes("dev.azure.com"))).toBe(true);
+    expect(content.repositories.some((r: { url: string }) => r.url.includes("github.com"))).toBe(true);
   });
 
   it("exits with error if config already exists", async () => {

@@ -21,6 +21,17 @@ vi.mock("../ado-client.js", () => ({
 
 vi.mock("../graph-client.js", () => createMockGraphModule());
 
+vi.mock("../github-client.js", () => ({
+  getGitHubToken: vi.fn().mockResolvedValue("mock-token"),
+  clearTokenCache: vi.fn(),
+  githubFetch: vi.fn(),
+  githubFetchAllPages: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("../github-fetch-prs.js", () => ({
+  fetchGitHubPullRequests: vi.fn().mockResolvedValue([]),
+}));
+
 import { getGitApiForOrg } from "../ado-client.js";
 import { runPipeline, runMarkdownExport } from "../pipeline.js";
 
@@ -482,5 +493,24 @@ describe("e2e: runPipeline", () => {
     const daveWorkload = result.workload.find((w) => w.displayName === "Dave");
     expect(daveWorkload).toBeDefined();
     expect(daveWorkload!.assignedPrCount).toBe(2);
+  });
+});
+
+describe("e2e: run command — GitHub repos", () => {
+  let testDir: TestDir;
+
+  beforeEach(() => {
+    testDir = singleRepoConfig("https://github.com/owner/repo");
+  });
+
+  afterEach(() => {
+    testDir.cleanup();
+  });
+
+  it("processes a GitHub repo without errors", async () => {
+    const result = await runPipeline(testDir.configPath);
+    expect(result.repos).toHaveLength(1);
+    expect(result.repos[0].provider).toBe("github");
+    expect(result.merged.needingReview).toHaveLength(0);
   });
 });

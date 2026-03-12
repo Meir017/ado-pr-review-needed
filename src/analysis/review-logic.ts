@@ -10,7 +10,8 @@ const KNOWN_DETERMINISTIC_BOT_AUTHORS = ["dependabot[bot]", "renovate[bot]", "gi
 
 const KNOWN_AI_BOT_AUTHORS = ["github copilot", "copilot[bot]", "claude", "codex"];
 
-function isBotAccount(uniqueName: string, botUsers: Set<string> = new Set(), displayName?: string): boolean {
+function isBotAccount(uniqueName: string, botUsers: Set<string> = new Set(), displayName?: string, isBot?: boolean): boolean {
+  if (isBot) return true;
   const lower = uniqueName.toLowerCase();
   if (botUsers.has(lower) || BOT_PATTERNS.some((p) => lower.includes(p))) return true;
   if (displayName && botUsers.has(displayName.toLowerCase())) return true;
@@ -110,7 +111,7 @@ export function analyzePrs(
 
     // Skip if any reviewer approved (vote >= 5)
     const isApproved = pr.reviewers.some(
-      (r) => r.vote >= 5 && !isBotAccount(r.uniqueName, botUsers, r.displayName) && !isAiBotAccount(r.uniqueName, aiBotUsers, r.displayName),
+      (r) => r.vote >= 5 && !isBotAccount(r.uniqueName, botUsers, r.displayName, r.isBot) && !isAiBotAccount(r.uniqueName, aiBotUsers, r.displayName),
     );
     if (isApproved) {
       const hasMergeConflict =

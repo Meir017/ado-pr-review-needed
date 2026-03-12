@@ -5,16 +5,18 @@
 
 A TypeScript CLI tool that queries Azure DevOps for open pull requests and generates a markdown summary of PRs needing reviewer feedback — inspired by [dotnet/aspire#13834](https://github.com/dotnet/aspire/issues/13834).
 
+> **Now with GitHub support!** Monitor both Azure DevOps and GitHub repositories from a single configuration.
+
 <p align="center">
   <img src="demo/pr-dashboard-demo.gif" alt="PR Review Dashboard demo" width="800">
 </p>
 
 ## How It Works
 
-1. Authenticates to Azure DevOps using `AzureCliCredential` (no PAT required)
+1. Authenticates to Azure DevOps using `AzureCliCredential` (no PAT required); for GitHub, uses the `gh` CLI token for private repos (no auth needed for public repos)
 2. Fetches all active, non-draft PRs (excluding those tagged `NO-MERGE`)
 3. Analyzes comment threads, reviewer votes, and push activity to determine which PRs are waiting on reviewers
-4. Fetches pipeline/build status for each PR from the Azure DevOps Build API
+4. Fetches pipeline/build status for each PR from the Azure DevOps Build API or GitHub Check Runs
 5. Generates a markdown file, HTML report, JSON report, or terminal dashboard with PRs sorted by wait time
 
 A PR is considered **"needing review"** when:
@@ -25,8 +27,9 @@ A PR is considered **"needing review"** when:
 ## Prerequisites
 
 - **Node.js 24+**
-- **Azure CLI** — logged in via `az login`
-- Access to the target Azure DevOps organization
+- **Azure CLI** — logged in via `az login` (for Azure DevOps repos)
+- **GitHub CLI (`gh`)** — logged in via `gh auth login` (for private GitHub repos only; public repos need no auth)
+- Access to the target Azure DevOps organization and/or GitHub repositories
 - (Optional) **Microsoft Graph** access — for resolving team members from org hierarchy
 
 ## Installation
@@ -61,7 +64,7 @@ Generate a template configuration file in the current directory:
 pr-review-needed setup
 ```
 
-This creates a `pr-review-config.json` with placeholder values. Edit it to add your Azure DevOps repository URLs and team members.
+This creates a `pr-review-config.json` with placeholder values. Edit it to add your Azure DevOps and/or GitHub repository URLs and team members.
 
 ### Run
 
@@ -105,13 +108,15 @@ pr-review-needed run --verbose
 
 ## Configuration
 
-The tool reads repository targets from `pr-review-config.json`. You can specify one or more Azure DevOps repository URLs:
+The tool reads repository targets from `pr-review-config.json`. You can specify one or more Azure DevOps and/or GitHub repository URLs:
 
 ```json
 {
   "repositories": [
     { "url": "https://dev.azure.com/{org}/{project}/_git/{repo}" },
-    { "url": "https://dev.azure.com/{org}/{project}/_git/{another-repo}", "skipRestartMerge": true }
+    { "url": "https://dev.azure.com/{org}/{project}/_git/{another-repo}", "skipRestartMerge": true },
+    { "url": "https://github.com/{owner}/{repo}" },
+    { "url": "https://github.com/{owner}/{another-repo}", "skipRestartMerge": true }
   ],
   "orgManager": "manager@example.com",
   "teamMembers": ["alice@example.com", "bob@example.com"]
@@ -122,6 +127,9 @@ All supported ADO URL formats work:
 - `https://dev.azure.com/{org}/{project}/_git/{repo}`
 - `https://{org}.visualstudio.com/{project}/_git/{repo}`
 - `git@ssh.dev.azure.com:v3/{org}/{project}/{repo}`
+
+GitHub URL format:
+- `https://github.com/{owner}/{repo}`
 
 When multiple repositories are configured, the markdown output groups PRs by repository.
 
@@ -147,7 +155,7 @@ Each entry in the `repositories` array is an object with the following fields:
 
 | Field | Description |
 |-------|-------------|
-| `url` | (Required) Full ADO repository URL |
+| `url` | (Required) Full ADO or GitHub repository URL |
 | `skipRestartMerge` | (Optional) When `true`, skip restart-merge for this repository. Default: `false`. |
 
 ## Example Output
@@ -269,7 +277,7 @@ Set `"enabled": false` to disable staleness badges entirely. Defaults are applie
 
 ## Pipeline Status
 
-Each PR's CI/CD pipeline status is automatically fetched from the Azure DevOps Build API and displayed across all output formats. The tool queries builds on the `refs/pull/{id}/merge` branch and de-duplicates to show only the latest run per pipeline definition.
+Each PR's CI/CD pipeline status is automatically fetched from the Azure DevOps Build API (or GitHub Check Runs for GitHub repos) and displayed across all output formats. For ADO repos, the tool queries builds on the `refs/pull/{id}/merge` branch and de-duplicates to show only the latest run per pipeline definition. For GitHub repos, check runs on the PR's head commit are used.
 
 ### Display
 
@@ -281,6 +289,29 @@ Each PR's CI/CD pipeline status is automatically fetched from the Azure DevOps B
 | ⚪ 2 pipeline(s) | Other/unknown status |
 
 The Pipelines column only appears when at least one PR has pipeline data. No additional configuration is required — pipeline status is fetched automatically whenever build data is available for a PR.
+
+## GitHub Support
+
+In addition to Azure DevOps, the tool fully supports GitHub repositories. Add any `https://github.com/{owner}/{repo}` URL to your config to start monitoring GitHub PRs.
+
+### Authentication
+
+- **Public repos**: No authentication needed — the tool uses unauthenticated GitHub API requests.
+- **Private repos**: Run `gh auth login` once; the tool automatically retrieves your token via `gh auth token`.
+
+### Feature Mapping
+
+GitHub concepts are mapped to the same unified model used for Azure DevOps:
+
+| Feature | GitHub Equivalent |
+|---------|-------------------|
+| Reviewer votes | GitHub review states: `APPROVED` → approve, `CHANGES_REQUESTED` → reject, `COMMENTED` → waiting, `PENDING` → no vote |
+| Pipeline status | GitHub Check Runs on the PR's head commit |
+| DORA metrics | GitHub Actions workflow runs + merged PR history via search API |
+| Restart merge | **Update branch** — merges the base branch into the PR head branch |
+| Auto-nudge | Posts a GitHub issue comment on stale PRs |
+| PR size (quantifier) | Computed from PR files' additions + deletions |
+| File labels | Same glob pattern matching as ADO repos |
 
 ## Review Metrics
 

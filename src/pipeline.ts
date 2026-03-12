@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { getGitApiForOrg, getBuildApiForOrg, getPolicyApiForOrg, getCoreApiForOrg } from "./ado-client.js";
 import { getMultiRepoConfig } from "./config.js";
 import { fetchOpenPullRequests, applyDetectedLabels } from "./fetch-prs.js";
+import { fetchGitHubPullRequests } from "./github-fetch-prs.js";
+import { getGitHubToken } from "./github-client.js";
 import { restartMergeForStalePrs } from "./automation/restart-merge.js";
 import { analyzePrs, mergeAnalysisResults } from "./analysis/review-logic.js";
 import { generateMarkdown } from "./reporting/generate-markdown.js";
@@ -14,12 +16,12 @@ import { sendNotifications } from "./automation/notifications/index.js";
 import { buildJsonReport, writeJsonOutput, sendWebhookPayload } from "./reporting/api-output.js";
 import { runAutoNudge } from "./automation/auto-nudge.js";
 import { generateHtmlReport } from "./reporting/html-report/generate-html.js";
-import type { AnalysisResult, PullRequestInfo, JsonRepoReport } from "./types.js";
+import type { AnalysisResult, PullRequestInfo, JsonRepoReport, GitHubRepoTarget } from "./types.js";
 import { computeSummaryStats, computeRepoSummaryStats } from "./types.js";
 import { runConcurrent, DEFAULT_CONCURRENCY } from "./concurrency.js";
 import { withRetry } from "./retry.js";
 import * as log from "./log.js";
-import type { RepoTarget } from "./config.js";
+import type { AdoRepoTarget, ProviderRepoTarget } from "./types.js";
 import { computeStalenessBadge } from "./analysis/staleness.js";
 import type { IGitApi } from "azure-devops-node-api/GitApi.js";
 
@@ -27,6 +29,7 @@ const TEMPLATE_CONFIG = {
   $schema: "https://raw.githubusercontent.com/Meir017/ado-pr-review-needed/main/pr-review-config.schema.json",
   repositories: [
     { url: "https://dev.azure.com/{org}/{project}/_git/{repo}" },
+    { url: "https://github.com/{owner}/{repo}", visibility: "public" },
   ],
   orgManager: null,
   teamMembers: [],
@@ -63,7 +66,7 @@ export function runSetup(): void {
   }
   writeFileSync(configPath, JSON.stringify(TEMPLATE_CONFIG, null, 2) + "\n", "utf-8");
   log.success(`Created template config: ${configPath}`);
-  log.info("Edit the file to add your Azure DevOps repository URLs and team members.");
+  log.info("Edit the file to add your repository URLs (Azure DevOps or GitHub) and team members.");
 }
 
 export interface RepoError {
@@ -73,6 +76,7 @@ export interface RepoError {
 
 export interface RepoResult {
   repoLabel: string;
+  provider?: import("./types.js").Provider;
   prs: PullRequestInfo[];
   analysis: AnalysisResult;
   restarted: number;
@@ -104,6 +108,7 @@ export function buildRepoReport(
 
   return {
     repoLabel: r.repoLabel,
+    provider: r.provider,
     analysis: r.analysis,
     metrics,
     workload,
@@ -145,7 +150,7 @@ async function refreshMergeStatus(
 }
 
 interface ProcessRepoOptions {
-  repo: RepoTarget;
+  repo: AdoRepoTarget;
   isMultiRepo: boolean;
   restartMergeAfterDays: number;
   quantifierConfig: import("./types.js").QuantifierConfig | undefined;
@@ -206,6 +211,7 @@ async function processRepo(options: ProcessRepoOptions): Promise<RepoResult | Re
     const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers, options.starredUsers);
     return {
       repoLabel,
+      provider: "ado" as const,
       prs,
       analysis,
       restarted: restartResult.restarted,
@@ -218,9 +224,47 @@ async function processRepo(options: ProcessRepoOptions): Promise<RepoResult | Re
   }
 }
 
+interface ProcessGitHubRepoOptions {
+  repo: GitHubRepoTarget;
+  isMultiRepo: boolean;
+  token: string | undefined;
+  quantifierConfig: import("./types.js").QuantifierConfig | undefined;
+  teamMembers: Set<string>;
+  ignoredUsers: Set<string>;
+  botUsers: Set<string>;
+  aiBotUsers: Set<string>;
+  starredUsers: Set<string>;
+}
+
+async function processGitHubRepo(options: ProcessGitHubRepoOptions): Promise<RepoResult | RepoError> {
+  const { repo, isMultiRepo, token, quantifierConfig, teamMembers, ignoredUsers, botUsers, aiBotUsers } = options;
+  const repoLabel = `${repo.owner}/${repo.repo}`;
+  try {
+    log.info(`Fetching open PRs from GitHub: ${repoLabel}…`);
+    const startFetch = Date.now();
+
+    const prs = await fetchGitHubPullRequests(repo, token, quantifierConfig, repo.patterns);
+    log.success(`Fetched ${prs.length} candidate PRs from ${repoLabel} (${Date.now() - startFetch}ms)`);
+
+    const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers, options.starredUsers);
+    return {
+      repoLabel,
+      provider: "github" as const,
+      prs,
+      analysis,
+      restarted: 0,
+      restartFailed: 0,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    log.debug(`Failed to process GitHub repo ${repoLabel}: ${msg}`);
+    return { repoLabel, error: msg };
+  }
+}
+
 export interface PipelineResult {
   multiConfig: import("./config.js").MultiRepoConfig;
-  repos: RepoTarget[];
+  repos: ProviderRepoTarget[];
   isMultiRepo: boolean;
   results: RepoResult[];
   repoErrors: RepoError[];
@@ -240,22 +284,53 @@ export async function runPipeline(configPath?: string): Promise<PipelineResult> 
   const repos = multiConfig.repos;
   const isMultiRepo = repos.length > 1;
 
-  log.info("Authenticating to Azure DevOps…");
-  const startAuth = Date.now();
-  const uniqueOrgs = [...new Set(repos.map((r) => r.orgUrl))];
-  for (const orgUrl of uniqueOrgs) {
-    await getGitApiForOrg(orgUrl);
+  const adoRepos = repos.filter((r): r is AdoRepoTarget => r.provider === "ado");
+  const githubRepos = repos.filter((r): r is GitHubRepoTarget => r.provider === "github");
+
+  if (adoRepos.length > 0) {
+    log.info("Authenticating to Azure DevOps…");
+    const startAuth = Date.now();
+    const uniqueOrgs = [...new Set(adoRepos.map((r) => r.orgUrl))];
+    for (const orgUrl of uniqueOrgs) {
+      await getGitApiForOrg(orgUrl);
+    }
+    log.success(`Authenticated to ${uniqueOrgs.join(", ")} (${Date.now() - startAuth}ms)`);
   }
-  log.success(`Authenticated to ${uniqueOrgs.join(", ")} (${Date.now() - startAuth}ms)`);
+
+  // Authenticate to GitHub if any private repos need it
+  let githubToken: string | undefined;
+  if (githubRepos.some((r) => r.visibility === "private")) {
+    log.info("Authenticating to GitHub…");
+    const startAuth = Date.now();
+    githubToken = await getGitHubToken();
+    log.success(`Authenticated to GitHub (${Date.now() - startAuth}ms)`);
+  } else if (githubRepos.length > 0) {
+    // Try to get a token for better rate limits, but don't fail
+    try {
+      githubToken = await getGitHubToken();
+      log.debug("Using GitHub token for improved rate limits");
+    } catch {
+      log.debug("No GitHub token available — using unauthenticated access (60 requests/hour)");
+    }
+  }
 
   let totalPrs = 0;
   let totalRestarted = 0;
   let totalRestartFailed = 0;
 
   log.info(`Processing ${repos.length} repo(s) (concurrency: ${DEFAULT_CONCURRENCY})…`);
-  const rawResults = await runConcurrent(repos, DEFAULT_CONCURRENCY, (repo) =>
+
+  // Process ADO repos
+  const adoResults = await runConcurrent(adoRepos, DEFAULT_CONCURRENCY, (repo) =>
     processRepo({ repo, isMultiRepo, restartMergeAfterDays: multiConfig.restartMergeAfterDays, quantifierConfig: multiConfig.quantifier, teamMembers: multiConfig.teamMembers, ignoredUsers: multiConfig.ignoredUsers, botUsers: multiConfig.botUsers, aiBotUsers: multiConfig.aiBotUsers, starredUsers: multiConfig.starredUsers }),
   );
+
+  // Process GitHub repos
+  const githubResults = await runConcurrent(githubRepos, DEFAULT_CONCURRENCY, (repo) =>
+    processGitHubRepo({ repo, isMultiRepo, token: githubToken, quantifierConfig: multiConfig.quantifier, teamMembers: multiConfig.teamMembers, ignoredUsers: multiConfig.ignoredUsers, botUsers: multiConfig.botUsers, aiBotUsers: multiConfig.aiBotUsers, starredUsers: multiConfig.starredUsers }),
+  );
+
+  const rawResults = [...adoResults, ...githubResults];
 
   const results: RepoResult[] = [];
   const repoErrors: RepoError[] = [];
@@ -293,7 +368,11 @@ export async function runMarkdownExport(args: CliArgs): Promise<void> {
 
     const repoLabel = isMultiRepo
       ? `${repos.length} repositories`
-      : `${repos[0]?.project}/${repos[0]?.repository}`;
+      : repos[0]?.provider === "ado"
+        ? `${repos[0].project}/${repos[0].repository}`
+        : repos[0]?.provider === "github"
+          ? `${repos[0].owner}/${repos[0].repo}`
+          : "unknown";
     const output = renderDashboard({ analysis: merged, repoLabel, multiRepo: isMultiRepo, stats, staleness: multiConfig.staleness, metrics, workload });
     console.log(output);
 

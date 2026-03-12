@@ -104,6 +104,18 @@ export function parseAdoPrUrl(url: string): { orgUrl: string; project: string; r
   return { orgUrl: match[1], project: match[2], repoName: match[3] };
 }
 
+/**
+ * Parse GitHub PR URL to extract owner and repo.
+ * Expected format: https://github.com/{owner}/{repo}/pull/{number}
+ */
+export function parseGitHubPrUrl(url: string): { owner: string; repo: string } | null {
+  const match = url.match(
+    /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/\d+/,
+  );
+  if (!match) return null;
+  return { owner: match[1], repo: match[2] };
+}
+
 export async function postPrComment(
   orgUrl: string,
   project: string,
@@ -126,11 +138,38 @@ export async function postPrComment(
   }
 }
 
+export async function postGitHubPrComment(
+  owner: string,
+  repo: string,
+  prNumber: number,
+  comment: string,
+  token?: string,
+): Promise<void> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments`;
+  const headers: Record<string, string> = {
+    "Accept": "application/vnd.github+json",
+    "Content-Type": "application/json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ body: comment }),
+  });
+  if (!response.ok) {
+    throw new Error(`GitHub API returned ${response.status}: ${response.statusText}`);
+  }
+}
+
 export async function runAutoNudge(
   analysis: AnalysisResult,
   staleness: StalenessConfig,
   config: NudgeConfig,
   now: Date = new Date(),
+  githubToken?: string,
 ): Promise<NudgeResult> {
   const history = loadNudgeHistory(config.historyFile);
   const candidates = filterNudgeCandidates(
@@ -162,14 +201,19 @@ export async function runAutoNudge(
     }
 
     const parsed = parseAdoPrUrl(pr.url);
-    if (!parsed) {
-      log.warn(`  #${pr.id} — could not parse ADO URL: ${pr.url}`);
+    const ghParsed = parseGitHubPrUrl(pr.url);
+    if (!parsed && !ghParsed) {
+      log.warn(`  #${pr.id} — could not parse PR URL: ${pr.url}`);
       result.errors++;
       continue;
     }
 
     try {
-      await postPrComment(parsed.orgUrl, parsed.project, parsed.repoName, pr.id, comment);
+      if (parsed) {
+        await postPrComment(parsed.orgUrl, parsed.project, parsed.repoName, pr.id, comment);
+      } else if (ghParsed) {
+        await postGitHubPrComment(ghParsed.owner, ghParsed.repo, pr.id, comment, githubToken);
+      }
       log.success(`  #${pr.id} "${pr.title}" — nudged (${ageInDays} days)`);
       result.nudged++;
 

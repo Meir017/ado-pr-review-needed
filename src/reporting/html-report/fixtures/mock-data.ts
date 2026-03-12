@@ -44,6 +44,7 @@ function prWaitingOnAuthor(overrides: Partial<PrWaitingOnAuthor> & { id: number;
 export function createMockReport(): JsonReport {
   const repoA: JsonRepoReport = {
     repoLabel: "org/frontend",
+    provider: "ado",
     analysis: {
       needingReview: [
         prNeedingReview({
@@ -115,6 +116,7 @@ export function createMockReport(): JsonReport {
 
   const repoB: JsonRepoReport = {
     repoLabel: "org/backend",
+    provider: "github",
     analysis: {
       needingReview: [
         prNeedingReview({

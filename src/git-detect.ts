@@ -1,9 +1,19 @@
 import { execSync } from "node:child_process";
+
 interface GitRemoteInfo {
   orgUrl: string;
   project: string;
   repository: string;
 }
+
+export interface GitHubRemoteInfo {
+  owner: string;
+  repo: string;
+}
+
+export type ParsedGitRemote =
+  | { provider: "ado"; info: GitRemoteInfo }
+  | { provider: "github"; info: GitHubRemoteInfo };
 
 /**
  * Parse an Azure DevOps git remote URL into org/project/repo.
@@ -61,6 +71,45 @@ export function parseAdoRemote(remoteUrl: string): GitRemoteInfo | null {
       repository: vsSshMatch[3],
     };
   }
+
+  return null;
+}
+
+/**
+ * Parse a GitHub git remote URL into owner/repo.
+ * Supports:
+ *   https://github.com/{owner}/{repo}
+ *   https://github.com/{owner}/{repo}.git
+ *   git@github.com:{owner}/{repo}.git
+ *   git@github.com:{owner}/{repo}
+ */
+export function parseGitHubRemote(remoteUrl: string): GitHubRemoteInfo | null {
+  // HTTPS: github.com
+  const httpsMatch = remoteUrl.match(
+    /https?:\/\/github\.com\/([^/]+)\/([^/\s]+?)(?:\.git)?(?:\s|$)/,
+  );
+  if (httpsMatch) {
+    return { owner: httpsMatch[1], repo: httpsMatch[2] };
+  }
+
+  // SSH: git@github.com
+  const sshMatch = remoteUrl.match(
+    /git@github\.com:([^/]+)\/([^/\s]+?)(?:\.git)?(?:\s|$)/,
+  );
+  if (sshMatch) {
+    return { owner: sshMatch[1], repo: sshMatch[2] };
+  }
+
+  return null;
+}
+
+/** Parse any supported git remote URL (ADO or GitHub). */
+export function parseGitRemote(remoteUrl: string): ParsedGitRemote | null {
+  const ado = parseAdoRemote(remoteUrl);
+  if (ado) return { provider: "ado", info: ado };
+
+  const github = parseGitHubRemote(remoteUrl);
+  if (github) return { provider: "github", info: github };
 
   return null;
 }

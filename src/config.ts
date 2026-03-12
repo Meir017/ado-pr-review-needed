@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchDirectReports, fetchOrgMembers } from "./graph-client.js";
-import { parseAdoRemote } from "./git-detect.js";
-import type { QuantifierConfig, SizeThreshold, PrSizeLabel, StalenessConfig, NotificationsConfig, WebhookConfig, NudgeConfig } from "./types.js";
+import { parseAdoRemote, parseGitHubRemote } from "./git-detect.js";
+import type { QuantifierConfig, SizeThreshold, PrSizeLabel, StalenessConfig, NotificationsConfig, WebhookConfig, NudgeConfig, ProviderRepoTarget, AdoRepoTarget, GitHubRepoTarget } from "./types.js";
 import { DEFAULT_THRESHOLDS, DEFAULT_STALENESS_THRESHOLDS } from "./types.js";
 
 export interface RepoPatternsConfig {
@@ -20,7 +20,7 @@ export interface RepoTarget {
 }
 
 export interface MultiRepoConfig {
-  repos: RepoTarget[];
+  repos: ProviderRepoTarget[];
   teamMembers: Set<string>;
   ignoredUsers: Set<string>;
   botUsers: Set<string>;
@@ -36,6 +36,7 @@ export interface MultiRepoConfig {
 
 interface RepositoryConfigEntry {
   url: string;
+  visibility?: "public" | "private";
   skipRestartMerge?: boolean;
   patterns?: {
     ignore?: string[];
@@ -103,7 +104,7 @@ function loadConfigFile(configFilePath?: string): ConfigFile {
   return JSON.parse(raw) as ConfigFile;
 }
 
-function parseRepoTargets(cfg: ConfigFile): RepoTarget[] {
+function parseRepoTargets(cfg: ConfigFile): ProviderRepoTarget[] {
   if (!cfg.repositories || cfg.repositories.length === 0) {
     throw new Error(
       "Config must specify 'repositories' (array of repository objects with a 'url' field).",
@@ -111,18 +112,36 @@ function parseRepoTargets(cfg: ConfigFile): RepoTarget[] {
   }
 
   return cfg.repositories.map((entry) => {
-    const parsed = parseAdoRemote(entry.url);
-    if (!parsed) {
-      throw new Error(`Invalid ADO repository URL: ${entry.url}`);
-    }
-    return {
-      ...parsed,
-      skipRestartMerge: entry.skipRestartMerge ?? false,
-      patterns: {
-        ignore: entry.patterns?.ignore ?? [],
-        labels: entry.patterns?.labels ?? {},
-      },
+    const patterns = {
+      ignore: entry.patterns?.ignore ?? [],
+      labels: entry.patterns?.labels ?? {},
     };
+
+    // Try GitHub first
+    const ghParsed = parseGitHubRemote(entry.url);
+    if (ghParsed) {
+      return {
+        provider: "github" as const,
+        owner: ghParsed.owner,
+        repo: ghParsed.repo,
+        visibility: entry.visibility ?? "public",
+        skipRestartMerge: entry.skipRestartMerge ?? false,
+        patterns,
+      } satisfies GitHubRepoTarget;
+    }
+
+    // Try ADO
+    const parsed = parseAdoRemote(entry.url);
+    if (parsed) {
+      return {
+        provider: "ado" as const,
+        ...parsed,
+        skipRestartMerge: entry.skipRestartMerge ?? false,
+        patterns,
+      } satisfies AdoRepoTarget;
+    }
+
+    throw new Error(`Unrecognized repository URL format: ${entry.url}. Supported formats: Azure DevOps (https://dev.azure.com/{org}/{project}/_git/{repo}) and GitHub (https://github.com/{owner}/{repo}).`);
   });
 }
 
