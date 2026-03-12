@@ -68,6 +68,7 @@
   tr:hover { background: rgba(88,166,255,0.04); }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
+  .provider-icon { vertical-align: middle; display: inline-block; opacity: 0.7; position: relative; top: -1px; }
   .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
   .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
   .badge-yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
@@ -187,6 +188,11 @@
 <script>
 const DATA = {{DATA_PLACEHOLDER}};
 
+const PROVIDER_ICONS = {
+  github: `<svg class="provider-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>`,
+  ado: `<svg class="provider-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M15 3.622v8.512L11.5 15l-5.425-1.975v1.958L3.004 10.97l8.951.7V4.005L15 3.622zm-2.984.428L6.994 1v2.001L2.382 4.356 1 6.13v4.029l1.978.873V5.869l9.038-1.818z"/></svg>`,
+};
+
 function init() {
   document.getElementById('timestamp').textContent = new Date(DATA.generatedAt).toLocaleString();
   document.getElementById('repo-count').textContent = DATA.repositories.length;
@@ -195,6 +201,10 @@ function init() {
   renderRepoFilter();
   renderPrTable();
   renderMetrics();
+}
+
+function providerIcon(provider) {
+  return PROVIDER_ICONS[provider] || PROVIDER_ICONS.ado;
 }
 
 function renderSummaryCards() {
@@ -236,7 +246,8 @@ function renderRepoFilter() {
   const repoPopup = document.querySelector('#repo-filter .multi-select-popup');
   repoPopup.innerHTML = '';
   for (const repo of DATA.repositories) {
-    repoPopup.innerHTML += `<label class="multi-select-option"><input type="checkbox" value="${escapeHtml(repo.repoLabel)}" onchange="filterTable()"><span>${escapeHtml(repo.repoLabel)}</span></label>`;
+    const icon = providerIcon(repo.provider);
+    repoPopup.innerHTML += `<label class="multi-select-option"><input type="checkbox" value="${escapeHtml(repo.repoLabel)}" onchange="filterTable()"><span>${icon} ${escapeHtml(repo.repoLabel)}</span></label>`;
   }
 
   // Populate reviewer filter
@@ -260,9 +271,10 @@ function renderRepoFilter() {
 function getAllPrs() {
   const rows = [];
   for (const repo of DATA.repositories) {
-    for (const pr of repo.analysis.needingReview) rows.push({ ...pr, status: 'needingReview', repo: repo.repoLabel, date: pr.waitingSince });
-    for (const pr of repo.analysis.approved) rows.push({ ...pr, status: 'approved', repo: repo.repoLabel, date: pr.createdDate });
-    for (const pr of repo.analysis.waitingOnAuthor) rows.push({ ...pr, status: 'waitingOnAuthor', repo: repo.repoLabel, date: pr.lastReviewerActivityDate });
+    const p = repo.provider;
+    for (const pr of repo.analysis.needingReview) rows.push({ ...pr, status: 'needingReview', repo: repo.repoLabel, repoProvider: p, date: pr.waitingSince });
+    for (const pr of repo.analysis.approved) rows.push({ ...pr, status: 'approved', repo: repo.repoLabel, repoProvider: p, date: pr.createdDate });
+    for (const pr of repo.analysis.waitingOnAuthor) rows.push({ ...pr, status: 'waitingOnAuthor', repo: repo.repoLabel, repoProvider: p, date: pr.lastReviewerActivityDate });
   }
   return rows;
 }
@@ -340,7 +352,7 @@ function filterTable() {
       <td>${escapeHtml(pr.title)}${conflict}</td>
       <td>${pr.isStarred ? '⭐ ' : ''}${escapeHtml(pr.author)}</td>
       <td>${statusBadge}</td>
-      <td>${escapeHtml(pr.repo)}</td>
+      <td>${providerIcon(pr.repoProvider)} ${escapeHtml(pr.repo)}</td>
       <td class="size-cell">${size}</td>
       <td class="reviewer-cell">${reviewerCell}</td>
       <td class="policy-cell">${policyCell}</td>

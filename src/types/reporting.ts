@@ -1,9 +1,11 @@
 import type { AnalysisResult, RepoSummaryStats } from "./analysis.js";
+import type { Provider } from "./provider.js";
 
 export type OutputFormat = "markdown" | "terminal" | "json" | "html";
 
 export interface JsonRepoReport {
   repoLabel: string;
+  provider?: Provider;
   analysis: AnalysisResult;
   metrics?: import("../metrics.js").ReviewMetrics;
   workload?: import("../reviewer-workload.js").ReviewerWorkload[];

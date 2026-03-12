@@ -76,6 +76,7 @@ export interface RepoError {
 
 export interface RepoResult {
   repoLabel: string;
+  provider?: import("./types.js").Provider;
   prs: PullRequestInfo[];
   analysis: AnalysisResult;
   restarted: number;
@@ -107,6 +108,7 @@ export function buildRepoReport(
 
   return {
     repoLabel: r.repoLabel,
+    provider: r.provider,
     analysis: r.analysis,
     metrics,
     workload,
@@ -209,6 +211,7 @@ async function processRepo(options: ProcessRepoOptions): Promise<RepoResult | Re
     const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers, options.starredUsers);
     return {
       repoLabel,
+      provider: "ado" as const,
       prs,
       analysis,
       restarted: restartResult.restarted,
@@ -246,6 +249,7 @@ async function processGitHubRepo(options: ProcessGitHubRepoOptions): Promise<Rep
     const analysis = analyzePrs(prs, teamMembers, isMultiRepo ? repoLabel : undefined, ignoredUsers, botUsers, aiBotUsers, options.starredUsers);
     return {
       repoLabel,
+      provider: "github" as const,
       prs,
       analysis,
       restarted: 0,
