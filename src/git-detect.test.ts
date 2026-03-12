@@ -84,6 +84,11 @@ describe("parseGitHubRemote", () => {
   it("returns null for empty string", () => {
     expect(parseGitHubRemote("")).toBeNull();
   });
+
+  it("parses repo names with dots", () => {
+    const result = parseGitHubRemote("https://github.com/mtp-microsoft/Infra.K8s.BasePlatformRP");
+    expect(result).toEqual({ owner: "mtp-microsoft", repo: "Infra.K8s.BasePlatformRP" });
+  });
 });
 
 describe("parseGitRemote", () => {

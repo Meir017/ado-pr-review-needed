@@ -86,7 +86,7 @@ export function parseAdoRemote(remoteUrl: string): GitRemoteInfo | null {
 export function parseGitHubRemote(remoteUrl: string): GitHubRemoteInfo | null {
   // HTTPS: github.com
   const httpsMatch = remoteUrl.match(
-    /https?:\/\/github\.com\/([^/]+)\/([^/\s.]+?)(?:\.git)?(?:\s|$)/,
+    /https?:\/\/github\.com\/([^/]+)\/([^/\s]+?)(?:\.git)?(?:\s|$)/,
   );
   if (httpsMatch) {
     return { owner: httpsMatch[1], repo: httpsMatch[2] };
@@ -94,7 +94,7 @@ export function parseGitHubRemote(remoteUrl: string): GitHubRemoteInfo | null {
 
   // SSH: git@github.com
   const sshMatch = remoteUrl.match(
-    /git@github\.com:([^/]+)\/([^/\s.]+?)(?:\.git)?(?:\s|$)/,
+    /git@github\.com:([^/]+)\/([^/\s]+?)(?:\.git)?(?:\s|$)/,
   );
   if (sshMatch) {
     return { owner: sshMatch[1], repo: sshMatch[2] };
