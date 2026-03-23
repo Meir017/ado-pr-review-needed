@@ -398,5 +398,86 @@ test.describe("HTML Dashboard — combined filters", () => {
     await page.locator(".toggle-label").click();
     await expect(page.locator("#pr-table tr")).toHaveCount(2);
   });
+
+  test("size filter + status filter combine correctly", async ({ page }) => {
+    await page.selectOption("#status-filter", "needingReview");
+    await page.click("#size-filter .multi-select-btn");
+    await page.click("#size-filter .multi-select-option:has-text('XL') input");
+    // Only PR 201 is needingReview + XL
+    await expect(page.locator("#pr-table tr")).toHaveCount(1);
+    await expect(page.locator("#pr-table tr").first()).toContainText("Add REST API endpoint");
+  });
+});
+
+test.describe("HTML Dashboard — size multi-select filter", () => {
+  test.beforeEach(async ({ page }) => {
+    await renderMock(page);
+  });
+
+  test("shows size options in order", async ({ page }) => {
+    await page.click("#size-filter .multi-select-btn");
+    const options = page.locator("#size-filter .multi-select-option");
+    // Mock data has XS, S, M, L, XL sizes
+    await expect(options).toHaveCount(5);
+    const texts = await options.allTextContents();
+    expect(texts).toEqual(["XS", "S", "M", "L", "XL"]);
+  });
+
+  test("filters by single size", async ({ page }) => {
+    await page.click("#size-filter .multi-select-btn");
+    await page.click("#size-filter .multi-select-option:has-text('XS') input");
+    // Only PR 102 is XS
+    await expect(page.locator("#pr-table tr")).toHaveCount(1);
+    await expect(page.locator("#pr-table tr").first()).toContainText("Fix navbar styling");
+  });
+
+  test("filters by multiple sizes", async ({ page }) => {
+    await page.click("#size-filter .multi-select-btn");
+    await page.click("#size-filter input[value='M']");
+    await page.click("#size-filter input[value='L']");
+    // PR 101 is M, PR 103 is L
+    await expect(page.locator("#pr-table tr")).toHaveCount(2);
+  });
+
+  test("updates button label when size selected", async ({ page }) => {
+    await page.click("#size-filter .multi-select-btn");
+    await page.click("#size-filter input[value='XL']");
+    await expect(page.locator("#size-filter .multi-select-text")).toHaveText("XL");
+  });
+
+  test("shows count when multiple sizes selected", async ({ page }) => {
+    await page.click("#size-filter .multi-select-btn");
+    await page.click("#size-filter input[value='S']");
+    await page.click("#size-filter input[value='M']");
+    await expect(page.locator("#size-filter .multi-select-text")).toHaveText("2 selected");
+  });
+
+  test("reverts to All Sizes when unchecked", async ({ page }) => {
+    await page.click("#size-filter .multi-select-btn");
+    await page.click("#size-filter input[value='M']");
+    await expect(page.locator("#size-filter .multi-select-text")).toHaveText("M");
+    await page.click("#size-filter input[value='M']");
+    await expect(page.locator("#size-filter .multi-select-text")).toHaveText("All Sizes");
+  });
+
+  test("excludes PRs without size when filter is active", async ({ page }) => {
+    // PR 104 has no size info
+    await page.click("#size-filter .multi-select-btn");
+    await page.click("#size-filter input[value='XS']");
+    await page.click("#size-filter input[value='S']");
+    await page.click("#size-filter input[value='M']");
+    await page.click("#size-filter input[value='L']");
+    await page.click("#size-filter input[value='XL']");
+    // All 5 sizes selected, but PR 104 has no size → 5 shown
+    await expect(page.locator("#pr-table tr")).toHaveCount(5);
+  });
+
+  test("updates summary cards when filtered by size", async ({ page }) => {
+    await page.click("#size-filter .multi-select-btn");
+    await page.click("#size-filter .multi-select-option:has-text('XL') input");
+    // Only PR 201 (XL, needingReview)
+    await expect(page.locator('[data-card="total"]')).toContainText("1");
+    await expect(page.locator('[data-card="needing-review"]')).toContainText("1");
+  });
 });
 
