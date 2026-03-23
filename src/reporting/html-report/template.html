@@ -142,6 +142,10 @@
       <button class="multi-select-btn" type="button"><span class="multi-select-text">All Reviewers</span><span class="arrow">▼</span></button>
       <div class="multi-select-popup"></div>
     </div>
+    <div class="multi-select" id="size-filter">
+      <button class="multi-select-btn" type="button"><span class="multi-select-text">All Sizes</span><span class="arrow">▼</span></button>
+      <div class="multi-select-popup"></div>
+    </div>
     <label class="toggle-label">
       <span class="toggle-switch">
         <input type="checkbox" id="hide-conflicts" onchange="filterTable()">
@@ -266,6 +270,24 @@ function renderRepoFilter() {
   for (const name of [...allReviewers].sort()) {
     revPopup.innerHTML += `<label class="multi-select-option"><input type="checkbox" value="${escapeHtml(name)}" onchange="filterTable()"><span>${escapeHtml(name)}</span></label>`;
   }
+
+  // Populate size filter
+  const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL'];
+  const allSizes = new Set();
+  for (const repo of DATA.repositories) {
+    for (const list of [repo.analysis.needingReview, repo.analysis.approved, repo.analysis.waitingOnAuthor]) {
+      for (const pr of list) {
+        if (pr.size && pr.size.label) allSizes.add(pr.size.label);
+      }
+    }
+  }
+  const sizePopup = document.querySelector('#size-filter .multi-select-popup');
+  sizePopup.innerHTML = '';
+  for (const label of SIZE_ORDER) {
+    if (allSizes.has(label)) {
+      sizePopup.innerHTML += `<label class="multi-select-option"><input type="checkbox" value="${label}" onchange="filterTable()"><span>${label}</span></label>`;
+    }
+  }
 }
 
 function getAllPrs() {
@@ -303,10 +325,12 @@ function filterTable() {
   const sf = document.getElementById('status-filter').value;
   const rf = getMultiSelectValues('repo-filter');
   const rvf = getMultiSelectValues('reviewer-filter');
+  const szf = getMultiSelectValues('size-filter');
   const hc = document.getElementById('hide-conflicts').checked;
 
   updateMultiSelectLabel('repo-filter', 'All Repos');
   updateMultiSelectLabel('reviewer-filter', 'All Reviewers');
+  updateMultiSelectLabel('size-filter', 'All Sizes');
 
   let filtered = allPrs.filter(pr => {
     if (q && !`${pr.id} ${pr.title} ${pr.author}`.toLowerCase().includes(q)) return false;
@@ -316,6 +340,9 @@ function filterTable() {
     if (rvf.length > 0) {
       const hasReviewer = (pr.reviewers || []).some(r => rvf.includes(r.displayName));
       if (!hasReviewer) return false;
+    }
+    if (szf.length > 0) {
+      if (!pr.size || !szf.includes(pr.size.label)) return false;
     }
     return true;
   });
